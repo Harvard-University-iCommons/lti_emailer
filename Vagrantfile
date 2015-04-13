@@ -45,6 +45,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.synced_folder "../data", "/vagrant_data"
 
   config.vm.synced_folder "../django-icommons-ui", "/home/vagrant/django-icommons-ui", create: true, owner: "vagrant", group: "vagrant"
+  config.vm.synced_folder "../django-icommons-common", "/home/vagrant/django-icommons-common", create: true, owner: "vagrant", group: "vagrant"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
