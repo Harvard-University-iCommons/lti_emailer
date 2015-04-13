@@ -35,7 +35,7 @@ class Command(BaseCommand):
 
             for db, config in settings.DATABASES.iteritems():
                 if config.get('ENGINE') == 'django.db.backends.postgresql_psycopg2':
-                    logger.info("Initializing configured postgresql database:\n%s", json.dumps(config, indent=4))
+                    logger.info("Initializing %s postgresql database:\n%s", db, json.dumps(config, indent=4))
 
                     db_name = config.get('NAME')
                     db_user = config.get('USER')
