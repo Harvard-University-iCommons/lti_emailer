@@ -142,7 +142,7 @@ USE_TZ = True
 STATIC_URL = '/lti_emailer/static/'
 
 REDIS_HOST = SECURE_SETTINGS.get('redis_host', '127.0.0.1')
-REDIS_PORT = SECURE_SETTINGS.get('redis_port', '6379')
+REDIS_PORT = SECURE_SETTINGS.get('redis_port', 6379)
 
 CACHES = {
     'default': {
@@ -188,7 +188,7 @@ LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -231,7 +231,7 @@ LOGGING = {
     'loggers': {
         '': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
