@@ -251,8 +251,8 @@ file {'/etc/profile.d/venvwrapper.sh':
     require => Package['virtualenvwrapper'],
 }
 
-# Create a symlink from ~/icommons_lti_tools to /vagrant as a convenience for the developer
-file {'/home/vagrant/icommons_lti_tools':
+# Create a symlink from ~/lti_emailer to /vagrant as a convenience for the developer
+file {'/home/vagrant/lti_emailer':
     ensure => link,
     target => '/vagrant',
 }
@@ -262,19 +262,19 @@ exec {'create-virtualenv':
     provider => 'shell',
     user => 'vagrant',
     group => 'vagrant',
-    require => [ Package['virtualenvwrapper'], File['/home/vagrant/icommons_lti_tools'], File['/etc/profile.d/oracle.sh'],
+    require => [ Package['virtualenvwrapper'], File['/home/vagrant/lti_emailer'], File['/etc/profile.d/oracle.sh'],
                  Exec['known_hosts'], ],
     environment => ["ORACLE_HOME=/opt/oracle/instantclient_11_2","LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2","HOME=/home/vagrant","WORKON_HOME=/home/vagrant/.virtualenvs"],
     command => '/vagrant/vagrant/venv_bootstrap.sh',
-    creates => '/home/vagrant/.virtualenvs/icommons_lti_tools',
+    creates => '/home/vagrant/.virtualenvs/lti_emailer',
 }
 
 # Active this virtualenv upon login
 file {'/home/vagrant/.bash_profile':
     owner => 'vagrant',
     content => '
-echo "Activating python virtual environment \"icommons_lti_tools\""
-workon icommons_lti_tools
+echo "Activating python virtual environment \"lti_emailer\""
+workon lti_emailer
         
 # Show git repo branch at bash prompt
 parse_git_branch() {
