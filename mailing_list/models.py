@@ -39,7 +39,7 @@ class MailingListManager(models.Manager):
 
             mailing_lists_by_section_id = {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
 
-            defaults = kwargs.get('defaults', {})
+            overrides = kwargs.get('defaults', {})
             for s in canvas_sections:
                 section_id = s['id']
                 mailing_list = mailing_lists_by_section_id.get(section_id)
@@ -48,7 +48,7 @@ class MailingListManager(models.Manager):
                         'canvas_course_id': canvas_course_id,
                         'section_id': section_id
                     }
-                    create_kwargs.update(defaults)
+                    create_kwargs.update(overrides)
 
                     mailing_list = MailingList(**create_kwargs)
                     mailing_list.save()
