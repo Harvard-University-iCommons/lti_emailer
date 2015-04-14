@@ -28,6 +28,16 @@ listserv_client = ListservClient()
 
 class MailingListManager(models.Manager):
     def get_or_create_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
+        """
+        Gets the mailing list data for all sections related to the given canvas_course_id.
+        Creates MailingList models and corresponding listserv mailing lists if a given section's
+        mailing list does not yet exist. This will also sync the mailing list membership with the
+        course enrollments when creating new mailing lists.
+
+        :param canvas_course_id:
+        :param kwargs:
+        :return: List of mailing list dictionaries for the given canvas_course_id
+        """
         cache_key = settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id
         lists = cache.get(cache_key, {})
         if not lists:
@@ -77,6 +87,10 @@ class MailingListManager(models.Manager):
 
 
 class MailingList(models.Model):
+    """
+    This model tracks mailing lists created on a third-party listserv service.
+    These mailing lists correspond to a given canvas_course_id:section_id combination.
+    """
     canvas_course_id = models.IntegerField()
     section_id = models.IntegerField()
     created_by = models.CharField(max_length=32)
@@ -102,12 +116,24 @@ class MailingList(models.Model):
         return "canvas-%s-%s@%s" % (self.canvas_course_id, self.section_id, settings.LISTSERV_DOMAIN)
 
     def update_access_level(self, access_level):
+        """
+        Update the access_level setting for this MailingList on the listserv.
+
+        :param access_level:
+        :return:
+        """
         logger.debug("Updating access_level for listserv mailing list %s with %s", self.address, access_level)
         listserv_client.update_list(self, access_level)
         cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
         logger.debug("Finished updating listserv mailing list for canvas_course_id %s", self.canvas_course_id)
 
     def sync_listserv_membership(self):
+        """
+        Synchronize the listserv mailing list membership with the course enrollments
+        for the given canvas_course_id:section_id.
+
+        :return: The members count for this mailing list.
+        """
         logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
 
         canvas_course_id = self.canvas_course_id
@@ -125,8 +151,8 @@ class MailingList(models.Model):
                 univ_ids.append(enrollment['user']['sis_user_id'])
             except KeyError:
                 logger.debug("Found canvas enrollment with missing sis_user_id %s", json.dumps(enrollment, indent=4))
-        enrolled_emails = set([p.email_address for p in Person.objects.filter(univ_id__in=univ_ids)])
 
+        enrolled_emails = {p.email_address for p in Person.objects.filter(univ_id__in=univ_ids)}
         mailing_list_emails = enrolled_emails - unsubscribed
 
         # Only add subscribers to the listserv if:
@@ -146,10 +172,14 @@ class MailingList(models.Model):
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
 
+        # Return the listserv members count
         return len(listserv_emails) + len(members_to_add) - len(members_to_delete)
 
 
 class Unsubscribed(models.Model):
+    """
+    This model is used to keep track of mailing list members who have unsubscribed from the list.
+    """
     mailing_list = models.ForeignKey(MailingList)
     email = models.EmailField()
     created_by = models.CharField(max_length=32)
@@ -167,6 +197,10 @@ class Unsubscribed(models.Model):
 
 
 class EmailWhitelist(models.Model):
+    """
+    This model is used in testing/qa environments to ensure we do not
+    accidentally send email to real users.
+    """
     email = models.EmailField()
 
     class Meta:
