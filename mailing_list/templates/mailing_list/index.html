@@ -56,7 +56,7 @@
                         <td>
                             <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
                             <img src="{% static 'mailing_list/images/ajax-loader-small.gif' %}" ng-show="list.isUpdating"/>
-                            <span class="feedback" ng-show="list.updated">&#10003;</span>
+                            <span class="text-success feedback" ng-show="list.updated">&#10003;</span>
                         </td>
                     </tr>
                 </tbody>
@@ -85,7 +85,7 @@
                         <td>
                             <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
                             <img src="{% static 'mailing_list/images/ajax-loader-small.gif' %}" ng-show="list.isUpdating"/>
-                            <span class="feedback" ng-show="list.updated">&#10003;</span>
+                            <span class="text-success feedback" ng-show="list.updated">&#10003;</span>
                         </td>
                     </tr>
                 </tbody>
