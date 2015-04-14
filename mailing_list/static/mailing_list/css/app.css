@@ -1,0 +1,14 @@
+.loading-indicator {
+    width: 100%;
+    text-align: center;
+}
+
+.feedback {
+    display: inline-block;
+    font-weight: bold;
+}
+
+.feedback.ng-hide {
+  transition: 1s linear all;
+  opacity: 0;
+}

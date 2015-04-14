@@ -186,6 +186,8 @@ LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 
+CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
