@@ -38,10 +38,9 @@ class MailgunClient(object):
             response = requests.get(api_url, auth=(self.api_user, self.api_key))
             timer.status_code = response.status_code
 
-        if response.status_code != 200:
-            if response.status_code != 404:
-                logger.error(response.text)
-                raise ListservApiError("Failed to get mailing lists from %s" % self.api_url)
+        if response.status_code not in (200, 404):
+            logger.error(response.text)
+            raise ListservApiError("Failed to get mailing lists from %s" % self.api_url)
 
         return response.json().get('list')
 
