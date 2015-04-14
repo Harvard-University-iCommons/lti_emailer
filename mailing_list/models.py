@@ -159,7 +159,7 @@ class MailingList(models.Model):
         # 1. The subscriber is on the whitelist
         # OR
         # 2. Settings tell us to ignore the whitelist
-        if not hasattr(settings, 'IGNORE_WHITELIST'):
+        if not hasattr(settings, 'IGNORE_WHITELIST') or not settings.IGNORE_WHITELIST:
             mailing_list_emails = mailing_list_emails.intersection({x.email for x in EmailWhitelist.objects.all()})
 
         listserv_emails = {m['address'] for m in listserv_client.members(self)}
