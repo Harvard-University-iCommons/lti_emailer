@@ -23,6 +23,13 @@ logger = logging.getLogger(__name__)
 @require_http_methods(['GET'])
 @validate_resource_link_id
 def lists(request, resource_link_id):
+    """
+    Gets the list of mailing lists for the course in the current session context
+
+    :param request:
+    :param resource_link_id:
+    :return: JSON response containing the mailing lists for the course in this session context
+    """
     try:
         canvas_course_id = request.session['LTI_LAUNCH']['custom_canvas_course_id']
         logged_in_user_id = request.session['LTI_LAUNCH']['lis_person_sourcedid']
@@ -47,6 +54,14 @@ def lists(request, resource_link_id):
 @require_http_methods(['PUT'])
 @validate_resource_link_id
 def set_access_level(request, mailing_list_id, resource_link_id):
+    """
+    Sets the access_level for the given mailing_list on the listserv service
+
+    :param request:
+    :param mailing_list_id:
+    :param resource_link_id:
+    :return: JSON response containing the updated mailing list data
+    """
     try:
         logged_in_user_id = request.session['LTI_LAUNCH']['lis_person_sourcedid']
         access_level = json.loads(request.body)['access_level']

@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class MailgunClient(object):
+    """
+    Listserv client for the Mailgun API
+    https://documentation.mailgun.com/api_reference.html
+    """
 
     @property
     def domain(self):
@@ -31,6 +35,12 @@ class MailgunClient(object):
         return settings.LISTSERV_API_KEY
 
     def get_list(self, mailing_list):
+        """
+        Get the mailing_list from the listserv.
+
+        :param mailing_list:
+        :return: The listserv mailing list data dict.
+        """
         address = mailing_list.address
         api_url = "%s/%s" % (self.api_url, address)
 
@@ -45,6 +55,13 @@ class MailgunClient(object):
         return response.json().get('list')
 
     def create_list(self, mailing_list, access_level='members'):
+        """
+        Create the mailing_list on the listserv.
+
+        :param mailing_list:
+        :param access_level:
+        :return:
+        """
         address = mailing_list.address
         payload = {
             'address': address,
@@ -61,6 +78,12 @@ class MailgunClient(object):
             raise ListservApiError(message)
 
     def delete_list(self, mailing_list):
+        """
+        Delete the mailing_list from the listserv.
+
+        :param mailing_list:
+        :return:
+        """
         address = mailing_list.address
         api_url = "%s/%s" % (self.api_url, address)
 
@@ -73,6 +96,13 @@ class MailgunClient(object):
             raise ListservApiError("Failed to delete mailing list %s" % address)
 
     def update_list(self, mailing_list, access_level='members'):
+        """
+        Update the mailing list on the listserv.
+
+        :param mailing_list:
+        :param access_level:
+        :return:
+        """
         address = mailing_list.address
         api_url = "%s/%s" % (self.api_url, address)
         payload = {
@@ -89,6 +119,12 @@ class MailgunClient(object):
             raise ListservApiError(message)
 
     def members(self, mailing_list):
+        """
+        Get the mailing_list members from the listserv.
+
+        :param mailing_list:
+        :return: The list of members
+        """
         address = mailing_list.address
         api_url = "%s/%s/members" % (self.api_url, mailing_list.address)
 
@@ -119,6 +155,13 @@ class MailgunClient(object):
         return result
 
     def add_members(self, mailing_list, emails):
+        """
+        Adds the given emails as members to the mailing_list on the listserv.
+
+        :param mailing_list:
+        :param emails:
+        :return:
+        """
         address = mailing_list.address
         api_url = "%s/%s/members.json" % (self.api_url, address)
 
@@ -144,6 +187,13 @@ class MailgunClient(object):
                 )
 
     def delete_members(self, mailing_list, emails):
+        """
+        Deletes the given emails from the members list on the listserv.
+
+        :param mailing_list:
+        :param emails:
+        :return:
+        """
         address = mailing_list.address
         api_url = "%s/%s/members" % (self.api_url, address)
 

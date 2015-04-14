@@ -159,7 +159,7 @@ class MailingList(models.Model):
         # 1. The subscriber is on the whitelist
         # OR
         # 2. Settings tell us to ignore the whitelist
-        if not hasattr(settings, 'IGNORE_WHITELIST') or not settings.IGNORE_WHITELIST:
+        if not getattr(settings, 'IGNORE_WHITELIST', False):
             mailing_list_emails = mailing_list_emails.intersection({x.email for x in EmailWhitelist.objects.all()})
 
         listserv_emails = {m['address'] for m in listserv_client.members(self)}
@@ -169,6 +169,10 @@ class MailingList(models.Model):
 
         listserv_client.add_members(self, members_to_add)
         listserv_client.delete_members(self, members_to_delete)
+
+        # Update MailingList subscriptions_updated audit field
+        self.subscriptions_updated = datetime.utcnow()
+        self.save()
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
 
