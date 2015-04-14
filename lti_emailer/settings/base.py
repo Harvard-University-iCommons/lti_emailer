@@ -151,6 +151,7 @@ CACHES = {
         'OPTIONS': {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
+        'TIMEOUT': 60 * 20  # 20 minutes
     },
 }
 
