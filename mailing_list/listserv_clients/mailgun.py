@@ -180,9 +180,9 @@ class MailgunClient(object):
 
             if response.status_code != 200:
                 logger.error(response.text)
-                raise ListservApiError("Failed to add mailing list members batch %d of %d %s" % (
+                raise ListservApiError("Failed to add mailing list members batch %d of %d emails %s" % (
                     index + 1,
-                    len(batches),
+                    len(emails),
                     json.dumps(payload))
                 )
 

@@ -27,6 +27,19 @@ listserv_client = ListservClient()
 
 
 class MailingListManager(models.Manager):
+    """
+    Custom Manager for working with MailingList models.
+    """
+    def _get_canvas_sections(self, canvas_course_id):
+        try:
+            return get_all_list_data(SDK_CONTEXT, sections.list_course_sections, canvas_course_id)
+        except CanvasAPIError:
+            logger.exception("Failed to get canvas sections for canvas_course_id %s", canvas_course_id)
+            raise
+
+    def _get_mailing_lists_by_section_id(self, canvas_course_id):
+        return {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
+
     def get_or_create_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
         """
         Gets the mailing list data for all sections related to the given canvas_course_id.
@@ -41,13 +54,8 @@ class MailingListManager(models.Manager):
         cache_key = settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id
         lists = cache.get(cache_key, {})
         if not lists:
-            try:
-                canvas_sections = get_all_list_data(SDK_CONTEXT, sections.list_course_sections, canvas_course_id)
-            except CanvasAPIError:
-                logger.exception("Failed to get canvas sections for canvas_course_id %s", canvas_course_id)
-                raise
-
-            mailing_lists_by_section_id = {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
+            canvas_sections = self._get_canvas_sections(canvas_course_id)
+            mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
             overrides = kwargs.get('defaults', {})
             for s in canvas_sections:
@@ -111,9 +119,37 @@ class MailingList(models.Model):
             self.section_id
         )
 
+    def _get_unsubscribed_email_set(self):
+        return {x.email for x in self.unsubscribed_set.all()}
+
+    def _get_enrolled_email_set(self, canvas_course_id):
+        try:
+            canvas_enrollments = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_courses, canvas_course_id)
+        except CanvasAPIError:
+            logger.exception("Failed to get canvas enrollments for canvas_course_id %s", canvas_course_id)
+            raise
+
+        univ_ids = []
+        for enrollment in canvas_enrollments:
+            try:
+                univ_ids.append(enrollment['user']['sis_user_id'])
+            except KeyError:
+                logger.debug("Found canvas enrollment with missing sis_user_id %s", json.dumps(enrollment, indent=4))
+
+        return {p.email_address for p in Person.objects.filter(univ_id__in=univ_ids)}
+
+    def _get_whitelist_email_set(self):
+        return {x.email for x in EmailWhitelist.objects.all()}
+
+    def _get_listserv_email_set(self):
+        return {m['address'] for m in listserv_client.members(self)}
+
     @property
     def address(self):
-        return "canvas-%s-%s@%s" % (self.canvas_course_id, self.section_id, settings.LISTSERV_DOMAIN)
+        return settings.LISTSERV_ADDRESS_FORMAT.format(
+            canvas_course_id=self.canvas_course_id,
+            section_id=self.section_id
+        )
 
     def update_access_level(self, access_level):
         """
@@ -136,33 +172,19 @@ class MailingList(models.Model):
         """
         logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
 
-        canvas_course_id = self.canvas_course_id
-        unsubscribed = {x.email for x in self.unsubscribed_set.all()}
-
-        try:
-            canvas_enrollments = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_courses, canvas_course_id)
-        except CanvasAPIError:
-            logger.exception("Failed to get canvas enrollments for canvas_course_id %s", canvas_course_id)
-            raise
-
-        univ_ids = []
-        for enrollment in canvas_enrollments:
-            try:
-                univ_ids.append(enrollment['user']['sis_user_id'])
-            except KeyError:
-                logger.debug("Found canvas enrollment with missing sis_user_id %s", json.dumps(enrollment, indent=4))
-
-        enrolled_emails = {p.email_address for p in Person.objects.filter(univ_id__in=univ_ids)}
-        mailing_list_emails = enrolled_emails - unsubscribed
+        unsubscribed_emails = self._get_unsubscribed_email_set()
+        enrolled_emails = self._get_enrolled_email_set(self.canvas_course_id)
+        mailing_list_emails = enrolled_emails - unsubscribed_emails
 
         # Only add subscribers to the listserv if:
         # 1. The subscriber is on the whitelist
         # OR
         # 2. Settings tell us to ignore the whitelist
         if not getattr(settings, 'IGNORE_WHITELIST', False):
-            mailing_list_emails = mailing_list_emails.intersection({x.email for x in EmailWhitelist.objects.all()})
+            whitelist_emails = self._get_whitelist_email_set()
+            mailing_list_emails = mailing_list_emails.intersection(whitelist_emails)
 
-        listserv_emails = {m['address'] for m in listserv_client.members(self)}
+        listserv_emails = self._get_listserv_email_set()
 
         members_to_add = mailing_list_emails - listserv_emails
         members_to_delete = listserv_emails - mailing_list_emails
