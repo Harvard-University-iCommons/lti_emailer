@@ -122,11 +122,15 @@ class MailingList(models.Model):
     def _get_unsubscribed_email_set(self):
         return {x.email for x in self.unsubscribed_set.all()}
 
-    def _get_enrolled_email_set(self, canvas_course_id):
+    def _get_enrolled_email_set(self):
         try:
-            canvas_enrollments = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_courses, canvas_course_id)
+            canvas_enrollments = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_sections, self.section_id)
         except CanvasAPIError:
-            logger.exception("Failed to get canvas enrollments for canvas_course_id %s", canvas_course_id)
+            logger.exception(
+                "Failed to get canvas enrollments for canvas_course_id %s and section_id %s",
+                self.canvas_course_id,
+                self.section_id
+            )
             raise
 
         univ_ids = []
@@ -173,7 +177,7 @@ class MailingList(models.Model):
         logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
 
         unsubscribed_emails = self._get_unsubscribed_email_set()
-        enrolled_emails = self._get_enrolled_email_set(self.canvas_course_id)
+        enrolled_emails = self._get_enrolled_email_set()
         mailing_list_emails = enrolled_emails - unsubscribed_emails
 
         # Only add subscribers to the listserv if:

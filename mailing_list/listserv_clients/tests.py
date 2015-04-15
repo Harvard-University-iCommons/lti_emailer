@@ -60,12 +60,9 @@ class ListservClientTests(TestCase):
         )
         mock_requests_get.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
-        auth = (listserv_client.api_user, listserv_client.api_key)
 
         with self.assertRaises(ListservApiError):
             listserv_client.get_list(mailing_list)
-            mock_requests_get.assert_called_with(api_url, auth=auth)
 
     @patch('requests.post')
     def test_create_list_success(self, mock_requests_post):
@@ -95,16 +92,9 @@ class ListservClientTests(TestCase):
         )
         mock_requests_post.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = listserv_client.api_url
-        auth = (listserv_client.api_user, listserv_client.api_key)
-        payload = {
-            'address': mailing_list.address,
-            'access_level': 'members'
-        }
 
         with self.assertRaises(ListservApiError):
             listserv_client.create_list(mailing_list)
-            mock_requests_post.assert_called_with(api_url, auth=auth, data=payload)
 
     @patch('requests.delete')
     def test_delete_list_success(self, mock_requests_delete):
@@ -130,12 +120,9 @@ class ListservClientTests(TestCase):
         )
         mock_requests_delete.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
-        auth = (listserv_client.api_user, listserv_client.api_key)
 
         with self.assertRaises(ListservApiError):
             listserv_client.delete_list(mailing_list)
-            mock_requests_delete.assert_called_with(api_url, auth=auth)
 
     @patch('requests.put')
     def test_update_list_success(self, mock_requests_put):
@@ -164,15 +151,9 @@ class ListservClientTests(TestCase):
         )
         mock_requests_put.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
-        auth = (listserv_client.api_user, listserv_client.api_key)
-        payload = {
-            'access_level': 'members'
-        }
 
         with self.assertRaises(ListservApiError):
             listserv_client.update_list(mailing_list)
-            mock_requests_put.assert_called_with(api_url, auth=auth, data=payload)
 
     @patch('requests.get')
     def test_members_success(self, mock_requests_get):
@@ -200,12 +181,9 @@ class ListservClientTests(TestCase):
         )
         mock_requests_get.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s/members?limit=100&skip=0" % (listserv_client.api_url, mailing_list.address)
-        auth = (listserv_client.api_user, listserv_client.api_key)
 
         with self.assertRaises(ListservApiError):
             listserv_client.members(mailing_list)
-            mock_requests_get.assert_called_with(api_url, auth=auth)
 
     @patch('requests.post')
     def test_add_members_success(self, mock_requests_post):
@@ -236,17 +214,10 @@ class ListservClientTests(TestCase):
         )
         mock_requests_post.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s/members.json" % (listserv_client.api_url, mailing_list.address)
-        auth = (listserv_client.api_user, listserv_client.api_key)
         emails = ['douglas_hall@harvard.edu', 'david_bonner@harvard.edu']
-        payload = {
-            'members': json.dumps(emails),
-            'upsert': 'yes'
-        }
 
         with self.assertRaises(ListservApiError):
             listserv_client.add_members(mailing_list, emails)
-            mock_requests_post.assert_called_with(api_url, auth=auth, data=payload)
 
     @patch('requests.delete')
     def test_delete_members_success(self, mock_requests_delete):
@@ -274,9 +245,6 @@ class ListservClientTests(TestCase):
         mock_requests_delete.return_value = response
         mailing_list = MailingList.objects.get(id=1)
         emails = ['douglas_hall@harvard.edu']
-        api_url = "%s/%s/members/%s" % (listserv_client.api_url, mailing_list.address, emails[0])
-        auth = (listserv_client.api_user, listserv_client.api_key)
 
         with self.assertRaises(ListservApiError):
             listserv_client.delete_members(mailing_list, emails)
-            mock_requests_delete.assert_called_with(api_url, auth=auth)

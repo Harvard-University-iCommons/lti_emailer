@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
@@ -16,6 +17,10 @@ from ims_lti_py.tool_config import ToolConfig
 
 
 logger = logging.getLogger(__name__)
+
+
+def lti_auth_error(request):
+    raise PermissionDenied
 
 
 @require_http_methods(['GET'])
