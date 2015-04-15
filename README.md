@@ -15,4 +15,8 @@ This application currently needs a coursemanager database configuration in order
 emails. The models defined within this project can be configured to use any standard database (postgresql,
 Sqlite, Oracle).
 
-The asynchronous listserv sync job is currently implemented with the Huey package [https://github.com/coleifer/huey](https://github.com/coleifer/huey).
+A distributed cache is used to cache mailing list data (currently configured to use Redis).
+
+[Mailgun](https://documentation.mailgun.com/) is currently the mail/listserv provider for this application.
+
+The asynchronous listserv sync job is currently implemented using [Huey](https://github.com/coleifer/huey).
