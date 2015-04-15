@@ -14,6 +14,12 @@ DATABASES = {
     },
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
+    },
+}
+
 """
 Unit tests should be able to run without talking to external services like
 redis/elasticache.  Let's disable the caching middleware, and use the db
