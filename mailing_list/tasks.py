@@ -24,20 +24,21 @@ DEFAULT_LISTSERV_PERIODIC_SYNC_CRONTAB = {'minute': '0'}
 
 @db_task()
 def sync_listserv(course_ids=None):
-    _sync_course_ids(course_ids)
+    _sync_listserv(course_ids)
 
 
 @db_periodic_task(
     crontab(**getattr(settings, 'LISTSERV_PERIODIC_SYNC_CRONTAB',
                                 DEFAULT_LISTSERV_PERIODIC_SYNC_CRONTAB)))
 def periodic_sync_listserv():
-    _sync_course_ids(None)
+    _sync_listserv(None)
 
 
-def _sync_course_ids(course_ids):
+def _sync_listserv(course_ids):
     filter_kwargs = {}
     if course_ids:
-        if not isinstance(course_ids, collections.Iterable):
+        if (not isinstance(course_ids, collections.Iterable)
+                or isinstance(course_ids, basestring)):
             course_ids = [course_ids]
         filter_kwargs['canvas_course_id__in'] = course_ids
 
