@@ -1,0 +1,39 @@
+# Replace the {{ }} tokens with the correct values for your environment
+# and copy this file to secure.py
+
+SECURE_SETTINGS = {
+    'canvas_token': '{{ secure_settings.canvas_token }}',
+    'lti_oauth_credentials': {
+        '{{ secure_settings.lti_key }}': '{{ secure_settings.lti_secret }}',
+    },
+
+    'icommons_api_user': '{{ secure_settings.icommons_api_user }}',
+    'icommons_api_pass': '{{ secure_settings.icommons_api_pass }}',
+    'icommons_api_host': '{{ secure_settings.icommons_api_host }}',
+
+    'django_secret_key': '{{ secure_settings.django_secret_key }}',
+
+    'admins': (
+        ('{{ secure_settings.admin_user_name }}', '{{ secure_settings.admin_user_email }}'),
+    ),
+
+    'db_default_backend': '{{ secure_settings.db_default_backend }}',
+    'db_default_name': '{{ secure_settings.db_default_name }}',
+    'db_default_user': '{{ secure_settings.db_default_user }}',
+    'db_default_password': '{{ secure_settings.db_default_password }}',
+    'db_default_host': '{{ secure_settings.db_default_host }}',
+    'db_default_port': {{ secure_settings.db_default_port }},
+    'db_termtool_name': '{{ secure_settings.db_termtool_name }}',
+    'db_termtool_user': '{{ secure_settings.db_termtool_user }}',
+    'db_termtool_password': '{{ secure_settings.db_termtool_password }}',
+    'db_termtool_host': '{{ secure_settings.db_termtool_host }}',
+    'db_termtool_port': '{{ secure_settings.db_termtool_port }}',  # Oracle driver requires this to be a string
+
+    'redis_host': '{{ secure_settings.redis_host }}',
+    'redis_port': {{ secure_settings.redis_port }},
+
+    'listserv_domain': '{{ secure_settings.listserv_domain }}',
+    'listserv_api_url': '{{ secure_settings.listserv_api_url }}',
+    'listserv_api_user': '{{ secure_settings.listserv_api_user }}',
+    'listserv_api_key': '{{ secure_settings.listserv_api_key }}',
+}

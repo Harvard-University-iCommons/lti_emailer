@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+ADMINS = SECURE_SETTINGS.get('admins')
 
 # Application definition
 
