@@ -1,7 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.management.base import BaseCommand, CommandError
 
 from mailing_list.models import MailingList
@@ -28,9 +27,6 @@ class Command(BaseCommand):
                 for ml in MailingList.objects.all():
                     canvas_course_ids.append(ml.canvas_course_id)
                     ml.sync_listserv_membership()
-
-            for canvas_course_id in canvas_course_ids:
-                cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id)
 
             logger.info("Finished sync_listserv job for canvas_course_ids %s", canvas_course_ids)
         except Exception:

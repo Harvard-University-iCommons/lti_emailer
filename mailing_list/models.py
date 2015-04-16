@@ -201,6 +201,8 @@ class MailingList(models.Model):
         self.save()
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
+        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID
+                         % self.canvas_course_id)
 
         # Return the listserv members count
         return len(listserv_emails) + len(members_to_add) - len(members_to_delete)

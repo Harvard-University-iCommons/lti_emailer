@@ -41,7 +41,8 @@ INSTALLED_APPS = (
     'icommons_ui',
     'djangular',
     'lti_emailer',
-    'mailing_list'
+    'mailing_list',
+    'huey.djhuey'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -189,6 +190,13 @@ LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
 
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
+
+HUEY = {
+    'backend': 'huey.backends.redis_backend',
+    'connection': {'host': 'localhost', 'port': 6379},
+    'consumer_options': {'workers': 4}, # probably needs tweaking
+    'name': 'mailing list management',
+}
 
 LOGGING = {
     'version': 1,
