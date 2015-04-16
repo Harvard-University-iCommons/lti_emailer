@@ -142,8 +142,8 @@ USE_TZ = True
 
 STATIC_URL = '/lti_emailer/static/'
 
-REDIS_HOST = SECURE_SETTINGS.get('cache_host', '127.0.0.1')
-REDIS_PORT = SECURE_SETTINGS.get('cache_port', 6379)
+REDIS_HOST = SECURE_SETTINGS.get('redis_host', '127.0.0.1')
+REDIS_PORT = SECURE_SETTINGS.get('redis_port', 6379)
 
 CACHES = {
     'default': {

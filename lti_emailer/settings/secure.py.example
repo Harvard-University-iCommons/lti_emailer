@@ -1,3 +1,6 @@
+# Replace the {{ }} tokens with the correct values for your environment
+# and copy this file to secure.py
+
 SECURE_SETTINGS = {
     'canvas_token': '{{ secure_settings.canvas_token }}',
     'lti_oauth_credentials': {
@@ -26,8 +29,8 @@ SECURE_SETTINGS = {
     'db_termtool_host': '{{ secure_settings.db_termtool_host }}',
     'db_termtool_port': '{{ secure_settings.db_termtool_port }}',  # Oracle driver requires this to be a string
 
-    'cache_host': '{{ secure_settings.cache_host }}',
-    'cache_port': {{ secure_settings.cache_port }},
+    'redis_host': '{{ secure_settings.redis_host }}',
+    'redis_port': {{ secure_settings.redis_port }},
 
     'listserv_domain': '{{ secure_settings.listserv_domain }}',
     'listserv_api_url': '{{ secure_settings.listserv_api_url }}',
