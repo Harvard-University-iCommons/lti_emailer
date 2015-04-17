@@ -20,3 +20,7 @@ A distributed cache is used to cache mailing list data (currently configured to 
 [Mailgun](https://documentation.mailgun.com/) is currently the mail/listserv provider for this application.
 
 The asynchronous listserv sync job is currently implemented using [Huey](https://github.com/coleifer/huey).
+After deployment, a huey worker must be started by running `python manage.py run_huey`.  Note that because a
+periodic task is defined for this application, only a single huey worker should be run.  Otherwise, that
+periodic task will run once per worker.
+

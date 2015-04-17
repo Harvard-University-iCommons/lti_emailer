@@ -7,7 +7,7 @@ from django.conf import settings
 from mock import MagicMock, patch
 
 from .models import MailingList
-from .tasks import _sync_listserv
+from .tasks import course_sync_listserv
 
 
 class MailingListModelTests(TestCase):
@@ -264,7 +264,7 @@ class TaskQueueTests(TestCase):
         mock_mailing_list = MagicMock(canvas_course_id=course_id)
         mock_objects_filter.return_value = [mock_mailing_list]
 
-        _sync_listserv(None)
+        course_sync_listserv(None)
 
         mock_objects_filter.assert_called_once_with()
         mock_mailing_list.sync_listserv_membership.assert_called_once_with()
@@ -275,7 +275,7 @@ class TaskQueueTests(TestCase):
         mock_mailing_list = MagicMock(canvas_course_id=course_id)
         mock_objects_filter.return_value = [mock_mailing_list]
 
-        _sync_listserv(course_id)
+        course_sync_listserv(course_id)
 
         mock_objects_filter.assert_called_once_with(canvas_course_id__in=[course_id])
         mock_mailing_list.sync_listserv_membership.assert_called_once_with()
@@ -287,7 +287,7 @@ class TaskQueueTests(TestCase):
         course_ids = [ml.canvase_course_id for ml in mock_mailing_lists]
         mock_objects_filter.return_value = mock_mailing_lists
 
-        _sync_listserv(course_ids)
+        course_sync_listserv(course_ids)
 
         mock_objects_filter.assert_called_once_with(canvas_course_id__in=course_ids)
         for mock_ml in mock_mailing_lists:
