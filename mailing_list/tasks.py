@@ -44,13 +44,14 @@ def _sync_listserv(course_ids):
 
     success_course_ids, failure_course_ids = [], []
     for mailing_list in MailingList.objects.filter(**filter_kwargs):
-        success_course_ids.append(mailing_list.canvas_course_id)
         try:
             mailing_list.sync_listserv_membership()
         except (CanvasAPIError, ListservApiError):
             failure_course_ids.append(mailing_list.canvas_course_id)
             logger.exception('Unable to sync canvas course id {}'.format(
                                  mailing_list.canvas_course_id))
+        else:
+            success_course_ids.append(mailing_list.canvas_course_id)
 
     logger.info('Finished syncing listserv memberships.  Course ids {} '
                 'succeeded, course ids {} failed'.format(

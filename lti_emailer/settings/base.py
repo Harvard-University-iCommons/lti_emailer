@@ -188,12 +188,14 @@ LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
+LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab',
+                                                     {'minute': '0'})
 
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
     'backend': 'huey.backends.redis_backend',
-    'connection': {'host': 'localhost', 'port': 6379},
+    'connection': {'host': REDIS_HOST, 'port': REDIS_PORT},
     'consumer_options': {'workers': 4}, # probably needs tweaking
     'name': 'mailing list management',
 }
