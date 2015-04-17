@@ -16,7 +16,11 @@ email_whitelist = [
     'david_downs@harvard.edu',
     'jill_ehrenzweig@harvard.edu',
     'kimberly_edelman@harvard.edu',
-    'colin_murtaugh@harvard.edu'
+    'colin_murtaugh@harvard.edu',
+    'roderick_morales@harvard.edu',
+    'carter_snowden@harvard.edu',
+    'chow_hiuk@yahoo.com',
+    'tlttest101@gmail.com'
 ]
 
 
