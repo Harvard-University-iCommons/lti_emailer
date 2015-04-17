@@ -20,7 +20,8 @@ email_whitelist = [
     'roderick_morales@harvard.edu',
     'carter_snowden@harvard.edu',
     'chow_hiuk@yahoo.com',
-    'tlttest101@gmail.com'
+    'tlttest101@gmail.com',
+    'elliottyates@gmail.com'
 ]
 
 
