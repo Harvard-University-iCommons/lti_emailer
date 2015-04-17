@@ -1,10 +1,13 @@
+import uuid
+
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.conf import settings
 
-from mock import patch
+from mock import MagicMock, patch
 
 from .models import MailingList
+from .tasks import course_sync_listserv
 
 
 class MailingListModelTests(TestCase):
@@ -240,3 +243,52 @@ class MailingListModelTests(TestCase):
             'members_count': 1,
             'is_primary_section': False
         }, result)
+
+
+class TaskQueueTests(TestCase):
+    """
+    Huey's django integration doesn't play nicely with unit tests.  In
+    particular, the decorators it provides instantiate a module-global
+    Huey object at module load time.  That means that override_settings
+    is useless in this case.  We could edit the huey.djhuey.HUEY object
+    directly, but really, then we're just testing huey itself.
+
+    Thus, the tests here focus just on the functionality being invoked
+    by the huey tasks.
+    """
+    longMessage = True
+
+    @patch('mailing_list.tasks.MailingList.objects.filter')
+    def test_sync_no_args(self, mock_objects_filter):
+        course_id = uuid.uuid4().hex
+        mock_mailing_list = MagicMock(canvas_course_id=course_id)
+        mock_objects_filter.return_value = [mock_mailing_list]
+
+        course_sync_listserv(None)
+
+        mock_objects_filter.assert_called_once_with()
+        mock_mailing_list.sync_listserv_membership.assert_called_once_with()
+
+    @patch('mailing_list.tasks.MailingList.objects.filter')
+    def test_sync_one_course_id(self, mock_objects_filter):
+        course_id = uuid.uuid4().hex
+        mock_mailing_list = MagicMock(canvas_course_id=course_id)
+        mock_objects_filter.return_value = [mock_mailing_list]
+
+        course_sync_listserv(course_id)
+
+        mock_objects_filter.assert_called_once_with(canvas_course_id__in=[course_id])
+        mock_mailing_list.sync_listserv_membership.assert_called_once_with()
+
+    @patch('mailing_list.tasks.MailingList.objects.filter')
+    def test_sync_many_course_ids(self, mock_objects_filter):
+        mock_mailing_lists = [MagicMock(canvas_course_id=uuid.uuid4().hex)
+                                  for _ in xrange(5)]
+        course_ids = [ml.canvase_course_id for ml in mock_mailing_lists]
+        mock_objects_filter.return_value = mock_mailing_lists
+
+        course_sync_listserv(course_ids)
+
+        mock_objects_filter.assert_called_once_with(canvas_course_id__in=course_ids)
+        for mock_ml in mock_mailing_lists:
+            mock_ml.sync_listserv_membership.assert_called_once_with()
