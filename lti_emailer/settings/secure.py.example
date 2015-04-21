@@ -2,10 +2,12 @@
 # and copy this file to secure.py
 
 SECURE_SETTINGS = {
+    'enable_debug': '{{ secure_settings.enable_debug }}',
     'canvas_token': '{{ secure_settings.canvas_token }}',
-    'lti_oauth_credentials': {
-        '{{ secure_settings.lti_key }}': '{{ secure_settings.lti_secret }}',
-    },
+    'canvas_url': '{{ secure_settings.canvas_url }}',
+
+    # A dictionary of key/values for credentials 
+    'lti_oauth_credentials': '{{ secure_settings.lti_oauth_credentials }}',
 
     'icommons_api_user': '{{ secure_settings.icommons_api_user }}',
     'icommons_api_pass': '{{ secure_settings.icommons_api_pass }}',
@@ -13,11 +15,6 @@ SECURE_SETTINGS = {
 
     'django_secret_key': '{{ secure_settings.django_secret_key }}',
 
-    'admins': (
-        ('{{ secure_settings.admin_user_name }}', '{{ secure_settings.admin_user_email }}'),
-    ),
-
-    'db_default_backend': '{{ secure_settings.db_default_backend }}',
     'db_default_name': '{{ secure_settings.db_default_name }}',
     'db_default_user': '{{ secure_settings.db_default_user }}',
     'db_default_password': '{{ secure_settings.db_default_password }}',

@@ -24,11 +24,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 SECRET_KEY = SECURE_SETTINGS.get('django_secret_key', 'changeme')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = SECURE_SETTINGS.get('enable_debug', False)
 
-ALLOWED_HOSTS = []
+TEMPLATE_DEBUG = DEBUG
 
-ADMINS = SECURE_SETTINGS.get('admins')
+ALLOWED_HOSTS = ['*']
+
+# These addresses will receive emails about certain errors
+ADMINS = ()
 
 # Application definition
 
@@ -43,6 +46,7 @@ INSTALLED_APPS = (
     'djangular',
     'lti_emailer',
     'mailing_list',
+    'gunicorn',
     'huey.djhuey'
 )
 
@@ -102,12 +106,12 @@ DATABASE_ROUTERS = ['lti_emailer.routers.DatabaseAppsRouter']
 
 DATABASES = {
     'default': {
-        'ENGINE': SECURE_SETTINGS.get('db_default_backend', 'django.db.backends.sqlite3'),
-        'NAME': SECURE_SETTINGS.get('db_default_name', os.path.join(BASE_DIR, 'db.sqlite3')),
-        'USER': SECURE_SETTINGS.get('db_default_user', None),
-        'PASSWORD': SECURE_SETTINGS.get('db_default_password', None),
-        'HOST': SECURE_SETTINGS.get('db_default_host', None),
-        'PORT': SECURE_SETTINGS.get('db_default_port', None),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': SECURE_SETTINGS.get('db_default_name', 'lti_emailer'),
+        'USER': SECURE_SETTINGS.get('db_default_user', 'postgres'),
+        'PASSWORD': SECURE_SETTINGS.get('db_default_password'),
+        'HOST': SECURE_SETTINGS.get('db_default_host', '127.0.0.1'),
+        'PORT': SECURE_SETTINGS.get('db_default_port', 5432),  # Default postgres port
     },
     'termtool': {
         'ENGINE': 'django.db.backends.oracle',
@@ -143,6 +147,8 @@ USE_TZ = True
 
 STATIC_URL = '/lti_emailer/static/'
 
+STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'http_static'))
+
 REDIS_HOST = SECURE_SETTINGS.get('redis_host', '127.0.0.1')
 REDIS_PORT = SECURE_SETTINGS.get('redis_port', 6379)
 
@@ -157,18 +163,24 @@ CACHES = {
     },
 }
 
-SESSION_ENGINE = 'redis_sessions.session'
-SESSION_REDIS_HOST = REDIS_HOST
-SESSION_REDIS_PORT = REDIS_PORT
+# Provide a unique value for sharing cache among Django projects
+KEY_PREFIX = 'lti_emailer'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Django defaults to False (as of 1.7)
+SESSION_COOKIE_SECURE = SECURE_SETTINGS.get('use_secure_cookies', False)
 
 LTI_OAUTH_CREDENTIALS = SECURE_SETTINGS.get('lti_oauth_credentials', None)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+CANVAS_URL = SECURE_SETTINGS.get('canvas_url', 'https://canvas.instructure.com')
+
 CANVAS_SDK_SETTINGS = {
     'auth_token': SECURE_SETTINGS.get('canvas_token', None),
-    'base_api_url': SECURE_SETTINGS.get('canvas_api_url', 'https://canvas.icommons.harvard.edu/api'),
+    'base_api_url': CANVAS_URL + '/api',
     'max_retries': 3,
     'per_page': 40,
     'session_inactivity_expiration_time_secs': 50,
@@ -178,7 +190,7 @@ ICOMMONS_COMMON = {
     'ICOMMONS_API_HOST': SECURE_SETTINGS.get('icommons_api_host', None),
     'ICOMMONS_API_USER': SECURE_SETTINGS.get('icommons_api_user', None),
     'ICOMMONS_API_PASS': SECURE_SETTINGS.get('icommons_api_pass', None),
-    'CANVAS_API_BASE_URL': 'https://canvas.icommons.harvard.edu/api/v1',
+    'CANVAS_API_BASE_URL': CANVAS_URL + '/api/v1',
     'CANVAS_API_HEADERS': {
         'Authorization': 'Bearer ' + SECURE_SETTINGS.get('canvas_token', 'canvas_token_missing_from_config')
     },
@@ -191,13 +203,12 @@ LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
 LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab',
                                                      {'minute': '0'})
-
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
     'backend': 'huey.backends.redis_backend',
     'connection': {'host': REDIS_HOST, 'port': REDIS_PORT},
-    'consumer_options': {'workers': 4}, # probably needs tweaking
+    'consumer_options': {'workers': 4},  # probably needs tweaking
     'name': 'mailing list management',
 }
 
@@ -238,7 +249,7 @@ LOGGING = {
         'request': {
             'level': 'DEBUG',
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': 'request.log',
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
             'formatter': 'verbose',
         },
 
