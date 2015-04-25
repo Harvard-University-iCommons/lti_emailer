@@ -56,4 +56,4 @@ def lti_launch(request):
         "lti_emailer launched with params: %s",
         json.dumps(request.POST.dict(), indent=4)
     )
-    return redirect('mailing_list:index', request.POST['resource_link_id'])
+    return redirect('mailing_list:index')
