@@ -238,7 +238,7 @@ LOGGING = {
         'logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': 'app.log',
+            'filename': '/var/opt/tlt/logs/lti_emailer.log',
             'formatter': 'verbose',
         },
         'console': {
@@ -256,7 +256,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
+            'handlers': ['console', 'logfile'],
             'level': 'INFO',
             'propagate': True,
         },
