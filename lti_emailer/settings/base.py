@@ -119,7 +119,7 @@ DATABASES = {
         'USER': SECURE_SETTINGS.get('db_termtool_user'),
         'PASSWORD': SECURE_SETTINGS.get('db_termtool_password'),
         'HOST': SECURE_SETTINGS.get('db_termtool_host'),
-        'PORT': SECURE_SETTINGS.get('db_termtool_port'),
+        'PORT': str(SECURE_SETTINGS.get('db_termtool_port')),
         'OPTIONS': {
             'threaded': True,
         },
