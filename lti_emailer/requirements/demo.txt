@@ -5,6 +5,6 @@
  
 # below are requirements specific to the stage environment
 
-git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git@v1.9.1#egg=django-icommons-common
+git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git@v1.9.2#egg=django-icommons-common
 git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-ui.git@v0.9.4#egg=django-icommons-ui
 git+ssh://git@github.com/Harvard-University-iCommons/django-auth-lti.git@v0.9#egg=django-auth-lti
