@@ -169,10 +169,10 @@ class MailingListModelTests(TestCase):
     @patch('mailing_list.models.MailingList.sync_listserv_membership')
     @patch('mailing_list.models.listserv_client.create_list')
     @patch('mailing_list.models.listserv_client.get_list')
-    @patch('mailing_list.models.MailingListManager._get_canvas_sections')
+    @patch('mailing_list.models.canvas_api_client.get_sections')
     def test_get_or_create_mailing_lists_for_canvas_course_id_with_existing_list(
-            self, mock_get_canvas_sections, mock_get_list, mock_create_list, mock_sync_listserv_membership):
-        mock_get_canvas_sections.return_value = [{
+            self, mock_get_sections, mock_get_list, mock_create_list, mock_sync_listserv_membership):
+        mock_get_sections.return_value = [{
             'id': 1582,
             'name': 'section name',
             'sis_section_id': 334562
@@ -190,6 +190,8 @@ class MailingListModelTests(TestCase):
         self.assertFalse(mock_create_list.called, 'ListservClient.create_list called and it should not have been')
         self.assertEqual(result, [{
             'id': 1,
+            'canvas_course_id': 3716,
+            'section_id': 1582,
             'name': 'section name',
             'address': address,
             'access_level': 'members',
@@ -200,10 +202,10 @@ class MailingListModelTests(TestCase):
     @patch('mailing_list.models.MailingList.sync_listserv_membership')
     @patch('mailing_list.models.listserv_client.create_list')
     @patch('mailing_list.models.listserv_client.get_list')
-    @patch('mailing_list.models.MailingListManager._get_canvas_sections')
+    @patch('mailing_list.models.canvas_api_client.get_sections')
     def test_get_or_create_mailing_lists_for_canvas_course_id_with_new_list(
-            self, mock_get_canvas_sections, mock_get_list, mock_create_list, mock_sync_listserv_membership):
-        mock_get_canvas_sections.return_value = [{
+            self, mock_get_sections, mock_get_list, mock_create_list, mock_sync_listserv_membership):
+        mock_get_sections.return_value = [{
             'id': 1583,
             'name': 'section name 1',
             'sis_section_id': 334562
@@ -216,19 +218,21 @@ class MailingListModelTests(TestCase):
         mock_create_list.return_value = None
         mock_sync_listserv_membership.return_value = 1
 
-        result = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(3718)
+        result = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(3716)
         address_1 = settings.LISTSERV_ADDRESS_FORMAT.format(
-            canvas_course_id=3718,
+            canvas_course_id=3716,
             section_id=1583
         )
         address_2 = settings.LISTSERV_ADDRESS_FORMAT.format(
-            canvas_course_id=3718,
+            canvas_course_id=3716,
             section_id=1584
         )
 
         self.assertTrue(mock_create_list.called, 'ListservClient.create_list not called and it should have been')
         self.assertIn({
             'id': 2,
+            'canvas_course_id': 3716,
+            'section_id': 1583,
             'name': 'section name 1',
             'address': address_1,
             'access_level': 'members',
@@ -237,6 +241,8 @@ class MailingListModelTests(TestCase):
         }, result)
         self.assertIn({
             'id': 3,
+            'canvas_course_id': 3716,
+            'section_id': 1584,
             'name': 'section name 2',
             'address': address_2,
             'access_level': 'members',
@@ -282,8 +288,7 @@ class TaskQueueTests(TestCase):
 
     @patch('mailing_list.tasks.MailingList.objects.filter')
     def test_sync_many_course_ids(self, mock_objects_filter):
-        mock_mailing_lists = [MagicMock(canvas_course_id=uuid.uuid4().hex)
-                                  for _ in xrange(5)]
+        mock_mailing_lists = [MagicMock(canvas_course_id=uuid.uuid4().hex) for _ in xrange(5)]
         course_ids = [ml.canvase_course_id for ml in mock_mailing_lists]
         mock_objects_filter.return_value = mock_mailing_lists
 

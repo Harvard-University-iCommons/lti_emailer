@@ -1,3 +1,7 @@
+body {
+    padding: 10px;
+}
+
 .loading-indicator {
     width: 100%;
     text-align: center;

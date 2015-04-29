@@ -1,29 +1,9 @@
+{% extends 'mailing_list/base.html' %}
+
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en" ng-app="mailingList">
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{% static 'favicon.ico' %}" rel="icon" type="image/x-icon">
-    {% block stylesheet %}
-        <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-3.3.4/bootstrap.min.css' %}" media="screen"/>
-        <link rel="stylesheet" type="text/css" href="{% static 'mailing_list/css/app.css' %}" media="screen"/>
-    {% endblock stylesheet %}
-    <script src="{% static 'jquery-1.10.2/jquery-1.10.2.min.js' %}"></script>
-    <script src="{% static 'underscore-1.8.2/underscore.min.js' %}"></script>
-    <script src="{% static 'bootstrap-3.3.4/bootstrap.min.js' %}"></script>
-    <script src="{% static 'angular-1.3.9/angular.min.js' %}"></script>
-    <script src="{% static 'angular-1.3.9/angular-animate.min.js' %}"></script>
-    <script src="{% static 'djangular/js/django-angular.js' %}"></script>
-    <script src="{% static 'mailing_list/js/app.js' %}"></script>
-    <script>
-        window.globals = {
-            RESOURCE_LINK_ID: '{{ resource_link_id }}'
-        };
-    </script>
-    <title>Mailing List</title>
 
-</head>
+{% block body %}
 <body class="lti-tool" role="application" ng-controller="MailingListController as ml">
     <header>
         <h1>{% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}</h1>
@@ -32,6 +12,9 @@
         <img src="{% static 'mailing_list/images/ajax-loader-large.gif' %}"/>
     </div>
     <main class="ng-hide" ng-show="ml.loaded">
+        <div class="alert alert-info" role="alert" ng-show="!ml.hasPrimarySections() && !ml.hasOtherSections()">
+            There are not any mailing lists for this course at this time.
+        </div>
         <div id="course-sections" ng-show="ml.hasPrimarySections()">
             <h2>Course Sections</h2>
             <table class="table">
@@ -40,7 +23,6 @@
                         <th>Section Name</th>
                         <th>Mailing List Address</th>
                         <th>Number of Recipients</th>
-                        <th>Who can post to this list?</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,11 +35,6 @@
                         </td>
                         <td>{{ list.members_count }}</td>
                         {% endverbatim %}
-                        <td>
-                            <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
-                            <img src="{% static 'mailing_list/images/ajax-loader-small.gif' %}" ng-show="list.isUpdating"/>
-                            <span class="text-success feedback" ng-show="list.updated">&#10003;</span>
-                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -70,7 +47,6 @@
                         <th>Section Name</th>
                         <th>Mailing List Address</th>
                         <th>Number of Recipients</th>
-                        <th>Who can post to this list?</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,15 +58,10 @@
                         </td>
                         <td>{{ list.members_count }}</td>
                         {% endverbatim %}
-                        <td>
-                            <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
-                            <img src="{% static 'mailing_list/images/ajax-loader-small.gif' %}" ng-show="list.isUpdating"/>
-                            <span class="text-success feedback" ng-show="list.updated">&#10003;</span>
-                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </main>
 </body>
-</html>
+{% endblock body %}

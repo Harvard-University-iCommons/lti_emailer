@@ -8,18 +8,34 @@ from django.contrib.auth.decorators import login_required
 
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
+from django_auth_lti.verification import has_lti_role
 
 from icommons_common.decorators import validate_resource_link_id
 from icommons_common.view_utils import create_json_200_response, create_json_500_response
 
+from lti_emailer import canvas_api_client
 from .models import MailingList
 
 
 logger = logging.getLogger(__name__)
 
 
+def _filter_mailing_lists_for_user(custom_canvas_user_id, mailing_lists):
+    result = []
+    for ml in mailing_lists:
+        if ml['access_level'] != MailingList.ACCESS_LEVEL_READONLY:
+            enrollments = canvas_api_client.get_enrollments(ml['canvas_course_id'], ml['section_id'])
+            user_ids = [enrollment['user']['id'] for enrollment in enrollments]
+            if custom_canvas_user_id in user_ids:
+                result.append(ml)
+
+    return result
+
+
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required([
+    const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER, const.LEARNER
+])
 @require_http_methods(['GET'])
 @validate_resource_link_id
 def lists(request, resource_link_id):
@@ -41,6 +57,11 @@ def lists(request, resource_link_id):
                 'modified_by': logged_in_user_id
             }
         )
+
+        if has_lti_role(request, const.LEARNER):
+            # Learners should only see lists which they can post to, so filter the mailing lists
+            custom_canvas_user_id = int(request.session['LTI_LAUNCH']['custom_canvas_user_id'])
+            mailing_lists = _filter_mailing_lists_for_user(custom_canvas_user_id, mailing_lists)
     except Exception:
         message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.session['LTI_LAUNCH'])
         logger.exception(message)

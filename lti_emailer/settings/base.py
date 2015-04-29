@@ -201,8 +201,10 @@ LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
-LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab',
-                                                     {'minute': '0'})
+LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab', {'minute': '0'})
+
+CACHE_KEY_SECTIONS_BY_CANVAS_COURSE_ID = "sections_by_canvas_course_id-%s"
+CACHE_KEY_ENROLLMENTS_BY_SECTION_ID = "enrollments_by_section_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
