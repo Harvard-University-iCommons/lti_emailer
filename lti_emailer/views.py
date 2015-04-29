@@ -1,8 +1,6 @@
 import logging
 import json
 
-from urlparse import urlparse
-
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
 from django.views.decorators.http import require_http_methods
@@ -18,24 +16,8 @@ from django_auth_lti.verification import has_lti_role
 
 from ims_lti_py.tool_config import ToolConfig
 
-from canvas_sdk.methods import external_tools
-
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
-from icommons_common.view_utils import create_json_500_response
-
 
 logger = logging.getLogger(__name__)
-
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
-
-
-def _get_external_tool_id(request):
-    """
-    Parses the external_tool id from the LTI launch request
-    :param request:
-    :return: The external_tool id for the given LTI launch request
-    """
-    return urlparse(request.META.get('HTTP_REFERER')).path.split('/')[-1]
 
 
 def lti_auth_error(request):
@@ -77,17 +59,6 @@ def lti_launch(request):
         "lti_emailer launched with params: %s",
         json.dumps(request.POST.dict(), indent=4)
     )
-
-    # external_tool_id = _get_external_tool_id(request)
-    # canvas_course_id = request.session['LTI_LAUNCH']['custom_canvas_course_id']
-    # tool_config = external_tools.get_single_external_tool_courses(SDK_CONTEXT, canvas_course_id, external_tool_id).json()
-    # print json.dumps(tool_config)
-    # if tool_config['course_navigation']['visibility'] == 'admins':
-    #     tool_config['course_navigation']['visibility'] = 'members'
-    # else:
-    #     tool_config['course_navigation']['visibility'] = 'admins'
-    # external_tools.edit_external_tool_courses(SDK_CONTEXT, canvas_course_id, external_tool_id, payload=tool_config)
-    # print json.dumps(tool_config)
 
     view = 'mailing_list'
     if has_lti_role(request, const.LEARNER):
