@@ -6,3 +6,8 @@ environment=DJANGO_SETTINGS_MODULE="{{ project_name }}.settings.{{ django_settin
 
 [group:{{ project_name }}]
 programs=gunicorn-{{ project_name }}
+
+[program:huey-{{ project_name }}]
+command=/var/opt/virtualenvs/{{ project_name }}/bin/python /opt/tlt/{{ project_name }}/manage.py run_huey
+user=deploy
+environment=DJANGO_SETTINGS_MODULE="{{ project_name }}.settings.{{ django_settings }}",ORACLE_HOME="/opt/oracle/instantclient_11_2",LD_LIBRARY_PATH="/opt/oracle/instantclient_11_2"
