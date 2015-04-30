@@ -26,7 +26,6 @@ def admin_index(request, resource_link_id):
 
 @validate_resource_link_id
 @login_required
-@lti_role_required([const.LEARNER])
 @require_http_methods(['GET'])
 def learner_index(request, resource_link_id):
     logged_in_user_id = request.session['LTI_LAUNCH']['lis_person_sourcedid']

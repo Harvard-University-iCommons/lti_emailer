@@ -10,9 +10,8 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
-from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
-from django_auth_lti.verification import has_lti_role
+from django_auth_lti.verification import has_lti_roles
 
 from ims_lti_py.tool_config import ToolConfig
 
@@ -49,9 +48,6 @@ def tool_config(request):
 
 
 @login_required
-@lti_role_required([
-    const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER, const.LEARNER
-])
 @require_http_methods(['POST'])
 @csrf_exempt
 def lti_launch(request):
@@ -61,9 +57,11 @@ def lti_launch(request):
     )
 
     view = 'mailing_list'
-    if has_lti_role(request, const.LEARNER):
-        view += ":learner_index"
-    else:
+    if has_lti_roles(request, [
+        const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER
+    ]):
         view += ":admin_index"
+    else:
+        view += ":learner_index"
 
     return redirect(view, request.POST['resource_link_id'])
