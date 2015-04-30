@@ -10,8 +10,8 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
-from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
+from django_auth_lti.verification import has_lti_roles
 
 from ims_lti_py.tool_config import ToolConfig
 
@@ -39,7 +39,7 @@ def tool_config(request):
         'enabled': 'true',
         'text': "Course Emailer %s" % env,
         'default': 'disabled',
-        'visibility': 'admins',
+        'visibility': 'members',
     }
     lti_tool_config.set_ext_param('canvas.instructure.com', 'course_navigation', course_nav_params)
     lti_tool_config.set_ext_param('canvas.instructure.com', 'privacy_level', 'public')
@@ -48,7 +48,6 @@ def tool_config(request):
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
 @require_http_methods(['POST'])
 @csrf_exempt
 def lti_launch(request):
@@ -56,4 +55,13 @@ def lti_launch(request):
         "lti_emailer launched with params: %s",
         json.dumps(request.POST.dict(), indent=4)
     )
-    return redirect('mailing_list:index', request.POST['resource_link_id'])
+
+    view = 'mailing_list'
+    if has_lti_roles(request, [
+        const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER
+    ]):
+        view += ":admin_index"
+    else:
+        view += ":learner_index"
+
+    return redirect(view, request.POST['resource_link_id'])
