@@ -37,7 +37,7 @@ def get_sections(canvas_course_id):
 
 
 def get_enrollments(canvas_course_id, section_id):
-    cache_key = settings.CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID % canvas_course_id
+    cache_key = settings.CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID % section_id
     result = cache.get(cache_key)
     if not result:
         try:
