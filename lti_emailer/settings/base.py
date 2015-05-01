@@ -264,12 +264,12 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'logfile'],
+            'handlers': ['console', 'app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['logfile'],
+            'handlers': ['app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
             'propagate': False,
         },
@@ -283,7 +283,7 @@ LOGGING = {
             'level': _DEFAULT_LOG_LEVEL,
         },
         'mailing_list': {
-            'handlers': ['console', 'logfile'],
+            'handlers': ['console', 'app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
         }
     }
