@@ -214,6 +214,8 @@ HUEY = {
     'name': 'mailing list management',
 }
 
+_DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', 'DEBUG')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -225,52 +227,64 @@ LOGGING = {
             'format': '%(levelname)s %(module)s %(message)s'
         }
     },
+    # Borrowing some default filters for app loggers
     'filters': {
         'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'handlers': {
+        # Log to a text file that can be rotated by logrotate
+        'app_logfile': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
+            'formatter': 'verbose',
+        },
+        'huey_logfile': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'huey-lti_emailer.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'filters': ['require_debug_true'],
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler',
         },
-        # Log to a text file that can be rotated by logrotate
-        'logfile': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': '/var/opt/tlt/logs/lti_emailer.log',
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'request': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
-            'formatter': 'verbose',
-        },
-
     },
     'loggers': {
         '': {
             'handlers': ['console', 'logfile'],
-            'level': 'INFO',
+            'level': _DEFAULT_LOG_LEVEL,
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['request'],
-            'level': 'DEBUG',
+            'handlers': ['logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': _DEFAULT_LOG_LEVEL,
             'propagate': True,
         },
+        'huey': {
+            'handlers': ['huey_logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
+        },
+        'mailing_list': {
+            'handlers': ['console', 'logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
+        }
     }
 }

@@ -13,4 +13,3 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 LOGGING['handlers']['logfile']['filename'] = 'app.log'
-LOGGING['loggers']['']['level'] = 'DEBUG'
