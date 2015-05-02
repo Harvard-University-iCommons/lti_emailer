@@ -12,4 +12,4 @@ DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
 }
 
-LOGGING['handlers']['logfile']['filename'] = 'app.log'
+LOGGING['handlers']['app_logfile']['filename'] = 'app.log'
