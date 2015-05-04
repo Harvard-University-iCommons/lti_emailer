@@ -7,17 +7,10 @@ from django.conf import settings
 from django.db import models
 from django.core.cache import cache
 
-from canvas_sdk.methods import enrollments, sections
-from canvas_sdk.utils import get_all_list_data
-from canvas_sdk.exceptions import CanvasAPIError
-
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.models import Person
 
+from lti_emailer import canvas_api_client
 from .listserv_clients.mailgun import MailgunClient as ListservClient
-
-
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 
 
 logger = logging.getLogger(__name__)
@@ -30,13 +23,6 @@ class MailingListManager(models.Manager):
     """
     Custom Manager for working with MailingList models.
     """
-    def _get_canvas_sections(self, canvas_course_id):
-        try:
-            return get_all_list_data(SDK_CONTEXT, sections.list_course_sections, canvas_course_id)
-        except CanvasAPIError:
-            logger.exception("Failed to get canvas sections for canvas_course_id %s", canvas_course_id)
-            raise
-
     def _get_mailing_lists_by_section_id(self, canvas_course_id):
         return {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
 
@@ -54,7 +40,7 @@ class MailingListManager(models.Manager):
         cache_key = settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id
         lists = cache.get(cache_key, {})
         if not lists:
-            canvas_sections = self._get_canvas_sections(canvas_course_id)
+            canvas_sections = canvas_api_client.get_sections(canvas_course_id)
             mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
             overrides = kwargs.get('defaults', {})
@@ -71,7 +57,7 @@ class MailingListManager(models.Manager):
                     mailing_list = MailingList(**create_kwargs)
                     mailing_list.save()
 
-                access_level = 'members'
+                access_level = MailingList.ACCESS_LEVEL_MEMBERS
                 listserv_list = listserv_client.get_list(mailing_list)
                 if not listserv_list:
                     listserv_client.create_list(mailing_list)
@@ -82,6 +68,8 @@ class MailingListManager(models.Manager):
 
                 lists[section_id] = {
                     'id': mailing_list.id,
+                    'canvas_course_id': mailing_list.canvas_course_id,
+                    'section_id': mailing_list.section_id,
                     'name': s['name'],
                     'address': mailing_list.address,
                     'access_level': access_level,
@@ -99,6 +87,10 @@ class MailingList(models.Model):
     This model tracks mailing lists created on a third-party listserv service.
     These mailing lists correspond to a given canvas_course_id:section_id combination.
     """
+    ACCESS_LEVEL_MEMBERS = 'members'
+    ACCESS_LEVEL_EVERYONE = 'everyone'
+    ACCESS_LEVEL_READONLY = 'readonly'
+
     canvas_course_id = models.IntegerField()
     section_id = models.IntegerField()
     created_by = models.CharField(max_length=32)
@@ -123,17 +115,8 @@ class MailingList(models.Model):
         return {x.email for x in self.unsubscribed_set.all()}
 
     def _get_enrolled_email_set(self):
-        try:
-            canvas_enrollments = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_sections, self.section_id)
-        except CanvasAPIError:
-            logger.exception(
-                "Failed to get canvas enrollments for canvas_course_id %s and section_id %s",
-                self.canvas_course_id,
-                self.section_id
-            )
-            raise
-
         univ_ids = []
+        canvas_enrollments = canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
         for enrollment in canvas_enrollments:
             try:
                 univ_ids.append(enrollment['user']['sis_user_id'])
@@ -201,8 +184,7 @@ class MailingList(models.Model):
         self.save()
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
-        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID
-                         % self.canvas_course_id)
+        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
 
         # Return the listserv members count
         return len(listserv_emails) + len(members_to_add) - len(members_to_delete)

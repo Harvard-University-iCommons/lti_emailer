@@ -47,7 +47,6 @@ INSTALLED_APPS = (
     'djangular',
     'lti_emailer',
     'mailing_list',
-    'gunicorn',
     'huey.djhuey'
 )
 
@@ -120,7 +119,7 @@ DATABASES = {
         'USER': SECURE_SETTINGS.get('db_termtool_user'),
         'PASSWORD': SECURE_SETTINGS.get('db_termtool_password'),
         'HOST': SECURE_SETTINGS.get('db_termtool_host'),
-        'PORT': SECURE_SETTINGS.get('db_termtool_port'),
+        'PORT': str(SECURE_SETTINGS.get('db_termtool_port')),
         'OPTIONS': {
             'threaded': True,
         },
@@ -202,8 +201,10 @@ LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
-LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab',
-                                                     {'minute': '0'})
+LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab', {'minute': '0'})
+
+CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
+CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID = "canvas_enrollments_by_canvas_section_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
@@ -239,7 +240,7 @@ LOGGING = {
         'logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': 'app.log',
+            'filename': '/var/opt/tlt/logs/lti_emailer.log',
             'formatter': 'verbose',
         },
         'console': {
@@ -257,7 +258,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
+            'handlers': ['console', 'logfile'],
             'level': 'INFO',
             'propagate': True,
         },
