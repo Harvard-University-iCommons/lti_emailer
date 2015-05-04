@@ -17,11 +17,6 @@
     {% include 'django_auth_lti/resource_link_id.html' %}
     <script src="{% static 'mailing_list/js/app.js' %}"></script>
     {% block js %}{% endblock js %}
-    <script>
-        window.globals = {
-            RESOURCE_LINK_ID: '{{ resource_link_id }}'
-        };
-    </script>
     <title>Course Emailer</title>
 </head>
 {% block body %}{% endblock body %}

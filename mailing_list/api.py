@@ -56,7 +56,7 @@ def lists(request):
             const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER
         ]):
             # Learners should only see lists which they can post to, so filter the mailing lists
-            canvas_user_id = int(request.session['LTI_LAUNCH']['custom_canvas_user_id'])
+            canvas_user_id = int(request.LTI.get('custom_canvas_user_id'))
             mailing_lists = _filter_mailing_lists_for_user(canvas_user_id, mailing_lists)
     except Exception:
         message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
