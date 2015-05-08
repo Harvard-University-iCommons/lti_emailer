@@ -10,7 +10,6 @@ from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
 from django_auth_lti.verification import has_lti_roles
 
-from icommons_common.decorators import validate_resource_link_id
 from icommons_common.view_utils import create_json_200_response, create_json_500_response
 
 from lti_emailer import canvas_api_client
@@ -34,18 +33,16 @@ def _filter_mailing_lists_for_user(canvas_user_id, mailing_lists):
 
 @login_required
 @require_http_methods(['GET'])
-@validate_resource_link_id
-def lists(request, resource_link_id):
+def lists(request):
     """
     Gets the list of mailing lists for the course in the current session context
 
     :param request:
-    :param resource_link_id:
     :return: JSON response containing the mailing lists for the course in this session context
     """
     try:
-        canvas_course_id = request.session['LTI_LAUNCH']['custom_canvas_course_id']
-        logged_in_user_id = request.session['LTI_LAUNCH']['lis_person_sourcedid']
+        canvas_course_id = request.LTI['custom_canvas_course_id']
+        logged_in_user_id = request.LTI['lis_person_sourcedid']
 
         mailing_lists = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(
             canvas_course_id,
@@ -59,10 +56,10 @@ def lists(request, resource_link_id):
             const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER
         ]):
             # Learners should only see lists which they can post to, so filter the mailing lists
-            canvas_user_id = int(request.session['LTI_LAUNCH']['custom_canvas_user_id'])
+            canvas_user_id = int(request.LTI.get('custom_canvas_user_id'))
             mailing_lists = _filter_mailing_lists_for_user(canvas_user_id, mailing_lists)
     except Exception:
-        message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.session['LTI_LAUNCH'])
+        message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
         logger.exception(message)
         return create_json_500_response(message)
 
@@ -72,18 +69,16 @@ def lists(request, resource_link_id):
 @login_required
 @lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
 @require_http_methods(['PUT'])
-@validate_resource_link_id
-def set_access_level(request, mailing_list_id, resource_link_id):
+def set_access_level(request, mailing_list_id):
     """
     Sets the access_level for the given mailing_list on the listserv service
 
     :param request:
     :param mailing_list_id:
-    :param resource_link_id:
     :return: JSON response containing the updated mailing list data
     """
     try:
-        logged_in_user_id = request.session['LTI_LAUNCH']['lis_person_sourcedid']
+        logged_in_user_id = request.LTI['lis_person_sourcedid']
         access_level = json.loads(request.body)['access_level']
 
         mailing_list = MailingList.objects.get(id=mailing_list_id)
@@ -97,10 +92,7 @@ def set_access_level(request, mailing_list_id, resource_link_id):
             'access_level': access_level
         }
     except Exception:
-        message = "Failed to activate MailingList %s with LTI params %s" % (
-            mailing_list_id,
-            json.dumps(request.session['LTI_LAUNCH'])
-        )
+        message = "Failed to activate MailingList %s with LTI params %s" % (mailing_list_id, json.dumps(request.LTI))
         logger.exception(message)
         return create_json_500_response(message)
 

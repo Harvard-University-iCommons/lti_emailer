@@ -3,11 +3,21 @@
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.interceptors.push(function(){
+            return {
+                'request': function(config){
+                    // window.globals.append_resource_link_id function added by
+                    // django_auth_lti/js/resource_link_id.js
+                    config.url = window.globals.append_resource_link_id(config.url);
+                    return config;
+                }
+            };
+        });
     });
 
     app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
         var ml = this;
-        var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists', [window.globals.RESOURCE_LINK_ID]);
+        var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
 
         ml.isLoading = true;
         ml.isUpdating = false;
@@ -48,7 +58,7 @@
 
         ml.updateAccessLevel = function(list) {
             list.isUpdating = true;
-            var url = $djangoUrl.reverse('mailing_list:api_lists_set_access_level', [list.id, window.globals.RESOURCE_LINK_ID]);
+            var url = $djangoUrl.reverse('mailing_list:api_lists_set_access_level', [list.id]);
             $http.put(url, {access_level: list.access_level}).success(function(data){
                 list.isUpdating = false;
                 list.updated = true;

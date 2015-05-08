@@ -64,4 +64,4 @@ def lti_launch(request):
     else:
         view += ":learner_index"
 
-    return redirect(view, request.POST['resource_link_id'])
+    return redirect(view)
