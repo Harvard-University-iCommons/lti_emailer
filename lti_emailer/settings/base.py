@@ -102,7 +102,7 @@ DATABASE_APPS_MAPPING = {
 
 DATABASE_MIGRATION_WHITELIST = ['default']
 
-DATABASE_ROUTERS = ['lti_emailer.routers.DatabaseAppsRouter']
+DATABASE_ROUTERS = ['icommons_common.routers.DatabaseAppsRouter']
 
 DATABASES = {
     'default': {
