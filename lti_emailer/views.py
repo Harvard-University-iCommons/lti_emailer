@@ -26,7 +26,7 @@ def lti_auth_error(request):
 @require_http_methods(['GET'])
 def tool_config(request):
     env = settings.ENV_NAME if hasattr(settings, 'ENV_NAME') else ''
-    url = "%s://%s%s" % (request.scheme, request.get_host(), reverse('lti_launch'))
+    url = "%s://%s%s" % (request.scheme, request.get_host(), reverse('lti_launch', exclude_resource_link_id=True))
     lti_tool_config = ToolConfig(
         title="Course Emailer %s" % env,
         launch_url=url,
