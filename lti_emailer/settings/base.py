@@ -92,17 +92,7 @@ WSGI_APPLICATION = 'lti_emailer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASE_APPS_MAPPING = {
-    'icommons_common': 'termtool',
-    'auth': 'default',
-    'contenttypes': 'default',
-    'sessions': 'default',
-    'mailing_list': 'default'
-}
-
-DATABASE_MIGRATION_WHITELIST = ['default']
-
-DATABASE_ROUTERS = ['icommons_common.routers.DatabaseAppsRouter']
+DATABASE_ROUTERS = ['icommons_common.routers.CourseSchemaDatabaseRouter']
 
 DATABASES = {
     'default': {
@@ -127,6 +117,8 @@ DATABASES = {
     }
 }
 
+COURSE_SCHEMA_DB_NAME = 'termtool'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -145,7 +137,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-STATIC_URL = '/lti_emailer/static/'
+STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'http_static'))
 
@@ -240,7 +232,7 @@ LOGGING = {
         'logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': '/var/opt/tlt/logs/lti_emailer.log',
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
             'formatter': 'verbose',
         },
         'console': {
@@ -248,13 +240,6 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'request': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
-            'formatter': 'verbose',
-        },
-
     },
     'loggers': {
         '': {
@@ -263,7 +248,7 @@ LOGGING = {
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['request'],
+            'handlers': ['logfile'],
             'level': 'DEBUG',
             'propagate': False,
         },
