@@ -201,10 +201,12 @@ CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
     'backend': 'huey.backends.redis_backend',
-    'connection': {'host': REDIS_HOST, 'port': REDIS_PORT},
+    'connection': {'host': REDIS_HOST, 'port': int(REDIS_PORT)},  # huey needs port to be an int
     'consumer_options': {'workers': 4},  # probably needs tweaking
     'name': 'mailing list management',
 }
+
+_DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', 'DEBUG')
 
 LOGGING = {
     'version': 1,
@@ -217,10 +219,14 @@ LOGGING = {
             'format': '%(levelname)s %(module)s %(message)s'
         }
     },
+    # Borrowing some default filters for app loggers
     'filters': {
         'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'handlers': {
         'mail_admins': {
@@ -229,33 +235,49 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler',
         },
         # Log to a text file that can be rotated by logrotate
-        'logfile': {
-            'level': 'DEBUG',
+        'app_logfile': {
+            'level': _DEFAULT_LOG_LEVEL,
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'django-lti_emailer.log'),
+            'formatter': 'verbose',
+        },
+        'huey_logfile': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'huey-lti_emailer.log'),
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': _DEFAULT_LOG_LEVEL,
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+            'filters': ['require_debug_true'],
         },
     },
     'loggers': {
+        # TODO: remove this catch-all handler in favor of app-specific handlers
         '': {
-            'handlers': ['console', 'logfile'],
-            'level': 'INFO',
+            'handlers': ['console', 'app_logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['logfile'],
-            'level': 'DEBUG',
+            'handlers': ['app_logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': _DEFAULT_LOG_LEVEL,
             'propagate': True,
         },
+        'huey': {
+            'handlers': ['huey_logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
+        },
+        'mailing_list': {
+            'handlers': ['console', 'app_logfile'],
+            'level': _DEFAULT_LOG_LEVEL,
+        }
     }
 }
