@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_auth_lti',
     'icommons_common',
     'icommons_ui',
     'djangular',
@@ -55,7 +56,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'cached_auth.Middleware',
-    'django_auth_lti.middleware.LTIAuthMiddleware',
+    'django_auth_lti.middleware_patched.MultiLTILaunchAuthMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -91,17 +92,7 @@ WSGI_APPLICATION = 'lti_emailer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASE_APPS_MAPPING = {
-    'icommons_common': 'termtool',
-    'auth': 'default',
-    'contenttypes': 'default',
-    'sessions': 'default',
-    'mailing_list': 'default'
-}
-
-DATABASE_MIGRATION_WHITELIST = ['default']
-
-DATABASE_ROUTERS = ['lti_emailer.routers.DatabaseAppsRouter']
+DATABASE_ROUTERS = ['icommons_common.routers.CourseSchemaDatabaseRouter']
 
 DATABASES = {
     'default': {
@@ -126,6 +117,8 @@ DATABASES = {
     }
 }
 
+COURSE_SCHEMA_DB_NAME = 'termtool'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -144,7 +137,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-STATIC_URL = '/lti_emailer/static/'
+STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'http_static'))
 
@@ -236,11 +229,16 @@ LOGGING = {
         },
     },
     'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
         # Log to a text file that can be rotated by logrotate
         'app_logfile': {
             'level': _DEFAULT_LOG_LEVEL,
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'lti_emailer.log'),
+            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'django-lti_emailer.log'),
             'formatter': 'verbose',
         },
         'huey_logfile': {
@@ -255,13 +253,9 @@ LOGGING = {
             'formatter': 'simple',
             'filters': ['require_debug_true'],
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
-        },
     },
     'loggers': {
+        # TODO: remove this catch-all handler in favor of app-specific handlers
         '': {
             'handlers': ['console', 'app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
@@ -270,6 +264,8 @@ LOGGING = {
         'django.request': {
             'handlers': ['app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['logfile'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         'django': {
