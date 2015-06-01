@@ -208,7 +208,7 @@ CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
     'backend': 'huey.backends.redis_backend',
-    'connection': {'host': REDIS_HOST, 'port': REDIS_PORT},
+    'connection': {'host': REDIS_HOST, 'port': int(REDIS_PORT)},  # huey needs port to be an int
     'consumer_options': {'workers': 4},  # probably needs tweaking
     'name': 'mailing list management',
 }
