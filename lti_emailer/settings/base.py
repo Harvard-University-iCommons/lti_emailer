@@ -151,20 +151,16 @@ CACHES = {
         'OPTIONS': {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
-        'TIMEOUT': 60 * 20  # 20 minutes
+        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
+        'TIMEOUT': 60 * 20,  # 20 minutes
     },
 }
-
-# Provide a unique value for sharing cache among Django projects
-KEY_PREFIX = 'lti_emailer'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# Django defaults to False (as of 1.7)
-SESSION_COOKIE_SECURE = SECURE_SETTINGS.get('use_secure_cookies', False)
-
+# AWS/Prod environments are behind ssl - this can be set to False for local envs
+SESSION_COOKIE_SECURE = True
 LTI_OAUTH_CREDENTIALS = SECURE_SETTINGS.get('lti_oauth_credentials', None)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
