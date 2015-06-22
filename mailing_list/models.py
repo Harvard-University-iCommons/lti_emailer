@@ -10,7 +10,7 @@ from django.core.cache import cache
 from icommons_common.models import Person
 
 from lti_emailer import canvas_api_client
-from .listserv_clients.mailgun import MailgunClient as ListservClient
+from mailgun.listserv_client import MailgunClient as ListservClient
 
 
 logger = logging.getLogger(__name__)

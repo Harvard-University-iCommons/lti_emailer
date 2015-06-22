@@ -6,7 +6,7 @@ from django.conf import settings
 
 from icommons_common.utils import grouper, ApiRequestTimer
 
-from .exceptions import ListservApiError
+from lti_emailer.exceptions import ListservApiError
 
 
 logger = logging.getLogger(__name__)

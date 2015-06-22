@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     'djangular',
     'lti_emailer',
     'mailing_list',
+    'mailgun',
     'huey.djhuey'
 )
 
