@@ -8,5 +8,5 @@
 oauthlib
 requests-oauthlib
 
-git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-ui.git@v0.9.4#egg=django-icommons-ui
-git+ssh://git@github.com/Harvard-University-iCommons/django-auth-lti.git@v1.2.0#egg=django-auth-lti
+git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-ui.git@master#egg=django-icommons-ui
+git+ssh://git@github.com/Harvard-University-iCommons/django-auth-lti.git@master#egg=django-auth-lti
