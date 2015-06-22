@@ -19,7 +19,6 @@ def handle_mailing_list_email_route(request):
     :param request:
     :return:
     """
-    email = json.loads(request.body)
-    logger.info("Handling Mailgun mailing list email action:\n%s", json.dumps(email, indent=4))
+    logger.info("Handling Mailgun mailing list email action:\n%s", json.dumps(request.POST.dict(), indent=4))
 
     return create_json_200_response({'success': True})
