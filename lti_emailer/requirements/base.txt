@@ -10,6 +10,3 @@ django-cached-authentication-middleware>=0.2.0
 django-angular==0.7.13
 dj-static==0.0.6
 huey
-
-git+ssh://git@github.com/penzance/canvas_python_sdk.git@v0.7.6#egg=canvas-python-sdk
-git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git@v1.9.6#egg=django-icommons-common
