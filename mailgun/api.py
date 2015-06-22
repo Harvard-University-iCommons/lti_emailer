@@ -1,6 +1,7 @@
 import logging
 import json
 
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from icommons_common.view_utils import create_json_200_response
@@ -9,6 +10,7 @@ from icommons_common.view_utils import create_json_200_response
 logger = logging.getLogger(__name__)
 
 
+@csrf_exempt
 @require_http_methods(['POST'])
 def handle_mailing_list_email_route(request):
     """
