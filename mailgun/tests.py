@@ -6,9 +6,9 @@ from mock import patch
 
 from icommons_common.utils import Bunch
 
-from .exceptions import ListservApiError
-from .mailgun import MailgunClient as ListservClient
+from lti_emailer.exceptions import ListservApiError
 from mailing_list.models import MailingList
+from .listserv_client import MailgunClient as ListservClient
 
 
 class ListservClientTests(TestCase):

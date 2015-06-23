@@ -12,7 +12,7 @@ from huey.djhuey import crontab, db_task, db_periodic_task
 from canvas_sdk.exceptions import CanvasAPIError
 
 from mailing_list.models import MailingList
-from mailing_list.listserv_clients.exceptions import ListservApiError
+from lti_emailer.exceptions import ListservApiError
 
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,7 @@ def periodic_sync_listserv():
 def course_sync_listserv(course_ids):
     filter_kwargs = {}
     if course_ids:
-        if (not isinstance(course_ids, collections.Iterable)
-                or isinstance(course_ids, basestring)):
+        if not isinstance(course_ids, collections.Iterable) or isinstance(course_ids, basestring):
             course_ids = [course_ids]
         filter_kwargs['canvas_course_id__in'] = course_ids
 
@@ -48,8 +47,7 @@ def course_sync_listserv(course_ids):
             mailing_list.sync_listserv_membership()
         except (CanvasAPIError, ListservApiError):
             failure_course_ids.append(mailing_list.canvas_course_id)
-            logger.exception('Unable to sync canvas course id {}'.format(
-                                 mailing_list.canvas_course_id))
+            logger.exception('Unable to sync canvas course id {}'.format(mailing_list.canvas_course_id))
         else:
             success_course_ids.append(mailing_list.canvas_course_id)
 
