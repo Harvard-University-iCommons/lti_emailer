@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from django.core.urlresolvers import reverse_lazy
 
 
-def authenticate(redirect_url=reverse_lazy('mailgun:auth_error'), raise_exception=False):
+def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
     def decorator(view_func):
         @wraps(view_func, assigned=available_attrs(view_func))
         def _wrapped_view(request, *args, **kwargs):
