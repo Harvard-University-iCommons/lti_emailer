@@ -19,14 +19,6 @@ class MailgunClient(object):
     """
 
     @property
-    def domain(self):
-        return settings.LISTSERV_DOMAIN
-
-    @property
-    def api_url(self):
-        return "%slists" % settings.LISTSERV_API_URL
-
-    @property
     def api_user(self):
         return settings.LISTSERV_API_USER
 
@@ -42,7 +34,7 @@ class MailgunClient(object):
         :return: The listserv mailing list data dict.
         """
         address = mailing_list.address
-        api_url = "%s/%s" % (self.api_url, address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, address)
 
         with ApiRequestTimer(logger, 'GET', api_url) as timer:
             response = requests.get(api_url, auth=(self.api_user, self.api_key))
@@ -50,7 +42,7 @@ class MailgunClient(object):
 
         if response.status_code not in (200, 404):
             logger.error(response.text)
-            raise ListservApiError("Failed to get mailing lists from %s" % self.api_url)
+            raise ListservApiError("Failed to get mailing lists from %s" % api_url)
 
         return response.json().get('list')
 
@@ -63,13 +55,14 @@ class MailgunClient(object):
         :return:
         """
         address = mailing_list.address
+        api_url = "%slists" % settings.LISTSERV_API_URL
         payload = {
             'address': address,
             'access_level': access_level
         }
 
-        with ApiRequestTimer(logger, 'POST', self.api_url, payload) as timer:
-            response = requests.post(self.api_url, auth=(self.api_user, self.api_key), data=payload)
+        with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
+            response = requests.post(api_url, auth=(self.api_user, self.api_key), data=payload)
             timer.status_code = response.status_code
 
         if response.status_code != 200:
@@ -85,7 +78,7 @@ class MailgunClient(object):
         :return:
         """
         address = mailing_list.address
-        api_url = "%s/%s" % (self.api_url, address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, address)
 
         with ApiRequestTimer(logger, 'DELETE', api_url) as timer:
             response = requests.delete(api_url, auth=(self.api_user, self.api_key))
@@ -104,7 +97,7 @@ class MailgunClient(object):
         :return:
         """
         address = mailing_list.address
-        api_url = "%s/%s" % (self.api_url, address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, address)
         payload = {
             'access_level': access_level
         }
@@ -126,7 +119,7 @@ class MailgunClient(object):
         :return: The list of members
         """
         address = mailing_list.address
-        api_url = "%s/%s/members" % (self.api_url, mailing_list.address)
+        api_url = "%slists/%s/members" % (settings.LISTSERV_API_URL, mailing_list.address)
 
         # Mailgun limits the number of members returned to 100 per API call, so
         # we need to retrieve the members in batches of 100
@@ -163,7 +156,7 @@ class MailgunClient(object):
         :return:
         """
         address = mailing_list.address
-        api_url = "%s/%s/members.json" % (self.api_url, address)
+        api_url = "%slists/%s/members.json" % (settings.LISTSERV_API_URL, address)
 
         # Mailgun limits the number of members which can be added in a single API POST to 1000, so
         # we have to add members in batches of 1000
@@ -195,7 +188,7 @@ class MailgunClient(object):
         :return:
         """
         address = mailing_list.address
-        api_url = "%s/%s/members" % (self.api_url, address)
+        api_url = "%slists/%s/members" % (settings.LISTSERV_API_URL, address)
 
         for index, email in enumerate(emails):
             url = "%s/%s" % (api_url, email)
@@ -212,3 +205,22 @@ class MailgunClient(object):
                     index,
                     len(emails)
                 ))
+
+    def send_mail(self, from_address, to_address, subject='', text='', html=''):
+        api_url = "%s%s/messages" % (settings.LISTSERV_API_URL, settings.LISTSERV_DOMAIN)
+        payload = {
+            'from': from_address,
+            'to': to_address,
+            'subject': subject,
+            'text': text,
+            'html': html
+        }
+
+        with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
+            response = requests.post(api_url, auth=(self.api_user, self.api_key), data=payload)
+            timer.status_code = response.status_code
+
+        if response.status_code != 200:
+            message = "Failed to POST email to Mailgun from %s to %s" % (from_address, to_address)
+            logger.error(message)
+            raise ListservApiError(message)

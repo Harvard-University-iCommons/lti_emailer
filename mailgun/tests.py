@@ -33,7 +33,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_get.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, mailing_list.address)
         auth = (listserv_client.api_user, listserv_client.api_key)
 
         result = listserv_client.get_list(mailing_list)
@@ -50,7 +50,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_get.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, mailing_list.address)
         auth = (listserv_client.api_user, listserv_client.api_key)
 
         result = listserv_client.get_list(mailing_list)
@@ -79,7 +79,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_post.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = listserv_client.api_url
+        api_url = "%slists" % settings.LISTSERV_API_URL
         auth = (listserv_client.api_user, listserv_client.api_key)
         payload = {
             'address': mailing_list.address,
@@ -111,7 +111,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_delete.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, mailing_list.address)
         auth = (listserv_client.api_user, listserv_client.api_key)
 
         result = listserv_client.delete_list(mailing_list)
@@ -139,7 +139,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_put.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s" % (listserv_client.api_url, mailing_list.address)
+        api_url = "%slists/%s" % (settings.LISTSERV_API_URL, mailing_list.address)
         auth = (listserv_client.api_user, listserv_client.api_key)
         payload = {
             'access_level': 'members'
@@ -171,7 +171,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_get.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s/members?limit=100&skip=0" % (listserv_client.api_url, mailing_list.address)
+        api_url = "%slists/%s/members?limit=100&skip=0" % (settings.LISTSERV_API_URL, mailing_list.address)
         auth = (listserv_client.api_user, listserv_client.api_key)
 
         result = listserv_client.members(mailing_list)
@@ -200,7 +200,7 @@ class ListservClientTests(TestCase):
         )
         mock_requests_post.return_value = response
         mailing_list = MailingList.objects.get(id=1)
-        api_url = "%s/%s/members.json" % (listserv_client.api_url, mailing_list.address)
+        api_url = "%slists/%s/members.json" % (settings.LISTSERV_API_URL, mailing_list.address)
         auth = (listserv_client.api_user, listserv_client.api_key)
         emails = ['douglas_hall@harvard.edu', 'david_bonner@harvard.edu']
         payload = {
@@ -235,7 +235,7 @@ class ListservClientTests(TestCase):
         mock_requests_delete.return_value = response
         mailing_list = MailingList.objects.get(id=1)
         emails = ['douglas_hall@harvard.edu']
-        api_url = "%s/%s/members/%s" % (listserv_client.api_url, mailing_list.address, emails[0])
+        api_url = "%slists/%s/members/%s" % (settings.LISTSERV_API_URL, mailing_list.address, emails[0])
         auth = (listserv_client.api_user, listserv_client.api_key)
 
         listserv_client.delete_members(mailing_list, emails)
