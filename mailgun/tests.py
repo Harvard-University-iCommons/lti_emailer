@@ -1,14 +1,16 @@
 import json
 
 from django.test import TestCase
+from django.core.urlresolvers import reverse_lazy
 
-from mock import patch
+from mock import patch, MagicMock
 
 from icommons_common.utils import Bunch
 
 from lti_emailer.exceptions import ListservApiError
 from mailing_list.models import MailingList
 from .listserv_client import MailgunClient as ListservClient
+from .decorators import authenticate
 
 
 class ListservClientTests(TestCase):
@@ -248,3 +250,78 @@ class ListservClientTests(TestCase):
 
         with self.assertRaises(ListservApiError):
             listserv_client.delete_members(mailing_list, emails)
+
+
+class DecoratorTests(TestCase):
+    longMessage = True
+
+    def setUp(self):
+        self.POST = {
+            'timestamp': '1434993074',
+            'token': 'bf1cbbf956c42ae17ee16f3c2c0bd64c06c88d091af37be127',
+            'signature': 'b3f06ae8c6537212580dd674828a5c916e1be9bd7ecbf9b73a2879a69e8408b4'
+        }
+
+    def test_authenticate_success(self):
+        request = Bunch(
+            POST=self.POST
+        )
+        view = MagicMock(return_value='fake response')
+        decorated = authenticate()(view)
+        response = decorated(request)
+        view.assert_called_with(request)
+
+    @patch('mailgun.decorators.redirect')
+    def _test_authenticate_failure(self, request_post, mock_redirect):
+        request = Bunch(
+            POST=request_post
+        )
+        view = MagicMock(return_value='fake response')
+        decorated = authenticate()(view)
+        response = decorated(request)
+        mock_redirect.assert_called_with(reverse_lazy('mailgun:auth_error'))
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_missing_timestamp(self, mock_redirect):
+        self._test_authenticate_failure({
+            'token': self.POST['token'],
+            'signature': self.POST['signature']
+        })
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_missing_token(self, mock_redirect):
+        self._test_authenticate_failure({
+            'timestamp': self.POST['timestamp'],
+            'signature': self.POST['signature']
+        })
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_missing_signature(self, mock_redirect):
+        self._test_authenticate_failure({
+            'timestamp': self.POST['timestamp'],
+            'token': self.POST['token']
+        })
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_bad_timestamp(self, mock_redirect):
+        self._test_authenticate_failure({
+            'timestamp': '0',
+            'token': self.POST['token'],
+            'signature': self.POST['signature']
+        })
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_bad_token(self, mock_redirect):
+        self._test_authenticate_failure({
+            'timestamp': self.POST['timestamp'],
+            'token': 'FFFF',
+            'signature': self.POST['signature']
+        })
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_bad_signature(self, mock_redirect):
+        self._test_authenticate_failure({
+            'timestamp': self.POST['timestamp'],
+            'token': self.POST['token'],
+            'signature': 'FFFF'
+        })
