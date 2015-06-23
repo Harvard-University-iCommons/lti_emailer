@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
-# @authenticate()
+@authenticate()
 @require_http_methods(['POST'])
 def handle_mailing_list_email_route(request):
     """
