@@ -1,5 +1,10 @@
 import json
+import hashlib
+import hmac
+import time
+import uuid
 
+from django.conf import settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse_lazy
 
@@ -256,10 +261,17 @@ class DecoratorTests(TestCase):
     longMessage = True
 
     def setUp(self):
+        timestamp = str(time.time())
+        token = str(uuid.uuid4())
+        signature = hmac.new(
+            key=settings.LISTSERV_API_KEY,
+            msg='{}{}'.format(timestamp, token),
+            digestmod=hashlib.sha256
+        ).hexdigest()
         self.POST = {
-            'timestamp': '1434993074',
-            'token': 'bf1cbbf956c42ae17ee16f3c2c0bd64c06c88d091af37be127',
-            'signature': 'b3f06ae8c6537212580dd674828a5c916e1be9bd7ecbf9b73a2879a69e8408b4'
+            'timestamp': timestamp,
+            'token': token,
+            'signature': signature
         }
 
     def test_authenticate_success(self):
@@ -284,6 +296,15 @@ class DecoratorTests(TestCase):
     @patch('mailgun.decorators.redirect')
     def test_authenticate_missing_timestamp(self, mock_redirect):
         self._test_authenticate_failure({
+            'token': self.POST['token'],
+            'signature': self.POST['signature']
+        })
+
+    @patch('mailgun.decorators.redirect')
+    def test_authenticate_stale_timestamp(self, mock_redirect):
+        timestamp = str(time.time() - 2 * settings.MAILGUN_CALLBACK_TIMEOUT)
+        self._test_authenticate_failure({
+            'timestamp': timestamp,
             'token': self.POST['token'],
             'signature': self.POST['signature']
         })
