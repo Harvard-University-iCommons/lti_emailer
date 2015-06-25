@@ -26,6 +26,14 @@ class MailingListManager(models.Manager):
     def _get_mailing_lists_by_section_id(self, canvas_course_id):
         return {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
 
+    def get_mailing_list_by_address(self, address):
+        try:
+            (_, canvas_course_id, section_id) = address.split('@')[0].split('-')
+        except (AttributeError, ValueError):
+            logger.error("Failed to parse address in get_mailing_list_by_address %s", address)
+            raise MailingList.DoesNotExist
+        return MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
+
     def get_or_create_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
         """
         Gets the mailing list data for all sections related to the given canvas_course_id.
@@ -137,6 +145,18 @@ class MailingList(models.Model):
             canvas_course_id=self.canvas_course_id,
             section_id=self.section_id
         )
+
+    @property
+    def access_level(self):
+        listserv_list = listserv_client.get_list(self)
+        return listserv_list['access_level']
+
+    @property
+    def members(self):
+        return listserv_client.members(self)
+
+    def send_mail(self, to_address, subject='', text='', html=''):
+        listserv_client.send_mail(self.address, to_address, subject, text, html)
 
     def update_access_level(self, access_level):
         """
