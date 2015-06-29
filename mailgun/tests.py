@@ -5,6 +5,7 @@ import time
 import uuid
 
 from django.conf import settings
+from django.test.utils import override_settings
 from django.test import TestCase
 from django.core.urlresolvers import reverse_lazy
 
@@ -257,6 +258,7 @@ class ListservClientTests(TestCase):
             listserv_client.delete_members(mailing_list, emails)
 
 
+@override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
 class DecoratorTests(TestCase):
     longMessage = True
 
