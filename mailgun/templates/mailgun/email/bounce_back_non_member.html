@@ -4,6 +4,15 @@
         <meta name="viewport" content="width=device-width">
     </head>
     <body>
-        Your email to {{ mailing_list_address }} was not sent because you are not a member of this mailing list.
+        <h4>***Your message could not be delivered to mailing list {{ recipient }}.***</h4>
+        <p>
+            You have insufficient permissions to post to this list. Please contact the teaching staff of this course if
+            you think this was in error.
+        </p>
+        <p>------------------------------</p>
+        <p><b>From:</b> {{ sender }}</p>
+        <p><b>To:</b> {{ recipient }}</p>
+        <p><b>Subject:</b> {{ subject }}</p>
+        <p>{{ message_body }}</p>
     </body>
 </html>
