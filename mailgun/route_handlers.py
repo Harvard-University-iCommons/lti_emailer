@@ -31,6 +31,8 @@ def handle_mailing_list_email_route(request):
     """
     sender = request.POST.get('sender')
     recipient = request.POST.get('recipient')
+    subject = request.POST.get('subject')
+    message_body = request.POST.get('body-plain')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
@@ -57,8 +59,13 @@ def handle_mailing_list_email_route(request):
         bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
 
     if bounce_back_email_template:
-        content = bounce_back_email_template.render(Context({'mailing_list_address': recipient}))
-        subject = "Undeliverable mail sent to %s" % recipient
+        content = bounce_back_email_template.render(Context({
+            'sender': sender,
+            'recipient': recipient,
+            'subject': subject,
+            'message_body': message_body
+        }))
+        subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
 
     return JsonResponse({'success': True})
