@@ -67,5 +67,11 @@
                 }, 2000);
             });
         };
+
+        ml.listMembersUrl = function(list) {
+            return window.globals.append_resource_link_id(
+                       $djangoUrl.reverse('mailing_list:list_members',
+                                          [list.id]));
+        };
     }]);
 })();
