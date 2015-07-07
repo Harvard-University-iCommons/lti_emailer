@@ -23,6 +23,11 @@
             <span class="studentRole">{{enrollee.role|get_enroll_type_display}}</span>
             <span class="studentName">{{enrollee.user.name}}</span> 
             <span class="label label-{{enrollee.badge_label_name|lower}}">{{enrollee.badge_label_name|upper}}</span>
+            <span>
+              <a href="mailto:{{ enrollee.email_address }}">
+                {{ enrollee.email_address }}
+              </a>
+            </span>
         </li>
     {% endfor %}
 {% endfor %}

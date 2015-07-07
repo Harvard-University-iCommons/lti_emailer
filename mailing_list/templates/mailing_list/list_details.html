@@ -10,7 +10,7 @@
   <header>
     <h1>
       {% block breadcrumbs %}
-        Course Emailer &gt; Section {{ section_id }} Members
+      Course Emailer &gt; {{ section.name | default:section.id }} Members
       {% endblock breadcrumbs %}
     </h1>
   </header>
