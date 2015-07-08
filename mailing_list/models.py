@@ -133,7 +133,7 @@ class MailingList(models.Model):
                 logger.debug(
                     "Found canvas enrollment with missing sis_user_id %s",
                     json.dumps(enrollment, indent=4))
-        return list(Person.objects.filter(univ_id__in=univ_ids))
+        return Person.objects.filter(univ_id__in=univ_ids)
 
     def _get_enrolled_email_set(self):
         return {p.email_address for p in self._get_enrolled_persons()}
