@@ -194,7 +194,6 @@ LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_cro
 
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
-CACHE_KEY_CANVAS_SECTION_BY_ID = "canvas_section_by_id-%s"
 CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
 CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID = "canvas_enrollments_by_canvas_section_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
