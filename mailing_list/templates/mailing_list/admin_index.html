@@ -31,7 +31,7 @@
                             <span ng-show="list.access_level == 'readonly'">{{ list.address }}</span>
                             <a href="mailto:{{ list.address }}" ng-show="list.access_level != 'readonly'">{{ list.address }}</a>
                         </td>
-                        <td>{{ list.members_count }}</td>
+                        <td><a href="{{ ml.listMembersUrl(list) }}">{{ list.members_count }}</a></td>
                         {% endverbatim %}
                         <td>
                             <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
@@ -60,7 +60,7 @@
                         <td>
                             <a href="mailto:{{ list.address }}">{{ list.address }}</a>
                         </td>
-                        <td>{{ list.members_count }}</td>
+                        <td><a href="{{ ml.listMembersUrl(list) }}">{{ list.members_count }}</a></td>
                         {% endverbatim %}
                         <td>
                             <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>

@@ -122,16 +122,21 @@ class MailingList(models.Model):
     def _get_unsubscribed_email_set(self):
         return {x.email for x in self.unsubscribed_set.all()}
 
-    def _get_enrolled_email_set(self):
+    def _get_enrolled_persons(self):
         univ_ids = []
-        canvas_enrollments = canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
+        canvas_enrollments = canvas_api_client.get_enrollments(
+                                 self.canvas_course_id, self.section_id)
         for enrollment in canvas_enrollments:
             try:
                 univ_ids.append(enrollment['user']['sis_user_id'])
             except KeyError:
-                logger.debug("Found canvas enrollment with missing sis_user_id %s", json.dumps(enrollment, indent=4))
+                logger.debug(
+                    "Found canvas enrollment with missing sis_user_id %s",
+                    json.dumps(enrollment, indent=4))
+        return Person.objects.filter(univ_id__in=univ_ids)
 
-        return {p.email_address for p in Person.objects.filter(univ_id__in=univ_ids)}
+    def _get_enrolled_email_set(self):
+        return {p.email_address for p in self._get_enrolled_persons()}
 
     def _get_whitelist_email_set(self):
         return {x.email for x in EmailWhitelist.objects.all()}
@@ -154,6 +159,10 @@ class MailingList(models.Model):
     @property
     def members(self):
         return listserv_client.members(self)
+
+    def emails_by_user_id(self):
+        return {p.univ_id: p.email_address
+                    for p in self._get_enrolled_persons()}
 
     def send_mail(self, to_address, subject='', text='', html=''):
         listserv_client.send_mail(self.address, to_address, subject, text, html)

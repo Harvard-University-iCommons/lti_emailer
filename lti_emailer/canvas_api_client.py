@@ -21,6 +21,15 @@ logger = logging.getLogger(__name__)
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 
 
+def get_section(canvas_course_id, section_id):
+    sections = get_sections(canvas_course_id)
+    section_id = int(section_id)
+    for section in sections:
+        if section['id'] == section_id:
+            return section
+    return None
+
+
 def get_sections(canvas_course_id):
     cache_key = settings.CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID % canvas_course_id
     result = cache.get(cache_key)
@@ -30,9 +39,7 @@ def get_sections(canvas_course_id):
         except CanvasAPIError:
             logger.exception("Failed to get canvas sections for canvas_course_id %s", canvas_course_id)
             raise
-
         cache.set(cache_key, result)
-
     return result
 
 
@@ -50,7 +57,5 @@ def get_enrollments(canvas_course_id, section_id):
                 section_id
             )
             raise
-
         cache.set(cache_key, result)
-
     return result
