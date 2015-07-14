@@ -37,7 +37,6 @@ class Command(BaseCommand):
         logger.info("Creating Canvas user primary email report for term_id %d...", term_id)
 
         report_data = {}
-        found_user = None
         for ci in CourseInstance.objects.filter(term=term):
             if ci.canvas_course_id:
                 logger.info("Retrieving users for canvas_course_id %d", ci.canvas_course_id)
@@ -70,8 +69,6 @@ class Command(BaseCommand):
 
                 for p in Person.objects.filter(univ_id__in=users.keys()):
                     user = users[p.univ_id]
-                    if user['email'] == '50807843':
-                        found_user = user
                     if p.email_address != user['email']:
                         for role in user['roles']:
                             if role not in report_data:
