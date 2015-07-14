@@ -75,10 +75,11 @@ class Command(BaseCommand):
                                 report_data[role] = []
                             report_data[role].append([role, p.univ_id, user['email']])
 
-        with open(os.path.join(settings.REPORT_DIR, 'report_user_primary_email.csv'), 'wb') as f:
+        report_path = os.path.join(settings.REPORT_DIR, 'report_user_primary_email.csv')
+        with open(report_path, 'wb') as f:
             writer = csv.writer(f, dialect='excel')
             writer.writerow(['Role', 'SIS Email', 'Canvas Email'])
             for role, rows in report_data.iteritems():
                 writer.writerows(rows)
 
-        logger.info("User primary email report complete for term_id %d...", term_id)
+        logger.info("User primary email report complete for term_id %d at %s", term_id, report_path)
