@@ -185,6 +185,8 @@ ICOMMONS_COMMON = {
     },
 }
 
+REPORT_DIR = SECURE_SETTINGS.get('report_dir', BASE_DIR)
+
 LISTSERV_DOMAIN = SECURE_SETTINGS.get('listserv_domain')
 LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
