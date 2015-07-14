@@ -6,6 +6,7 @@ sqlnet.log
 *.pid
 *.pyc
 *.pot
+*.csv
 local_settings.py
 gunicorn.py
 .vagrant
