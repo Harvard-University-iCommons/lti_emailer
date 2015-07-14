@@ -80,3 +80,5 @@ class Command(BaseCommand):
             writer.writerow(['Role', 'SIS Email', 'Canvas Email'])
             for role, rows in report_data.iteritems():
                 writer.writerows(rows)
+
+        logger.info("User primary email report complete for term_id %d...", term_id)
