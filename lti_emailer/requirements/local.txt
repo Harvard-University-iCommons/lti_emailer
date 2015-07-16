@@ -15,3 +15,9 @@ git+ssh://git@github.com/penzance/canvas_python_sdk.git@develop#egg=canvas-pytho
 git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git@develop#egg=django-icommons-common
 git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-ui.git@develop#egg=django-icommons-ui
 git+ssh://git@github.com/Harvard-University-iCommons/django-auth-lti.git@develop#egg=django-auth-lti
+
+# icommons_common unit tests depend on ccsw, and ccsw depends on icommons_common.
+# until ccsw gets its own proper project, and we move the delete command out of
+# icommons_common and into ccsw, work around the circular dependency by calling
+# out the ccsw dependency here.
+git+ssh://git@github.com/Harvard-University-iCommons/django-canvas-course-site-wizard.git@develop#egg=django-canvas-course-site-wizard
