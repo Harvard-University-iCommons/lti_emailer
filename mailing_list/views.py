@@ -1,12 +1,12 @@
 import logging
 
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
-from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
+from django_auth_lti.decorators import lti_role_required
 
 from lti_emailer.canvas_api_client import get_enrollments, get_section
 from mailing_list.models import MailingList
@@ -16,24 +16,19 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT,
+                    const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
 @require_http_methods(['GET'])
 def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
-    logger.info("Rendering mailing_list admin_index view for user %s" % logged_in_user_id)
+    logger.info("Rendering mailing_list admin_index view for user %s"
+                % logged_in_user_id)
     return render(request, 'mailing_list/admin_index.html', {})
 
 
 @login_required
-@require_http_methods(['GET'])
-def learner_index(request):
-    logged_in_user_id = request.LTI['lis_person_sourcedid']
-    logger.info("Rendering mailing_list learner_index view for user %s" % logged_in_user_id)
-    return render(request, 'mailing_list/learner_index.html', {})
-
-
-@login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT,
+                    const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
 @require_http_methods(['GET'])
 def list_members(request, section_id):
     logged_in_user_id = request.LTI.get('lis_person_sourcedid')
