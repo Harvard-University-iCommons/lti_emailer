@@ -33,7 +33,7 @@ class Command(BaseCommand):
         try:
             term = Term.objects.get(term_id=term_id)
         except Term.DoesNotExist:
-            CommandError('Invalid term_id %d provided.' % term_id)
+            raise CommandError('Invalid term_id %d provided.' % term_id)
         logger.info("Creating Canvas user primary email report for term_id %d...", term_id)
 
         report_data = {}
