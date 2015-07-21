@@ -2,75 +2,62 @@
 
 {% load static %}
 
-
 {% block body %}
-<body class="lti-tool" role="application" ng-controller="MailingListController as ml">
-    <header>
-        <h1>{% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}</h1>
-    </header>
-    <div class="loading-indicator" ng-show="ml.isLoading">
-        <img src="{% static 'mailing_list/images/ajax-loader-large.gif' %}"/>
+<body class="lti-tool"
+      role="application"
+      ng-controller="MailingListController as ml">
+  <header>
+    <h1>
+      {% block breadcrumbs %}Course Mailing List{% endblock breadcrumbs %}
+    </h1>
+  </header>
+  <div class="loading-indicator" ng-show="ml.isLoading">
+    <img src="{% static 'images/ajax-loader-large.gif' %}"/>
+  </div>
+  <main class="ng-hide" ng-show="ml.loaded">
+    <div id="course-sections" ng-show="ml.hasPrimarySections()">
+      <div ng-repeat="list in ml.primarySectionLists">
+        {% verbatim %}
+        <p class="caption-primary" ng-show="$first">
+          <a href="{{ ml.listMembersUrl(list) }}">
+            View course members' email addresses</a>
+          ({{ list.members_count }} members)
+        </p>
+        <h3>
+          {{ ml.primarySectionLists[0].name }} mailing list address
+        </h3>
+        <p class="caption-secondary">
+          The mailing list address contains everyone in the course
+          independent of roles, enrollment status and credit status.
+        </p>
+        {% endverbatim %}
+        {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+      </div>
     </div>
-    <main class="ng-hide" ng-show="ml.loaded">
-        <div id="course-sections" ng-show="ml.hasPrimarySections()">
-            <h2>Course Sections</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Section Name</th>
-                        <th>Mailing List Address</th>
-                        <th>Number of Recipients</th>
-                        <th>Who can post to this list?</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr ng-repeat="list in ml.primarySectionLists">
-                        {% verbatim %}
-                        <td>{{ list.name }}</td>
-                        <td>
-                            <span ng-show="list.access_level == 'readonly'">{{ list.address }}</span>
-                            <a href="mailto:{{ list.address }}" ng-show="list.access_level != 'readonly'">{{ list.address }}</a>
-                        </td>
-                        <td><a href="{{ ml.listMembersUrl(list) }}">{{ list.members_count }}</a></td>
-                        {% endverbatim %}
-                        <td>
-                            <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
-                            <img src="{% static 'mailing_list/images/ajax-loader-small.gif' %}" ng-show="list.isUpdating"/>
-                            <span class="text-success feedback" ng-show="list.updated">&#10003;</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div id="course-sections" ng-show="!ml.hasPrimarySections()">
+      <p>
+        There was an error retrieving the class mailing list for this course.
+        Please contact your school's Canvas help liaisons for assistance.
+      </p>
+    </div>
+
+    <div ng-show="ml.hasOtherSections()">
+      <h3>
+        {% verbatim %}{{ ml.primarySectionLists[0].name }}{% endverbatim %}
+        sections mailing list addresses
+      </h3>
+      <p class="caption-secondary">
+        These sections are created from the
+        <a href="" target="_blank">Manage Sections</a> tool
+        of this course and any changes applied there
+        will be reflected within these lists.
+      </p>
+      <div id="course-sections">
+        <div ng-repeat="list in ml.otherSectionLists" class="content-section">
+          {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
         </div>
-        <div id="other-sections" ng-show="ml.hasOtherSections()">
-            <h2>Other Sections</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Section Name</th>
-                        <th>Mailing List Address</th>
-                        <th>Number of Recipients</th>
-                        <th>Who can post to this list?</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr ng-repeat="list in ml.otherSectionLists">
-                        {% verbatim %}
-                        <td>{{ list.name }}</td>
-                        <td>
-                            <a href="mailto:{{ list.address }}">{{ list.address }}</a>
-                        </td>
-                        <td><a href="{{ ml.listMembersUrl(list) }}">{{ list.members_count }}</a></td>
-                        {% endverbatim %}
-                        <td>
-                            <select ng-model="list.access_level" ng-options="l.id as l.name for l in ml.accessLevels" ng-change="ml.updateAccessLevel(list)"></select>
-                            <img src="{% static 'mailing_list/images/ajax-loader-small.gif' %}" ng-show="list.isUpdating"/>
-                            <span class="text-success feedback" ng-show="list.updated">&#10003;</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
+      </div>
+    </div>
+  </main>
 </body>
 {% endblock body %}

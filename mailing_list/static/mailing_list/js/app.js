@@ -23,16 +23,29 @@
         ml.isUpdating = false;
         ml.primarySectionLists = [];
         ml.otherSectionLists = [];
+        ml.updatedAccessLevel = '';
         ml.accessLevels = [{
             id: 'members',
-            name: 'Course Enrollees'
+            name: 'Teaching Staff and Class List'
         },{
             id: 'everyone',
-            name: 'Anyone'
+            name: 'World Accessible'
         },{
             id: 'readonly',
-            name: 'No One'
+            name: 'Disabled'
         }];
+        ml.accessLevelStatusClass = {
+            members: 'Only class members can send emails ' +
+                     'to this mailing list address.',
+            everyone: 'Anyone with access to the list can email the class.',
+            readonly: 'This mailing list is disabled.'
+        };
+        ml.accessLevelStatusSection = {
+            members: 'Only section members can send emails ' +
+                     'to this mailing list address.',
+            everyone: 'Anyone with access to the list can email this section.',
+            readonly: 'This mailing list is disabled.'
+        };
 
         $http.get(URL_LISTS).success(function(data){
             ml.isLoading = false;
@@ -57,15 +70,27 @@
         };
 
         ml.updateAccessLevel = function(list) {
+            $('#permissions-modal-' + list.section_id).modal('hide');
             list.isUpdating = true;
-            var url = $djangoUrl.reverse('mailing_list:api_lists_set_access_level', [list.id]);
-            $http.put(url, {access_level: list.access_level}).success(function(data){
-                list.isUpdating = false;
-                list.updated = true;
-                $timeout(function(){
-                    list.updated = false;
-                }, 2000);
-            });
+            var url = $djangoUrl.reverse(
+                'mailing_list:api_lists_set_access_level',
+                [list.id]
+            );
+            $http.put(url, {access_level: ml.updatedAccessLevel})
+                .success(function(data){
+                    list.access_level = ml.updatedAccessLevel;
+                    list.isUpdating = false;
+                    list.updated = true;
+                    $timeout(function(){
+                        list.updated = false;
+                    }, 2000);
+                }).error(function(data){
+                    list.isUpdating = false;
+                    list.update_failed = true;
+                    $timeout(function(){
+                        list.update_failed = false;
+                    }, 2000);
+                });
         };
 
         ml.listMembersUrl = function(list) {
