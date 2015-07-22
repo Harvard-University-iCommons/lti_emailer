@@ -28,9 +28,11 @@ periodic task will run once per worker.
 
 After getting all your db connection stuff setup in the secure.py, access the 
 vagrant shell and bring up the postgres shell via `psql`. At the shell prompt:
+
     alter role vagrant with password '(your secure.py default db password)';
 
 Then, back in the vagrant shell:
+
     python manage.py init_db
     python manage.py migrate
 
