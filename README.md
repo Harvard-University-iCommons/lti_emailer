@@ -39,6 +39,6 @@ Then, back in the vagrant shell:
 If you're running via runsslserver and testing in Chrome, you'll need to 'bless'
 the local SSL connection in Chrome by first bringing up the tool_config
 (e.g. `https://localhost:8000/tool_config`) in a separate window and explicitly
-allowing the connection)
+allowing the connection.
 
 And because it accesses the coursemanager, don't forget the VPN.
