@@ -23,6 +23,8 @@
         ml.isUpdating = false;
         ml.primarySectionLists = [];
         ml.otherSectionLists = [];
+        // temp storage for modal interaction to access level to prevent base
+        // page from updating until the requested change has been saved via AJAX
         ml.updatedAccessLevel = '';
         ml.accessLevels = [{
             id: 'members',

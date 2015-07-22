@@ -19,9 +19,11 @@
       <div ng-repeat="list in ml.primarySectionLists">
         {% verbatim %}
         <p class="caption-primary" ng-show="$first">
-          <a href="{{ ml.listMembersUrl(list) }}">
-            View course members' email addresses</a>
-          ({{ list.members_count }} members)
+          <a class="partial-underline" href="{{ ml.listMembersUrl(list) }}">
+            <span class="link-text">
+              View course members' email addresses</span>
+            ({{ list.members_count }} members)
+          </a>
         </p>
         <h3>
           {{ ml.primarySectionLists[0].name }} mailing list address
@@ -31,13 +33,15 @@
           independent of roles, enrollment status and credit status.
         </p>
         {% endverbatim %}
-        {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+        <div class="content-section">
+          {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+        </div>
       </div>
     </div>
     <div id="course-sections" ng-show="!ml.hasPrimarySections()">
       <p>
         There was an error retrieving the class mailing list for this course.
-        Please contact your school's Canvas help liaisons for assistance.
+        Please contact your local academic support staff for assistance.
       </p>
     </div>
 
@@ -47,10 +51,9 @@
         sections mailing list addresses
       </h3>
       <p class="caption-secondary">
-        These sections are created from the
-        <a href="" target="_blank">Manage Sections</a> tool
-        of this course and any changes applied there
-        will be reflected within these lists.
+        These sections are created in the Manage Sections tool (if installed
+        in your account) or are being sent from the Registrar's Office.
+        Any changes made to those sections will be reflected within these lists.
       </p>
       <div id="course-sections">
         <div ng-repeat="list in ml.otherSectionLists" class="content-section">

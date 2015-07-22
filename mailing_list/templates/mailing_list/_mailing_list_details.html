@@ -1,147 +1,135 @@
 {% load static %}
 
+<div class="float-left col-50">
+  <p>
+    <strong>
 {% verbatim %}
-<div class="content-section">
-  <div class="float-left col-50">
-    <p>
-      <strong>
-        {{ list.name }}
-        (<a href="{{ ml.listMembersUrl(list) }}"><ng-pluralize
-          count=list.members_count
-          when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}">
-          </ng-pluralize></a>)
-      </strong>
-    </p>
-    <p ng-class="{'caption-disabled': list.access_level == 'readonly'}">
-      <strong>
-        Mailing list address:
-      </strong>
-      {{ list.address }}
-    </p>
-  </div>
-  <div class="float-left col-50 info-btn-status">
-    <a id="email-section-{{ list.section_id }}"
-       href="mailto:{{ list.address }}"
-       class="btn"
-       {% endverbatim %}
-       {% if scope == "class" %}
-         ng-class="list.access_level == 'readonly'
-                   ? 'btn-submit-primary-disabled' : 'btn-submit-primary'"
-       {% else %}
-         ng-class="list.access_level == 'readonly'
-                   ? 'btn-submit-secondary-disabled' : 'btn-submit-secondary'"
-       {% endif %}
-       {% verbatim %}
-       ng-disabled="list.access_level == 'readonly'">
-      <i class="fa fa-envelope"></i>
-      {% endverbatim %}
-      Email
-        {% if scope == "class" %}
-          Class Mailing List
-        {% else %}
-          {% verbatim %}
-            {{ list.name }}
-          {% endverbatim %}
-        {% endif %}
-      {% verbatim %}
-    </a>
-    <p>
-      {% endverbatim %}
-      {% if scope == "class" %}
-        {% verbatim %}
-          {{ ml.accessLevelStatusClass[list.access_level] }}
-        {% endverbatim %}
-      {% else %}
-        {% verbatim %}
-          {{ ml.accessLevelStatusSection[list.access_level] }}
-        {% endverbatim %}
-      {% endif %}
-      {% verbatim %}
-      <br>
-      <a href="#"
-         data-toggle="modal"
-         data-target="#permissions-modal-{{ list.section_id }}"
-         ng-click="ml.updatedAccessLevel = list.access_level">
-        Change who can email
-        {% endverbatim %}
-        {% if scope == "class" %}
-          the class
-        {% else %}
-          this section
-        {% endif %}
-        {% verbatim %}
-      </a>
-      {% endverbatim %}
-      <img src="{% static 'images/ajax-loader-small.gif' %}"
-           ng-show="list.isUpdating"/>
-      {% verbatim %}
-      <span class="text-success feedback" ng-show="list.updated">
-        &checkmark;
-      </span>
-      <span class="text-danger feedback" ng-show="list.update_failed">
-        &cross;
-      </span>
-    </p>
-    <div id="permissions-modal-{{ list.section_id }}" class="modal fade">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form>
-            <div class="modal-header">
-              <button type="button"
-                      class="close"
-                      data-dismiss="modal"
-                      aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-              <h4 class="modal-title">
-                <label for="permissions-input-{{ list.section_id }}"
-                       class="ic-Label">
-                  Change permissions
-                </label>
-              </h4>
-            </div>
-            <div class="modal-body">
-              <div id="permissions-input-{{ list.section_id }}">
-                <div class="indented-radio-block"
-                     ng-repeat="access_level in ml.accessLevels">
-                  <input type="radio"
-                         class="indented-radio-block-input"
-                         id="permissions-radio-{{ list.section_id }}-{{ access_level.id }}"
-                         ng-model="ml.updatedAccessLevel"
-                         value="{{ access_level.id }}">
-                  <label class="indented-radio-block-label"
-                         for="permissions-radio-{{ list.section_id }}-{{ access_level.id }}">
-                    {{ access_level.name }}
-                  </label>
-                  {% endverbatim %}
-                  {% if scope == "class" %}
-                    {% verbatim %}
-                      {{ ml.accessLevelStatusClass[access_level.id] }}
-                    {% endverbatim %}
-                  {% else %}
-                    {% verbatim %}
-                      {{ ml.accessLevelStatusSection[access_level.id] }}
-                    {% endverbatim %}
-                  {% endif %}
-                  {% verbatim %}
-                  <br/>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <div class="ic-Form-actions">
-                <a href="#" data-dismiss="modal">Cancel</a>
-                <button type="button"
-                        class="btn btn-primary btn-submit"
-                        ng-click="ml.updateAccessLevel(list)">
-                  Update Permissions
-                </button>
-              </div>
-            </div>
-          </form>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-  </div>
-</div>
+      {{ list.name }}
 {% endverbatim %}
+      (<ng-pluralize
+        count=list.members_count
+        when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}">
+        </ng-pluralize>)
+    </strong>
+  </p>
+  <p ng-class="{'caption-disabled': list.access_level == 'readonly'}">
+    <strong>
+      {% if scope == "class" %}
+        Class mailing list:
+      {% else %}
+        Section mailing list:
+      {% endif %}
+    </strong>
+{% verbatim %}
+    {{ list.address }}
+  </p>
+</div>
+<div class="float-left col-50 info-btn-status">
+  <a id="email-section-{{ list.section_id }}"
+     href="mailto:{{ list.address }}"
+{% endverbatim %}
+     class="btn"
+     {% if scope == "class" %}
+       ng-class="list.access_level == 'readonly'
+                 ? 'btn-submit-primary-disabled' : 'btn-submit-primary'"
+     {% else %}
+       ng-class="list.access_level == 'readonly'
+                 ? 'btn-submit-secondary-disabled' : 'btn-submit-secondary'"
+     {% endif %}
+     ng-disabled="list.access_level == 'readonly'">
+    <i class="fa fa-envelope"></i>
+    Email
+      {% if scope == "class" %}
+        Class Mailing List
+      {% else %}
+        <span ng-bind="list.name"></span>
+      {% endif %}
+  </a>
+  <p>
+    {% if scope == "class" %}
+      <span ng-bind="ml.accessLevelStatusClass[list.access_level]"></span>
+    {% else %}
+      <span ng-bind="ml.accessLevelStatusSection[list.access_level]"></span>
+    {% endif %}
+    <br>
+    <a href="#"
+       data-toggle="modal"
+{% verbatim %}
+       data-target="#permissions-modal-{{ list.section_id }}"
+{% endverbatim %}
+       ng-click="ml.updatedAccessLevel = list.access_level">
+      Change who can email
+      {% if scope == "class" %}
+        the class
+      {% else %}
+        this section
+      {% endif %}
+    </a>
+    <img src="{% static 'images/ajax-loader-small.gif' %}"
+         ng-show="list.isUpdating"/>
+    <span class="text-success feedback" ng-show="list.updated">
+      &checkmark;
+    </span>
+    <span class="text-danger feedback" ng-show="list.update_failed">
+      &cross;
+    </span>
+  </p>
+{% verbatim %}
+  <div id="permissions-modal-{{ list.section_id }}" class="modal fade">
+{% endverbatim %}
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form>
+          <div class="modal-header">
+            <button type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">
+{% verbatim %}
+              <label for="permissions-input-{{ list.section_id }}"
+                     class="ic-Label">
+                Change Permissions
+              </label>
+            </h4>
+          </div>
+          <div class="modal-body">
+            <div id="permissions-input-{{ list.section_id }}">
+              <div class="indented-radio-block"
+                   ng-repeat="access_level in ml.accessLevels">
+                <input type="radio"
+                       class="indented-radio-block-input"
+                       id="permissions-radio-{{ list.section_id }}-{{ access_level.id }}"
+                       ng-model="ml.updatedAccessLevel"
+                       value="{{ access_level.id }}">
+                <label class="indented-radio-block-label"
+                       for="permissions-radio-{{ list.section_id }}-{{ access_level.id }}">
+                  {{ access_level.name }}
+{% endverbatim %}
+                </label>
+                  {% if scope == "class" %}
+                    <span ng-bind="ml.accessLevelStatusClass[access_level.id]"></span>
+                  {% else %}
+                    <span ng-bind="ml.accessLevelStatusSection[access_level.id]"></span>
+                  {% endif %}
+                <br/>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div class="ic-Form-actions">
+              <a href="#" data-dismiss="modal">Cancel</a>
+              <button type="button"
+                      class="btn btn-primary btn-submit"
+                      ng-click="ml.updateAccessLevel(list)">
+                Update Permissions
+              </button>
+            </div>
+          </div>
+        </form>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+</div>
