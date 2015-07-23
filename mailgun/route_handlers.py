@@ -93,14 +93,16 @@ def handle_outgoing_emails_route(request):
     logger.info("Handling Mailgun outgoing mailing list email from %s to %s", sender, recipient)
 
     # fetch the mailing list access level
+    mailing_list_access_level = None
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
+        logger.debug(ml)
+        mailing_list_access_level = ml.acess.level
     except MailingList.DoesNotExist:
         message = "Could not find MailingList for email address %s" % recipient
         logger.error(message)
         return JsonResponse({'error': message}, status=406)  # Return status 406 so Mailgun does not retry
 
-    mailing_list_access_level = ml.acess.level
     logger.debug(" in router, mailing_list_access_level set to %s" % mailing_list_access_level)
 
     # if the access level is set to  MailingList.ACCESS_LEVEL_STAFF, verify that sender is a staff
