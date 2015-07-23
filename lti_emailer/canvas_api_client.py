@@ -9,7 +9,7 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 
-from canvas_sdk.methods import enrollments, sections
+from canvas_sdk.methods import enrollments, sections, courses
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
@@ -42,6 +42,24 @@ def get_sections(canvas_course_id):
         cache.set(cache_key, result)
     return result
 
+
+def get_sis_course_id(canvas_course_id):
+    """
+    This method will retrieve the sis_course_id given the canvas course id
+    """
+    print ("in get_sis_course_id for canvas_course_id=%s" %canvas_course_id)
+    try:
+        response = courses.get_single_course_courses(SDK_CONTEXT, canvas_course_id, 'all_courses')
+        course = response.json()
+        sis_course_id = course['sis_course_id']
+        logger.debug ("returning sis course id  = %s for canvas course %s" % (sis_course_id, canvas_course_id ))
+    except CanvasAPIError:
+        logger.exception(
+            "Failed to get canvas course information for canvas_course_id %s ",
+            canvas_course_id,
+        )
+        raise
+    return sis_course_id
 
 def get_enrollments(canvas_course_id, section_id):
     cache_key = settings.CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID % section_id

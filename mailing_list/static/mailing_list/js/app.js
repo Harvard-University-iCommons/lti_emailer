@@ -27,6 +27,9 @@
             id: 'members',
             name: 'Course Enrollees'
         },{
+            id: 'staff',
+            name: 'Course Staff'
+        },{
             id: 'everyone',
             name: 'Anyone'
         },{

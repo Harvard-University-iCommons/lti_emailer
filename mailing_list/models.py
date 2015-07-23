@@ -7,7 +7,10 @@ from django.conf import settings
 from django.db import models
 from django.core.cache import cache
 
-from icommons_common.models import Person
+from icommons_common.models import (
+    Person,
+    CourseStaff,
+)
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
@@ -33,6 +36,10 @@ class MailingListManager(models.Manager):
             logger.error("Failed to parse address in get_mailing_list_by_address %s", address)
             raise MailingList.DoesNotExist
         return MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
+
+    def get_mailing_list_by_id(self, id):
+        return MailingList.objects.get(id=id)
+
 
     def get_or_create_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
         """
@@ -70,7 +77,8 @@ class MailingListManager(models.Manager):
                 if not listserv_list:
                     listserv_client.create_list(mailing_list)
                 else:
-                    access_level = listserv_list['access_level']
+                    # fetch  access level that is now  stored in the DB
+                    access_level = mailing_list.access_level
 
                 members_count = mailing_list.sync_listserv_membership()
 
@@ -98,9 +106,11 @@ class MailingList(models.Model):
     ACCESS_LEVEL_MEMBERS = 'members'
     ACCESS_LEVEL_EVERYONE = 'everyone'
     ACCESS_LEVEL_READONLY = 'readonly'
+    ACCESS_LEVEL_STAFF = 'staff'
 
     canvas_course_id = models.IntegerField()
     section_id = models.IntegerField()
+    access_level = models.CharField(max_length=32, blank=True, default='members')
     created_by = models.CharField(max_length=32)
     modified_by = models.CharField(max_length=32)
     date_created = models.DateTimeField(blank=True, default=datetime.utcnow)
@@ -144,6 +154,30 @@ class MailingList(models.Model):
     def _get_listserv_email_set(self):
         return {m['address'] for m in listserv_client.members(self)}
 
+    def _get_staff_members(self):
+        logger.debug("fetching staff members for canvas course id %s" % self.canvas_course_id)
+
+        staff_email_list = []
+        try:
+            sis_course_id = canvas_api_client.get_sis_course_id(self.canvas_course_id)
+            staff_members = CourseStaff.objects.filter(models.Q(course_instance_id=sis_course_id))
+            logger.debug(staff_members)
+            univ_ids = []
+            if staff_members:
+                univ_ids = list(staff_members.values_list('user_id', flat=True))
+            logger.debug(" univ_ids for staff members= %s" % univ_ids)
+            people = Person.objects.filter(univ_id__in=univ_ids)
+            staff_email_list = list(people.values_list('email_address', flat=True))
+
+        except Exception as ex:
+            logger.info('Exception getting staff members for canvas course id=%s from '
+                        'CourseStaff table:' % self.canvas_course_id)
+
+        logger.debug(" returning staff emails : %s" % staff_email_list)
+        return staff_email_list
+
+
+
     @property
     def address(self):
         return settings.LISTSERV_ADDRESS_FORMAT.format(
@@ -151,8 +185,7 @@ class MailingList(models.Model):
             section_id=self.section_id
         )
 
-    @property
-    def access_level(self):
+    def get_listserv_access_level(self):
         listserv_list = listserv_client.get_list(self)
         return listserv_list['access_level']
 
@@ -169,13 +202,36 @@ class MailingList(models.Model):
 
     def update_access_level(self, access_level):
         """
-        Update the access_level setting for this MailingList on the listserv.
+        Update the access_level value in the DB and also the setting for this MailingList on the listserv.
 
         :param access_level:
         :return:
         """
         logger.debug("Updating access_level for listserv mailing list %s with %s", self.address, access_level)
-        listserv_client.update_list(self, access_level)
+
+        """
+        Since the the listserv_access_level can only be set to one of:
+        'readonly', 'members' or 'everyone', the access level will now be tracked
+        in the DB tsp that we can keep track of the custom access level. The access
+        levels will match for everthing except the custom levels. Eg:
+        if it is set to the new custom access of 'staff', set the listserv
+        access level to 'everyone'
+        """
+        #update the db
+        mailing_list = MailingList.objects.get_mailing_list_by_id(self.id)
+        mailing_list.access_level = access_level
+        mailing_list.save()
+
+        listserv_access_level = access_level if access_level != self.ACCESS_LEVEL_STAFF\
+            else self.ACCESS_LEVEL_EVERYONE
+
+        if access_level == self.ACCESS_LEVEL_STAFF:
+            listserv_access_level = self.ACCESS_LEVEL_EVERYONE
+        logger.debug("updating access_level to %s and listserv_access_level to %s "
+                     % (access_level, listserv_access_level))
+
+        listserv_client.update_list(self, listserv_access_level)
+
         cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
         logger.debug("Finished updating listserv mailing list for canvas_course_id %s", self.canvas_course_id)
 
