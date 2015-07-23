@@ -1,0 +1,120 @@
+{% load static %}
+
+<div class="float-left col-50">
+  <p>
+    <strong>
+      <span ng-bind="list.name"></span>
+      (<ng-pluralize
+        count=list.members_count
+        when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}">
+        </ng-pluralize>)
+    </strong>
+  </p>
+  <p ng-class="{'caption-disabled': list.access_level == 'readonly'}">
+    <strong>
+      {% if scope == "class" %}
+        Class mailing list:
+      {% else %}
+        Section mailing list:
+      {% endif %}
+    </strong>
+    <span ng-bind="list.address"></span>
+  </p>
+</div>
+<div class="float-left col-50 info-btn-status">
+{% verbatim %}
+  <a id="email-section-{{ list.section_id }}"
+     href="mailto:{{ list.address }}"
+{% endverbatim %}
+     class="btn"
+     {% if scope == "class" %}
+       ng-class="list.access_level == 'readonly'
+                 ? 'btn-submit-primary-disabled' : 'btn-submit-primary'"
+     {% else %}
+       ng-class="list.access_level == 'readonly'
+                 ? 'btn-submit-secondary-disabled' : 'btn-submit-secondary'"
+     {% endif %}
+     ng-disabled="list.access_level == 'readonly'">
+    <i class="fa fa-envelope"></i>
+    Email <span ng-bind="list.name"></span>
+  </a>
+  <p>
+    <span ng-bind="ml.accessLevelStatus[list.access_level]['{{ scope }}']"></span>
+    <br>
+    <a href="#"
+       data-toggle="modal"
+{% verbatim %}
+       data-target="#permissions-modal-{{ list.section_id }}"
+{% endverbatim %}
+       ng-click="ml.updatedAccessLevel = list.access_level">
+      Change who can email
+      {% if scope == "class" %}
+        the class
+      {% else %}
+        this section
+      {% endif %}
+    </a>
+    <img src="{% static 'images/ajax-loader-small.gif' %}"
+         ng-show="list.isUpdating"/>
+    <span class="text-success feedback" ng-show="list.updated">
+      &checkmark;
+    </span>
+    <span class="text-danger feedback" ng-show="list.update_failed">
+      &cross;
+    </span>
+  </p>
+{% verbatim %}
+  <div id="permissions-modal-{{ list.section_id }}" class="modal fade">
+{% endverbatim %}
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form>
+          <div class="modal-header">
+            <button type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">
+{% verbatim %}
+              <label for="permissions-input-{{ list.section_id }}"
+                     class="ic-Label">
+                Change Permissions
+              </label>
+            </h4>
+          </div>
+          <div class="modal-body">
+            <div id="permissions-input-{{ list.section_id }}">
+              <div class="indented-radio-block"
+                   ng-repeat="access_level in ml.accessLevels">
+                <input type="radio"
+                       class="indented-radio-block-input"
+                       id="permissions-radio-{{ list.section_id }}-{{ access_level.id }}"
+                       ng-model="ml.updatedAccessLevel"
+                       value="{{ access_level.id }}">
+                <label class="indented-radio-block-label"
+                       for="permissions-radio-{{ list.section_id }}-{{ access_level.id }}">
+{% endverbatim %}
+                  <span ng-bind="access_level.name['{{ scope }}']"></span>
+                </label>
+                  <span ng-bind="ml.accessLevelStatus[access_level.id]['{{ scope }}']"></span>
+                <br/>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div class="ic-Form-actions">
+              <a href="#" data-dismiss="modal">Cancel</a>
+              <button type="button"
+                      class="btn btn-primary btn-submit"
+                      ng-click="ml.updateAccessLevel(list)">
+                Update Permissions
+              </button>
+            </div>
+          </div>
+        </form>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+</div>

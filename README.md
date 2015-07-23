@@ -24,3 +24,21 @@ After deployment, a huey worker must be started by running `python manage.py run
 periodic task is defined for this application, only a single huey worker should be run.  Otherwise, that
 periodic task will run once per worker.
 
+## Local dev setup
+
+After getting all your db connection stuff setup in the secure.py, access the 
+vagrant shell and bring up the postgres shell via `psql`. At the shell prompt:
+
+    alter role vagrant with password '(your secure.py default db password)';
+
+Then, back in the vagrant shell:
+
+    python manage.py init_db
+    python manage.py migrate
+
+If you're running via runsslserver and testing in Chrome, you'll need to 'bless'
+the local SSL connection in Chrome by first bringing up the tool_config
+(e.g. `https://localhost:8000/tool_config`) in a separate window and explicitly
+allowing the connection.
+
+And because it accesses the coursemanager, don't forget the VPN.
