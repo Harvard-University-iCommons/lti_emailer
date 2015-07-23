@@ -23,19 +23,38 @@
         ml.isUpdating = false;
         ml.primarySectionLists = [];
         ml.otherSectionLists = [];
+        // temp storage for modal interaction to access level to prevent base
+        // page from updating until the requested change has been saved via AJAX
+        ml.updatedAccessLevel = '';
         ml.accessLevels = [{
             id: 'members',
-            name: 'Course Enrollees'
+            name: {class: 'Course Access', section: 'Section Access'}
         },{
             id: 'staff',
             name: 'Course Staff'
         },{
             id: 'everyone',
-            name: 'Anyone'
+            name: {class: 'World Access', section: 'World Access'}
         },{
             id: 'readonly',
-            name: 'No One'
+            name: {class: 'Disabled', section: 'Disabled'}
         }];
+        ml.accessLevelStatus = {
+            members: {
+                class: 'Only teaching staff, students, and others added to ' +
+                       'this course can send and reply to this mailing list.',
+                section: 'Only teaching staff, students, and others added to ' +
+                         'this section can send and reply to this mailing list.'
+            },
+            everyone: {
+                class: 'Anyone can send and reply to this mailing list.',
+                section: 'Anyone can send and reply to this mailing list.'
+            },
+            readonly: {
+                class: 'This mailing list is disabled.',
+                section: 'This mailing list is disabled.'
+            }
+        };
 
         $http.get(URL_LISTS).success(function(data){
             ml.isLoading = false;
@@ -60,15 +79,27 @@
         };
 
         ml.updateAccessLevel = function(list) {
+            $('#permissions-modal-' + list.section_id).modal('hide');
             list.isUpdating = true;
-            var url = $djangoUrl.reverse('mailing_list:api_lists_set_access_level', [list.id]);
-            $http.put(url, {access_level: list.access_level}).success(function(data){
-                list.isUpdating = false;
-                list.updated = true;
-                $timeout(function(){
-                    list.updated = false;
-                }, 2000);
-            });
+            var url = $djangoUrl.reverse(
+                'mailing_list:api_lists_set_access_level',
+                [list.id]
+            );
+            $http.put(url, {access_level: ml.updatedAccessLevel})
+                .success(function(data){
+                    list.access_level = ml.updatedAccessLevel;
+                    list.isUpdating = false;
+                    list.updated = true;
+                    $timeout(function(){
+                        list.updated = false;
+                    }, 2000);
+                }).error(function(data){
+                    list.isUpdating = false;
+                    list.update_failed = true;
+                    $timeout(function(){
+                        list.update_failed = false;
+                    }, 2000);
+                });
         };
 
         ml.listMembersUrl = function(list) {
