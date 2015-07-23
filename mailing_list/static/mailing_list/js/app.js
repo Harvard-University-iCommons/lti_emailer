@@ -27,11 +27,11 @@
         // page from updating until the requested change has been saved via AJAX
         ml.updatedAccessLevel = '';
         ml.accessLevels = [{
+            id: 'staff',
+            name: {class: 'Staff Access', section: 'Staff Access Only'}
+        },{
             id: 'members',
             name: {class: 'Course Access', section: 'Section Access'}
-        },{
-            id: 'staff',
-            name: 'Course Staff'
         },{
             id: 'everyone',
             name: {class: 'World Access', section: 'World Access'}
@@ -40,11 +40,18 @@
             name: {class: 'Disabled', section: 'Disabled'}
         }];
         ml.accessLevelStatus = {
+
             members: {
                 class: 'Only teaching staff, students, and others added to ' +
                        'this course can send and reply to this mailing list.',
                 section: 'Only teaching staff, students, and others added to ' +
                          'this section can send and reply to this mailing list.'
+            },
+            staff: {
+                class: 'Only members of the class with teaching related roles can email the mailing list.' +
+                ' (e.g. TA, TF, Faculty, etc)',
+                section: 'Only members of the class with teaching related roles can email the mailing list.' +
+                ' (e.g. TA, TF, Faculty, etc)'
             },
             everyone: {
                 class: 'Anyone can send and reply to this mailing list.',
