@@ -28,25 +28,29 @@
         ml.updatedAccessLevel = '';
         ml.accessLevels = [{
             id: 'members',
-            name: 'Teaching Staff and Class List'
+            name: {class: 'Course Access', section: 'Section Access'}
         },{
             id: 'everyone',
-            name: 'World Accessible'
+            name: {class: 'World Access', section: 'World Access'}
         },{
             id: 'readonly',
-            name: 'Disabled'
+            name: {class: 'Disabled', section: 'Disabled'}
         }];
-        ml.accessLevelStatusClass = {
-            members: 'Only class members can send emails ' +
-                     'to this mailing list address.',
-            everyone: 'Anyone with access to the list can email the class.',
-            readonly: 'This mailing list is disabled.'
-        };
-        ml.accessLevelStatusSection = {
-            members: 'Only section members can send emails ' +
-                     'to this mailing list address.',
-            everyone: 'Anyone with access to the list can email this section.',
-            readonly: 'This mailing list is disabled.'
+        ml.accessLevelStatus = {
+            members: {
+                class: 'Only teaching staff, students, and others added to ' +
+                       'this course can send and reply to this mailing list.',
+                section: 'Only teaching staff, students, and others added to ' +
+                         'this section can send and reply to this mailing list.'
+            },
+            everyone: {
+                class: 'Anyone can send and reply to this mailing list.',
+                section: 'Anyone can send and reply to this mailing list.'
+            },
+            readonly: {
+                class: 'This mailing list is disabled.',
+                section: 'This mailing list is disabled.'
+            }
         };
 
         $http.get(URL_LISTS).success(function(data){

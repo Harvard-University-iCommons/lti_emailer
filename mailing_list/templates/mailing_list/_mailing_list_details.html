@@ -3,9 +3,7 @@
 <div class="float-left col-50">
   <p>
     <strong>
-{% verbatim %}
-      {{ list.name }}
-{% endverbatim %}
+      <span ng-bind="list.name"></span>
       (<ng-pluralize
         count=list.members_count
         when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}">
@@ -20,11 +18,11 @@
         Section mailing list:
       {% endif %}
     </strong>
-{% verbatim %}
-    {{ list.address }}
+    <span ng-bind="list.address"></span>
   </p>
 </div>
 <div class="float-left col-50 info-btn-status">
+{% verbatim %}
   <a id="email-section-{{ list.section_id }}"
      href="mailto:{{ list.address }}"
 {% endverbatim %}
@@ -38,19 +36,10 @@
      {% endif %}
      ng-disabled="list.access_level == 'readonly'">
     <i class="fa fa-envelope"></i>
-    Email
-      {% if scope == "class" %}
-        Class Mailing List
-      {% else %}
-        <span ng-bind="list.name"></span>
-      {% endif %}
+    Email <span ng-bind="list.name"></span>
   </a>
   <p>
-    {% if scope == "class" %}
-      <span ng-bind="ml.accessLevelStatusClass[list.access_level]"></span>
-    {% else %}
-      <span ng-bind="ml.accessLevelStatusSection[list.access_level]"></span>
-    {% endif %}
+    <span ng-bind="ml.accessLevelStatus[list.access_level]['{{ scope }}']"></span>
     <br>
     <a href="#"
        data-toggle="modal"
@@ -106,14 +95,10 @@
                        value="{{ access_level.id }}">
                 <label class="indented-radio-block-label"
                        for="permissions-radio-{{ list.section_id }}-{{ access_level.id }}">
-                  {{ access_level.name }}
 {% endverbatim %}
+                  <span ng-bind="access_level.name['{{ scope }}']"></span>
                 </label>
-                  {% if scope == "class" %}
-                    <span ng-bind="ml.accessLevelStatusClass[access_level.id]"></span>
-                  {% else %}
-                    <span ng-bind="ml.accessLevelStatusSection[access_level.id]"></span>
-                  {% endif %}
+                  <span ng-bind="ml.accessLevelStatus[access_level.id]['{{ scope }}']"></span>
                 <br/>
               </div>
             </div>
