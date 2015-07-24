@@ -14,9 +14,10 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 from django.core.urlresolvers import reverse_lazy
+import logging
+import time
 
 from .secure import SECURE_SETTINGS
-
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -209,16 +210,21 @@ HUEY = {
 }
 
 _DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', 'DEBUG')
+_LOG_ROOT = SECURE_SETTINGS.get('log_root', '')  # Default to current directory
+
+# Make sure log timestamps are in GMT
+logging.Formatter.converter = time.gmtime
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(levelname)s\t%(asctime)s.%(msecs)03dZ\t%(name)s:%(lineno)s\t%(message)s',
+            'datefmt': '%Y-%m-%dT%H:%M:%S'
         },
         'simple': {
-            'format': '%(levelname)s %(module)s %(message)s'
+            'format': '%(levelname)s\t%(name)s:%(lineno)s\t%(message)s',
         }
     },
     # Borrowing some default filters for app loggers
@@ -231,22 +237,17 @@ LOGGING = {
         },
     },
     'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
-        },
         # Log to a text file that can be rotated by logrotate
         'app_logfile': {
             'level': _DEFAULT_LOG_LEVEL,
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'django-lti_emailer.log'),
+            'filename': os.path.join(_LOG_ROOT, 'django-lti_emailer.log'),
             'formatter': 'verbose',
         },
         'huey_logfile': {
             'level': _DEFAULT_LOG_LEVEL,
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(SECURE_SETTINGS.get('log_root', ''), 'huey-lti_emailer.log'),
+            'filename': os.path.join(_LOG_ROOT, 'huey-lti_emailer.log'),
             'formatter': 'verbose',
         },
         'console': {
