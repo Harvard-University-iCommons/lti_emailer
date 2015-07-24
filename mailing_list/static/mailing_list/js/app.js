@@ -40,7 +40,6 @@
             name: {class: 'Disabled', section: 'Disabled'}
         }];
         ml.accessLevelStatus = {
-
             members: {
                 class: 'Only teaching staff, students, and others added to ' +
                        'this course can send and reply to this mailing list.',
