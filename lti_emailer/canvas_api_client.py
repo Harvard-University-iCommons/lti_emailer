@@ -62,16 +62,12 @@ def get_enrollments(canvas_course_id, section_id):
 
 
 def get_teacher_enrollments(canvas_course_id):
-    print(" \n\n\n in get_teacher_enrollments for %s" % canvas_course_id)
     cache_key = settings.CACHE_KEY_CANVAS_TEACHER_ENROLLMENTS_BY_CANVAS_COURSE_ID % canvas_course_id
     result = cache.get(cache_key)
     if not result:
         try:
-            print(" invoking canvas api for  list_enrollments_courses")
             result = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_courses, canvas_course_id,
                                        type=TEACHER_ENROLLMENT_TYPES)
-            print("\n\n result -------")
-            print(result)
         except CanvasAPIError:
             logger.exception(
                 "Failed to get canvas teacher enrollments for canvas_course_id"

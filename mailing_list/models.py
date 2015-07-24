@@ -150,7 +150,6 @@ class MailingList(models.Model):
         logger.debug("fetching staff members for canvas course id %s" % self.canvas_course_id)
 
         staff_enrollments = canvas_api_client.get_teacher_enrollments(str(self.canvas_course_id))
-        print(" got staff members")
         logger.debug(staff_enrollments)
         univ_ids = []
         for enrollment in staff_enrollments:
