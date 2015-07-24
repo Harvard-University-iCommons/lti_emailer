@@ -15,27 +15,35 @@
     <img src="{% static 'images/ajax-loader-large.gif' %}"/>
   </div>
   <main class="ng-hide" ng-show="ml.loaded">
-    <div id="course-sections" ng-show="ml.hasPrimarySections()">
+    <div id="main-section" ng-show="ml.hasPrimarySections()">
       <div ng-repeat="list in ml.primarySectionLists">
         {% verbatim %}
-        <p class="caption-primary" ng-show="$first">
-          <a class="partial-underline" href="{{ ml.listMembersUrl(list) }}">
-            <span class="link-text">
-              View course members' email addresses</span>
+        <h2 class="all-members" ng-show="$first">
+          <a class="semi-underline" href="{{ ml.listMembersUrl(list) }}">
+            <span>
+              View course members' email addresses
+            </span>
             ({{ list.members_count }} members)
+            
           </a>
-        </p>
-        <h3>
-          {{ ml.primarySectionLists[0].name }} mailing list address
-        </h3>
-        <p class="caption-secondary">
-          The mailing list contains teaching staff, students, and others
-          who have been added to this course.
-        </p>
-        {% endverbatim %}
-        <div class="content-section">
-          {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+        </h2>
+        
+        <div class="main-section-content">
+          <h2>
+            {{ ml.primarySectionLists[0].name }} mailing list address
+          </h2>
+          <div class="listerv-content">
+            <p class="caption-secondary">
+              The mailing list contains teaching staff, students, and others
+              who have been added to this course.
+            </p>
+            {% endverbatim %}
+            <div class="content-section">
+              {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
     <div id="course-sections" ng-show="!ml.hasPrimarySections()">
@@ -46,18 +54,20 @@
     </div>
 
     <div ng-show="ml.hasOtherSections()">
-      <h3>
+      <h2>
         {% verbatim %}{{ ml.primarySectionLists[0].name }}{% endverbatim %}
         sections mailing list addresses
-      </h3>
-      <p class="caption-secondary">
-        These sections are created in the Manage Sections tool (if installed
-        in your account) or are being sent from the Registrar's Office.
-        Any changes made to those sections will be reflected within these lists.
-      </p>
-      <div id="course-sections">
-        <div ng-repeat="list in ml.otherSectionLists" class="content-section">
-          {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
+      </h2>
+      <div class="listerv-content">
+        <p class="caption-secondary">
+          These sections are created in the Manage Sections tool (if installed
+          in your account) or are being sent from the Registrar's Office.
+          Any changes made to those sections will be reflected within these lists.
+        </p>
+        <div id="course-sections">
+          <div ng-repeat="list in ml.otherSectionLists" class="content-section">
+            {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
+          </div>
         </div>
       </div>
     </div>
