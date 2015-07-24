@@ -1,0 +1,34 @@
+{% load enrollment_tags %}
+
+{% with letter_ranges="A-D,E-H,I-L,M-P,Q-S,T-Z" %}
+{% regroup enrollments by user.sortable_name|to_letter_range:letter_ranges as enrollments_by_name %}
+<li class="list-group-item pagination-lti">
+    <span class="pagination-lti-label pagination-lti-view">View: </span>
+    {% with name_buckets=enrollments_by_name|list_comp:'grouper' %}
+    <ul class="nav nav-pills nav-section-pagination">
+        <li class="active"><a class="viewAll" href="#">All</a></li>
+        <li class="{% if 'A-D' not in name_buckets %} disabled {% endif %}"><a class="a-d" href="#">A - D</a></li>
+        <li class="{% if 'E-H' not in name_buckets %} disabled {% endif %}"><a class="e-h" href="#">E - H</a></li>
+        <li class="{% if 'I-L' not in name_buckets %} disabled {% endif %}"><a class="i-l" href="#">I - L</a></li>
+        <li class="{% if 'M-P' not in name_buckets %} disabled {% endif %}"><a class="m-p" href="#">M - P</a></li>
+        <li class="{% if 'Q-S' not in name_buckets %} disabled {% endif %}"><a class="q-s" href="#">Q - S</a></li>
+        <li class="{% if 'T-Z' not in name_buckets %} disabled {% endif %}"><a class="t-z" href="#">T - Z</a></li>
+    </ul>
+    {% endwith %}
+    <span class="pagination-lti-label pagination-lti-range">{{ enrollments|first|enrollment_lname }} - {{ enrollments|last|enrollment_lname }}</span>
+</li>
+{% for enrollment_by_name in enrollments_by_name %}
+    {% for enrollee in enrollment_by_name.list %} 
+        <li class="list-group-item list-student {{ enrollment_by_name.grouper|lower }}">
+            <span class="studentRole">{{enrollee.role|get_enroll_type_display}}</span>
+            <span class="studentName">{{enrollee.user.name}}</span> 
+            <span class="label label-{{enrollee.badge_label_name|lower}}">{{enrollee.badge_label_name|upper}}</span>
+            <span>
+              <a href="mailto:{{ enrollee.email_address }}" target="_top">
+                {{ enrollee.email_address }}
+              </a>
+            </span>
+        </li>
+    {% endfor %}
+{% endfor %}
+{% endwith %}

@@ -1,0 +1,6 @@
+To install the git hooks in this directory for this repository only, create symbolic links in the lti_emailer/.git/hooks directory:
+
+Example:
+
+cd ~/tlt/lti_emailer
+ln -s ~/tlt/lti_emailer/.git_template/hooks/pre-commit ~/tlt/lti_emailer/.git/hooks/pre-commit

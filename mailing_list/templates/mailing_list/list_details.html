@@ -1,0 +1,40 @@
+{% extends 'mailing_list/base_list_details.html' %}
+{% load static %}
+
+{% block js %}
+<script src="{% static 'mailing_list/js/alphabet_pagination.js' %}"></script>
+{% endblock js %}
+
+{% block body %}
+<body class="lti-tool" role="application">
+  <div class="container">
+    <header>
+      <div class="row lti-header">
+        <h1>
+          {% block breadcrumbs %}
+          <a href="{% url 'mailing_list:admin_index' %}">Course Emailer</a>
+          &gt; {{ section.name | default:section.id }} Members
+          {% endblock breadcrumbs %}
+        </h1>
+      </div>
+    </header>
+
+    <main>
+    <div class="row row-lti col-md-8 lti-section">
+      {% if enrollments %}
+      <ul id="people-list" class="list-group list-section">
+        {% include "mailing_list/_mailing_list_members_by_name.html" %}
+      </ul>
+      {% else %}
+      <div class="jumbotron jumbotron-lti-emptySection ">
+        <h4>This section is empty.</h4>
+      </div>
+      {% endif %}
+    </div>
+    </main>
+  </div>
+  <script type="">
+    $('#people-list').alphabetPagination();
+  </script>
+</body>
+{% endblock body %}
