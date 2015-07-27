@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
@@ -83,8 +84,9 @@ def set_access_level(request, mailing_list_id):
 
         mailing_list = MailingList.objects.get(id=mailing_list_id)
         mailing_list.modified_by = logged_in_user_id
-        mailing_list.date_modified = datetime.utcnow()
-        mailing_list.update_access_level(access_level)
+        mailing_list.date_modified = timezone.now()
+        mailing_list.access_level = access_level
+        mailing_list.save()
 
         result = {
             'id': mailing_list.id,

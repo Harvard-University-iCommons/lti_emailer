@@ -46,7 +46,7 @@ class MailgunClient(object):
 
         return response.json().get('list')
 
-    def create_list(self, mailing_list, access_level='members'):
+    def create_list(self, mailing_list, access_level='readonly'):
         """
         Create the mailing_list on the listserv.
 

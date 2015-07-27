@@ -84,7 +84,7 @@ class ListservClientTests(TestCase):
         auth = (listserv_client.api_user, listserv_client.api_key)
         payload = {
             'address': mailing_list.address,
-            'access_level': 'members'
+            'access_level': 'readonly'
         }
 
         listserv_client.create_list(mailing_list)

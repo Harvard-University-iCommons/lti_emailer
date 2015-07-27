@@ -6,6 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from django.db import models
 from django.core.cache import cache
+from django.utils import timezone
 
 from icommons_common.models import (
     Person,
@@ -105,8 +106,8 @@ class MailingList(models.Model):
     access_level = models.CharField(max_length=32, default='members')
     created_by = models.CharField(max_length=32)
     modified_by = models.CharField(max_length=32)
-    date_created = models.DateTimeField(blank=True, default=datetime.utcnow)
-    date_modified = models.DateTimeField(blank=True, default=datetime.utcnow)
+    date_created = models.DateTimeField(blank=True, default=timezone.now)
+    date_modified = models.DateTimeField(blank=True, default=timezone.now)
     subscriptions_updated = models.DateTimeField(null=True, blank=True)
 
     objects = MailingListManager()
@@ -126,8 +127,7 @@ class MailingList(models.Model):
 
     def _get_enrolled_persons(self):
         univ_ids = []
-        canvas_enrollments = canvas_api_client.get_enrollments(
-                                 self.canvas_course_id, self.section_id)
+        canvas_enrollments = canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
         for enrollment in canvas_enrollments:
             try:
                 univ_ids.append(enrollment['user']['sis_user_id'])
@@ -146,33 +146,15 @@ class MailingList(models.Model):
     def _get_listserv_email_set(self):
         return {m['address'] for m in listserv_client.members(self)}
 
-    def _get_staff_members(self):
-        logger.debug("fetching staff members for canvas course id %s" % self.canvas_course_id)
-
-        staff_enrollments = canvas_api_client.get_teacher_enrollments(str(self.canvas_course_id))
-        logger.debug(staff_enrollments)
-        univ_ids = []
-        for enrollment in staff_enrollments:
-            try:
-                univ_ids.append(enrollment['user']['sis_user_id'])
-            except KeyError:
-                logger.debug(
-                    "Found canvas staff enrollment with missing sis_user_id %s",
-                    json.dumps(enrollment, indent=4))
-        people = Person.objects.filter(univ_id__in=univ_ids)
-        staff_email_list = list(people.values_list('email_address', flat=True))
-
-        logger.debug(" returning staff emails : %s" % staff_email_list)
-        return staff_email_list
-
     @property
     def address(self):
         return settings.LISTSERV_ADDRESS_FORMAT.format(
             canvas_course_id=self.canvas_course_id,
             section_id=self.section_id
         )
+
     @property
-    def get_listserv_access_level(self):
+    def listserv_access_level(self):
         listserv_list = listserv_client.get_list(self)
         return listserv_list['access_level']
 
@@ -180,43 +162,27 @@ class MailingList(models.Model):
     def members(self):
         return listserv_client.members(self)
 
+    def teaching_staff_addresses(self):
+        teaching_staff_enrollments = canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)
+        univ_ids = []
+        for enrollment in teaching_staff_enrollments:
+            try:
+                univ_ids.append(enrollment['user']['sis_user_id'])
+            except KeyError:
+                logger.debug(
+                    "Found canvas staff enrollment with missing sis_user_id %s",
+                    json.dumps(enrollment, indent=4)
+                )
+        people = Person.objects.filter(univ_id__in=univ_ids)
+        addresses = [email for email in people.values_list('email_address', flat=True)]
+        logger.debug("Returning teaching staff email list from MailingList.teaching_staff_email_set: %s" % addresses)
+        return addresses
+
     def emails_by_user_id(self):
-        return {p.univ_id: p.email_address
-                    for p in self._get_enrolled_persons()}
+        return {p.univ_id: p.email_address for p in self._get_enrolled_persons()}
 
     def send_mail(self, to_address, subject='', text='', html=''):
         listserv_client.send_mail(self.address, to_address, subject, text, html)
-
-    def update_access_level(self, access_level):
-        """
-        Update the access_level value in the DB and also the setting for this MailingList on the listserv.
-
-        :param access_level:
-        :return:
-        """
-        logger.debug("Updating access_level for listserv mailing list %s with %s", self.address, access_level)
-
-        """
-        Since the  listserv_access_level can only be set to one of:
-        'readonly', 'members' or 'everyone', the access level will now be tracked
-        in the DB tsp that we can keep track of the custom access level. The access
-        levels will match for everthing except the custom levels. Eg:
-        if it is set to the new custom access of 'staff', set the listserv
-        access level to 'members'
-        """
-        #update the db
-        self.access_level = access_level
-        self.save()
-
-        listserv_access_level = access_level if access_level != self.ACCESS_LEVEL_STAFF\
-            else self.ACCESS_LEVEL_MEMBERS
-        logger.debug("updating access_level to %s and listserv_access_level to %s "
-                     % (access_level, listserv_access_level))
-
-        listserv_client.update_list(self, listserv_access_level)
-
-        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
-        logger.debug("Finished updating listserv mailing list for canvas_course_id %s", self.canvas_course_id)
 
     def sync_listserv_membership(self):
         """
@@ -248,7 +214,7 @@ class MailingList(models.Model):
         listserv_client.delete_members(self, members_to_delete)
 
         # Update MailingList subscriptions_updated audit field
-        self.subscriptions_updated = datetime.utcnow()
+        self.subscriptions_updated = timezone.now()
         self.save()
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
@@ -265,7 +231,7 @@ class Unsubscribed(models.Model):
     mailing_list = models.ForeignKey(MailingList)
     email = models.EmailField()
     created_by = models.CharField(max_length=32)
-    date_created = models.DateTimeField(blank=True, default=datetime.utcnow)
+    date_created = models.DateTimeField(blank=True, default=timezone.now)
 
     class Meta:
         db_table = 'ml_unsubscribed'
