@@ -1,6 +1,5 @@
 from .base import *
 
-
 ENV_NAME = 'local'
 
 INSTALLED_APPS += ('debug_toolbar', 'sslserver')
