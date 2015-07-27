@@ -79,6 +79,12 @@ def handle_mailing_list_email_route(request):
     else:
         # Send the email to the mailing list members and teaching staff
         addresses = set(member_addresses + ml.teaching_staff_addresses)
+        # Do not send to the sender
+        try:
+            addresses.remove(sender)
+        except KeyError:
+            logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
+
         for address in addresses:
             ml.send_mail(address, subject, text=message_body)
 

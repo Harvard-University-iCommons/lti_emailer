@@ -162,6 +162,7 @@ class MailingList(models.Model):
     def members(self):
         return listserv_client.members(self)
 
+    @property
     def teaching_staff_addresses(self):
         teaching_staff_enrollments = canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)
         univ_ids = []

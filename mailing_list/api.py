@@ -3,9 +3,11 @@ import json
 
 from datetime import datetime
 
+from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.core.cache import cache
 
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
@@ -87,6 +89,8 @@ def set_access_level(request, mailing_list_id):
         mailing_list.date_modified = timezone.now()
         mailing_list.access_level = access_level
         mailing_list.save()
+
+        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % mailing_list.canvas_course_id)
 
         result = {
             'id': mailing_list.id,
