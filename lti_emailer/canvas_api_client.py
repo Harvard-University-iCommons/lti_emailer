@@ -19,7 +19,8 @@ from icommons_common.canvas_utils import SessionInactivityExpirationRC
 logger = logging.getLogger(__name__)
 
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
-TEACHER_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
+TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
+
 
 def get_section(canvas_course_id, section_id):
     sections = get_sections(canvas_course_id)
@@ -61,18 +62,20 @@ def get_enrollments(canvas_course_id, section_id):
     return result
 
 
-def get_teacher_enrollments(canvas_course_id):
-    cache_key = settings.CACHE_KEY_CANVAS_TEACHER_ENROLLMENTS_BY_CANVAS_COURSE_ID % canvas_course_id
+def get_teaching_staff_enrollments(canvas_course_id):
+    logger.debug("Fetching teaching staff enrollments for canvas course id %s", self.canvas_course_id)
+    cache_key = settings.CACHE_KEY_CANVAS_TEACHING_STAFF_ENROLLMENTS_BY_CANVAS_COURSE_ID % canvas_course_id
     result = cache.get(cache_key)
     if not result:
         try:
-            result = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_courses, canvas_course_id,
-                                       type=TEACHER_ENROLLMENT_TYPES)
-        except CanvasAPIError:
-            logger.exception(
-                "Failed to get canvas teacher enrollments for canvas_course_id"
-                % canvas_course_id
+            result = get_all_list_data(
+                SDK_CONTEXT,
+                enrollments.list_enrollments_courses,
+                canvas_course_id,
+                type=TEACHING_STAFF_ENROLLMENT_TYPES
             )
+        except CanvasAPIError:
+            logger.exception("Failed to get canvas teaching staff enrollments for canvas_course_id", canvas_course_id)
             raise
         cache.set(cache_key, result)
     return result
