@@ -90,7 +90,7 @@ def set_access_level(request, mailing_list_id):
         mailing_list.access_level = access_level
         mailing_list.save()
 
-        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % ml.canvas_course_id)
+        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % mailing_list.canvas_course_id)
 
         result = {
             'id': mailing_list.id,
