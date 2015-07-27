@@ -42,7 +42,9 @@ def handle_mailing_list_email_route(request):
         logger.error(message)
         return JsonResponse({'error': message}, status=406)  # Return status 406 so Mailgun does not retry
 
-    member_addresses = [m['address'] for m in ml.members]
+    # Always include teaching staff addresses with members addresses, so that they can email any list in the course
+    teaching_staff_addresses = ml.teaching_staff_addresses
+    member_addresses = set([m['address'] for m in ml.members] + teaching_staff_addresses)
     bounce_back_email_template = None
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender not in member_addresses:
         logger.info(
@@ -51,7 +53,7 @@ def handle_mailing_list_email_route(request):
             recipient
         )
         bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender not in ml.teaching_staff_addresses:
+    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender not in teaching_staff_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender "
             "was not a staff member",
@@ -77,15 +79,13 @@ def handle_mailing_list_email_route(request):
         subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
     else:
-        # Send the email to the mailing list members and teaching staff
-        addresses = set(member_addresses + ml.teaching_staff_addresses)
         # Do not send to the sender
         try:
-            addresses.remove(sender)
+            member_addresses.remove(sender)
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
-        for address in addresses:
+        for address in member_addresses:
             ml.send_mail(address, subject, text=message_body)
 
     return JsonResponse({'success': True})
