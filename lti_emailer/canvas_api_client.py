@@ -63,7 +63,7 @@ def get_enrollments(canvas_course_id, section_id):
 
 
 def get_teaching_staff_enrollments(canvas_course_id):
-    logger.debug("Fetching teaching staff enrollments for canvas course id %s", self.canvas_course_id)
+    logger.debug("Fetching teaching staff enrollments for canvas course id %s", canvas_course_id)
     cache_key = settings.CACHE_KEY_CANVAS_TEACHING_STAFF_ENROLLMENTS_BY_CANVAS_COURSE_ID % canvas_course_id
     result = cache.get(cache_key)
     if not result:
