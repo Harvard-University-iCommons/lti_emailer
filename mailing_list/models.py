@@ -182,8 +182,8 @@ class MailingList(models.Model):
     def emails_by_user_id(self):
         return {p.univ_id: p.email_address for p in self._get_enrolled_persons()}
 
-    def send_mail(self, to_address, subject='', text='', html=''):
-        listserv_client.send_mail(self.address, to_address, subject, text, html)
+    def send_mail(self, from_address, to_address, subject='', text='', html=''):
+        listserv_client.send_mail(from_address, to_address, self.address, subject, text, html)
 
     def sync_listserv_membership(self):
         """

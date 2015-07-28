@@ -86,6 +86,6 @@ def handle_mailing_list_email_route(request):
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
         for address in member_addresses:
-            ml.send_mail(address, subject, text=message_body)
+            ml.send_mail(sender, address, subject, text=message_body)
 
     return JsonResponse({'success': True})
