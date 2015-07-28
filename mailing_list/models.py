@@ -194,6 +194,9 @@ class MailingList(models.Model):
         """
         logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
 
+        # Clear Canvas API enrollment cache before syncing to make sure we have the latest data
+        cache.delete(settings.CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID % self.section_id)
+
         unsubscribed_emails = self._get_unsubscribed_email_set()
         enrolled_emails = self._get_enrolled_email_set()
         mailing_list_emails = enrolled_emails - unsubscribed_emails
@@ -219,6 +222,7 @@ class MailingList(models.Model):
         self.save()
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
+        cache.delete(settings.CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
         cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
 
         # Return the listserv members count
