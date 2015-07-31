@@ -182,10 +182,12 @@ class MailingList(models.Model):
     def emails_by_user_id(self):
         return {p.univ_id: p.email_address for p in self._get_enrolled_persons()}
 
-    def send_mail(self, from_address, to_address, subject='', text='', html=''):
-        logger.debug("   in send_mail: from_address=%s, to_address=%s, cc_address=%s "
-         %(from_address,to_address, self.address ))
-        listserv_client.send_mail(from_address, to_address, self.address, subject, text, html)
+    def send_mail(self, sender_address, to_address, subject='', text='', html=''):
+        logger.debug("   in send_mail: sender_address=%s, to_address=%s, self.address(from)=%s "
+                     % (sender_address, to_address, self.address))
+        formatted_from_address = sender_address + '<'+self.address+'>'
+        logger.debug("formatted_from_address=%s " % formatted_from_address)
+        listserv_client.send_mail(formatted_from_address, to_address,  sender_address, subject, text, html)
 
     def sync_listserv_membership(self):
         """
