@@ -23,9 +23,6 @@ SECRET_KEY = SECURE_SETTINGS.get('django_secret_key', 'changeme')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = SECURE_SETTINGS.get('enable_debug', False)
 
-# These addresses will receive emails about certain errors
-ADMINS = ()
-
 # Application definition
 
 INSTALLED_APPS = (
@@ -123,12 +120,14 @@ REDIS_PORT = SECURE_SETTINGS.get('redis_port', 6379)
 CACHES = {
     'default': {
         'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': "%s:%s" % (REDIS_HOST, REDIS_PORT),
+        'LOCATION': "redis://%s:%s/0" % (REDIS_HOST, REDIS_PORT),
         'OPTIONS': {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
         'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
-        'TIMEOUT': 60 * 20,  # 20 minutes
+        # See following for default timeout (5 minutes as of 1.7):
+        # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-CACHES-TIMEOUT
+        'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
     },
 }
 
@@ -176,9 +175,6 @@ LOGGING = {
     },
     # Borrowing some default filters for app loggers
     'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
@@ -231,6 +227,9 @@ LOGGING = {
         }
     }
 }
+
+# Currently deployed environment
+ENV_NAME = SECURE_SETTINGS.get('env_name', 'local')
 
 # Other app specific settings
 
