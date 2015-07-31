@@ -185,8 +185,6 @@ class MailingList(models.Model):
     def send_mail(self, sender_address, to_address, subject='', text='', html=''):
         logger.debug("   in send_mail: sender_address=%s, to_address=%s, mailing_list.address=%s "
                      % (sender_address, to_address, self.address))
-        formatted_from_address = sender_address + '<'+self.address+'>'
-        logger.debug("formatted_from_address=%s " % formatted_from_address)
         listserv_client.send_mail(sender_address, to_address,  self.address, subject, text, html)
 
     def sync_listserv_membership(self):
