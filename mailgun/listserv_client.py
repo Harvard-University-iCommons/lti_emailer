@@ -211,7 +211,7 @@ class MailgunClient(object):
         payload = {
             'from': from_address,
             'to': to_address,
-            # 'cc': cc_address,
+            'h:cc': mailing_list_address,
             'sender': mailing_list_address,
             'h:Reply-To': from_address,
             'subject': subject,
