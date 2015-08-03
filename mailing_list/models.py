@@ -183,7 +183,7 @@ class MailingList(models.Model):
         return {p.univ_id: p.email_address for p in self._get_enrolled_persons()}
 
     def send_mail(self, sender_address, to_address, subject='', text='', html=''):
-        logger.debug("   in send_mail: sender_address=%s, to_address=%s, mailing_list.address=%s "
+        logger.debug("in send_mail: sender_address=%s, to_address=%s, mailing_list.address=%s "
                      % (sender_address, to_address, self.address))
         listserv_client.send_mail(sender_address, to_address,  self.address, subject, text, html)
 

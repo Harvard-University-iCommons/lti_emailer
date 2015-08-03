@@ -90,7 +90,7 @@ def handle_mailing_list_email_route(request):
             member_addresses.remove(sender)
             if in_reply_to:
                 member_addresses.remove(original_to_address)
-                logger.debug(" Removing original_to_address =%s from this message as it is a reply"
+                logger.debug("Removing original_to_address =%s from this message as it is a reply all"
                              % original_to_address)
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
