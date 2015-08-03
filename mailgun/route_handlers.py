@@ -39,12 +39,14 @@ def handle_mailing_list_email_route(request):
     references = request.POST.get('References')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug("\n\n In Router:  checking additional params from header")
-    if in_reply_to :
+    if in_reply_to:
         logger.debug("in_reply_to=%s" % in_reply_to)
         logger.debug(" This is a reply!!")
-    if message_id :
+        to_address = request.POST.get('To')
+        logger.debug(" reply to adress is =%s" % to_address)
+    if message_id:
         logger.debug("message_id=%s" % message_id)
-    if references :
+    if references:
         logger.debug("references=%s" % references)
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
@@ -90,9 +92,13 @@ def handle_mailing_list_email_route(request):
         subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
     else:
-        # Do not send to the sender
+        # Do not send to the sender and also check if it is a reply and do not
+        # send to original sender to avoid duplicates
         try:
             member_addresses.remove(sender)
+            if in_reply_to:
+                member_addresses.remove(to_address)
+                logger.debug(" Removing to_address from this message as it is a reply")
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
