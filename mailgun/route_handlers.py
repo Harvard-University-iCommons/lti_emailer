@@ -35,8 +35,8 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
     in_reply_to = request.POST.get('In-Reply-To')
-    message_id = request.POST.get('message-id')
-    references = request.POST.get('references')
+    message_id = request.POST.get('Message-Id')
+    references = request.POST.get('References')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug("\n\n In Router:  checking additional params from header")
     if in_reply_to :
