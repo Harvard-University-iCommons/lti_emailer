@@ -1,7 +1,7 @@
 {% load static %}
 
 <div class="float-left col-50">
-  <p>
+  <p class="no-margin">
     <strong>
       <span ng-bind="list.name"></span>
       (<ng-pluralize
@@ -40,8 +40,7 @@
     Email <span ng-bind="list.name"></span>
   </a>
   <p>
-    <span ng-bind="ml.accessLevelStatus[list.access_level]['{{ scope }}']"></span>
-    <br>
+    <span ng-bind="ml.accessLevelStatus[list.access_level]['{{ scope }}']"></span> 
     <a href="#"
        data-toggle="modal"
 {% verbatim %}
