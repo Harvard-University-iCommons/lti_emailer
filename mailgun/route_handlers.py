@@ -34,7 +34,18 @@ def handle_mailing_list_email_route(request):
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
+    in_reply_to = request.POST.get('In-Reply-To')
+    message_id = request.POST.get('message-id')
+    references = request.POST.get('references')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
+    logger.debug("\n\n In Router:  checking additional params from header")
+    if in_reply_to :
+        logger.debug("in_reply_to=%s" % in_reply_to)
+        logger.debug(" This is a reply!!")
+    if message_id :
+        logger.debug("message_id=%s" % message_id)
+    if references :
+        logger.debug("references=%s" % references)
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
