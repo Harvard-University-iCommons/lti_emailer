@@ -1,7 +1,8 @@
 from .base import *
 
+ALLOWED_HOSTS = ['*']
 
-ENV_NAME = 'local'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 INSTALLED_APPS += ('debug_toolbar', 'sslserver')
 MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
