@@ -8,11 +8,6 @@ from django.db import models
 from django.core.cache import cache
 from django.utils import timezone
 
-from icommons_common.models import (
-    Person,
-    CourseStaff,
-)
-
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
 
@@ -125,20 +120,11 @@ class MailingList(models.Model):
     def _get_unsubscribed_email_set(self):
         return {x.email for x in self.unsubscribed_set.all()}
 
-    def _get_enrolled_persons(self):
-        univ_ids = []
-        canvas_enrollments = canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
-        for enrollment in canvas_enrollments:
-            try:
-                univ_ids.append(enrollment['user']['sis_user_id'])
-            except KeyError:
-                logger.debug(
-                    "Found canvas enrollment with missing sis_user_id %s",
-                    json.dumps(enrollment, indent=4))
-        return Person.objects.filter(univ_id__in=univ_ids)
-
     def _get_enrolled_email_set(self):
-        return {p.email_address for p in self._get_enrolled_persons()}
+        return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
+
+    def _get_enrolled_teaching_staff_email_set(self):
+        return {e['email'] for e in canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)}
 
     def _get_whitelist_email_set(self):
         return {x.email for x in EmailWhitelist.objects.all()}
@@ -164,23 +150,7 @@ class MailingList(models.Model):
 
     @property
     def teaching_staff_addresses(self):
-        teaching_staff_enrollments = canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)
-        univ_ids = []
-        for enrollment in teaching_staff_enrollments:
-            try:
-                univ_ids.append(enrollment['user']['sis_user_id'])
-            except KeyError:
-                logger.debug(
-                    "Found canvas staff enrollment with missing sis_user_id %s",
-                    json.dumps(enrollment, indent=4)
-                )
-        people = Person.objects.filter(univ_id__in=univ_ids)
-        addresses = [email for email in people.values_list('email_address', flat=True)]
-        logger.debug("Returning teaching staff email list from MailingList.teaching_staff_email_set: %s" % addresses)
-        return addresses
-
-    def emails_by_user_id(self):
-        return {p.univ_id: p.email_address for p in self._get_enrolled_persons()}
+        return self._get_enrolled_teaching_staff_email_set()
 
     def send_mail(self, sender_address, to_address, subject='', text='', html=''):
         logger.debug("in send_mail: sender_address=%s, to_address=%s, mailing_list.address=%s "
@@ -196,8 +166,8 @@ class MailingList(models.Model):
         """
         logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
 
-        # Clear Canvas API enrollment cache before syncing to make sure we have the latest data
-        cache.delete(settings.CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID % self.section_id)
+        # Clear Canvas API user cache before syncing to make sure we have the latest data
+        cache.delete(settings.CACHE_KEY_USERS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
 
         unsubscribed_emails = self._get_unsubscribed_email_set()
         enrolled_emails = self._get_enrolled_email_set()

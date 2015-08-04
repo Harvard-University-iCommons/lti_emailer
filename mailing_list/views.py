@@ -42,17 +42,9 @@ def list_members(request, section_id):
                 'canvas course {}, section {}'.format(
                     logged_in_user_id, canvas_course_id, section_id))
 
-    enrollments = get_enrollments(canvas_course_id, section_id)
-    enrollments.sort(key=lambda x: x['user']['sortable_name'])
     mailing_list = get_object_or_404(MailingList, section_id=section_id)
-    emails_by_user_id = mailing_list.emails_by_user_id()
-    for enrollment in enrollments:
-        try:
-            user_id = enrollment['user']['sis_user_id']
-        except KeyError:
-            continue
-        else:
-            enrollment['email_address'] = emails_by_user_id[user_id]
+    enrollments = get_enrollments(canvas_course_id, int(section_id))
+    enrollments.sort(key=lambda x: x['sortable_name'])
     section = get_section(canvas_course_id, section_id)
     return render(request, 'mailing_list/list_details.html',
                   {'section': section, 'enrollments': enrollments})
