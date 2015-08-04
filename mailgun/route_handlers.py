@@ -41,16 +41,13 @@ def handle_mailing_list_email_route(request):
         # fields to avoid duplicate being sent
         logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
         to_cc_list = []
-
         original_to_address = request.POST.get('To')
         if original_to_address:
             to_cc_list += original_to_address.replace(',', ';').split(';')
-            logger.debug("original_to_address=%s" % original_to_address)
 
         original_cc_address = request.POST.get('Cc')
         if original_cc_address:
             to_cc_list += original_cc_address.replace(',', ';').split(';')
-            logger.debug(" original_alt_cc_address=%s" % original_cc_address)
 
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
@@ -96,8 +93,8 @@ def handle_mailing_list_email_route(request):
         subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
     else:
-        # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC/BCC
-        # if they are already in the mailing list -  to avoid duplicates being sent as the email client would
+        # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
+        # if they are already in the mailing list - to avoid duplicates being sent as the email client would
         #  have already sent it
         try:
             member_addresses.remove(sender)
