@@ -128,4 +128,3 @@ def handle_mailing_list_email_route(request):
 
     return JsonResponse({'success': True})
 
-    def remove_
