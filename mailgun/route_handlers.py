@@ -59,8 +59,6 @@ def handle_mailing_list_email_route(request):
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = set([m['address'] for m in ml.members] + teaching_staff_addresses)
-    logger.debug(" here' the member_addresses")
-    logger.debug(member_addresses)
     bounce_back_email_template = None
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender not in member_addresses:
         logger.info(
@@ -104,7 +102,6 @@ def handle_mailing_list_email_route(request):
                 logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
                              % to_cc_list)
                 member_addresses.difference_update(to_cc_list)
-                logger.debug(member_addresses)
 
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
