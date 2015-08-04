@@ -37,8 +37,32 @@ def handle_mailing_list_email_route(request):
     in_reply_to = request.POST.get('In-Reply-To')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     if in_reply_to:
+        to_cc_list=[]
+
         original_to_address = request.POST.get('To')
-        logger.debug("This is a reply!! in_reply_to=%s and original_to_address=%s" % (in_reply_to,original_to_address))
+        to_cc_list += original_to_address.replace(',', ';').split(';')
+        logger.debug("\n\nThis is a reply!! in_reply_to=%s and original_to_address=%s"
+                     % (in_reply_to, original_to_address))
+        logger.debug(to_cc_list)
+
+        original_cc_address = request.POST.get('CC')
+        if original_cc_address:
+            to_cc_list += original_cc_address.replace(',', ';').split(';')
+            logger.debug(" original_alt_cc_address=%s" % original_cc_address)
+
+        original_alt_cc_address = request.POST.get('Cc')
+        if original_alt_cc_address:
+            logger.debug(" original_alt_cc_address=%s" % original_alt_cc_address)
+        if request.POST.get('cc'):
+            original_alt2_cc_address = request.POST.get('cc')
+            logger.debug(" original_alt2_cc_address=%s" % original_alt2_cc_address)
+        if request.POST.get('BCC'):
+            original_alt_bcc_address = request.POST.get('BCC')
+            logger.debug(" original_alt_bcc_address=%s" % original_alt_bcc_address)
+
+        logger.debug("contents of to_cc_list")
+        for item in to_cc_list:
+            logger.debug(item)
 
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
@@ -89,9 +113,13 @@ def handle_mailing_list_email_route(request):
         try:
             member_addresses.remove(sender)
             if in_reply_to:
-                member_addresses.remove(original_to_address)
-                logger.debug("Removing original_to_address =%s from this message as it is a reply all"
+                logger.debug("Removing duplicate addresses =%s from this message as it is a reply all"
                              % original_to_address)
+                for item in to_cc_list:
+                    if item in member_addresses:
+                        member_addresses.remove(item)
+                        logger.debug("Removing  duplicate item" % item)
+
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
@@ -99,3 +127,5 @@ def handle_mailing_list_email_route(request):
             ml.send_mail(sender, address, subject, text=message_body)
 
     return JsonResponse({'success': True})
+
+    def remove_
