@@ -37,29 +37,20 @@ def handle_mailing_list_email_route(request):
     in_reply_to = request.POST.get('In-Reply-To')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     if in_reply_to:
-        to_cc_list=[]
+        # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
+        # fields to avoid duplicate being sent
+        logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
+        to_cc_list = []
 
         original_to_address = request.POST.get('To')
-        to_cc_list += original_to_address.replace(',', ';').split(';')
-        logger.debug("\n\nThis is a reply!! in_reply_to=%s and original_to_address=%s"
-                     % (in_reply_to, original_to_address))
-        logger.debug(to_cc_list)
+        if original_to_address:
+            to_cc_list += original_to_address.replace(',', ';').split(';')
+            logger.debug("original_to_address=%s" % original_to_address)
 
-        original_cc_address = request.POST.get('CC')
+        original_cc_address = request.POST.get('Cc')
         if original_cc_address:
             to_cc_list += original_cc_address.replace(',', ';').split(';')
             logger.debug(" original_alt_cc_address=%s" % original_cc_address)
-
-        if request.POST.get('BCC'):
-            original_alt_bcc_address = request.POST.get('BCC')
-            logger.debug(" original_alt_bcc_address=%s" % original_alt_bcc_address)
-        if request.POST.get('Bcc'):
-            original_alt2_bcc_address = request.POST.get('Bcc')
-            logger.debug(" original_alt2_bcc_address=%s" % original_alt2_bcc_address)
-
-        logger.debug("contents of to_cc_list")
-        for item in to_cc_list:
-            logger.debug(item)
 
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
@@ -105,13 +96,14 @@ def handle_mailing_list_email_route(request):
         subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
     else:
-        # Do not send to the sender and also check if it is a reply-all and do not send to original sender to avoid
-        # duplicate being sent as the email client would have already sent it per the Reply-To param set in header
+        # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC/BCC
+        # if they are already in the mailing list -  to avoid duplicates being sent as the email client would
+        #  have already sent it
         try:
             member_addresses.remove(sender)
             if in_reply_to:
-                logger.debug("Removing duplicate addresses =%s from this message as it is a reply all"
-                             % original_to_address)
+                logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
+                             % to_cc_list)
                 for item in to_cc_list:
                     if item in member_addresses:
                         member_addresses.remove(item)
