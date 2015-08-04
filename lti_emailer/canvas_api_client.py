@@ -22,6 +22,27 @@ SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
 
 
+def get_users_in_course(canvas_course_id):
+    cache_key = settings.CACHE_KEY_USERS_BY_CANVAS_COURSE_ID % canvas_course_id
+    result = cache.get(cache_key)
+    if not result:
+        try:
+            result = get_all_list_data(
+                SDK_CONTEXT,
+                courses.list_users_in_course_users,
+                canvas_course_id,
+                ['email', 'enrollments']
+            )
+        except CanvasAPIError:
+            logger.exception(
+                "Failed to get users for canvas_course_id %s",
+                canvas_course_id
+            )
+            raise
+        cache.set(cache_key, result)
+    return result
+
+
 def get_section(canvas_course_id, section_id):
     sections = get_sections(canvas_course_id)
     section_id = int(section_id)
@@ -45,37 +66,22 @@ def get_sections(canvas_course_id):
 
 
 def get_enrollments(canvas_course_id, section_id):
-    cache_key = settings.CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID % section_id
-    result = cache.get(cache_key)
-    if not result:
-        try:
-            result = get_all_list_data(SDK_CONTEXT, enrollments.list_enrollments_sections, section_id)
-            print json.dumps(result, indent=4)
-        except CanvasAPIError:
-            logger.exception(
-                "Failed to get canvas enrollments for canvas_course_id %s and section_id %s",
-                canvas_course_id,
-                section_id
-            )
-            raise
-        cache.set(cache_key, result)
-    return result
+    users = get_users_in_course(canvas_course_id)
+    enrollments = []
+    for user in users:
+        for enrollment in user['enrollments']:
+            if enrollment['course_section_id'] == section_id:
+                enrollment['email'] = user['email']
+                enrollment['sortable_name'] = user['sortable_name']
+                enrollments.append(enrollment)
+    return enrollments
 
 
 def get_teaching_staff_enrollments(canvas_course_id):
-    logger.debug("Fetching teaching staff enrollments for canvas course id %s", canvas_course_id)
-    cache_key = settings.CACHE_KEY_CANVAS_TEACHING_STAFF_ENROLLMENTS_BY_CANVAS_COURSE_ID % canvas_course_id
-    result = cache.get(cache_key)
-    if not result:
-        try:
-            result = get_all_list_data(
-                SDK_CONTEXT,
-                enrollments.list_enrollments_courses,
-                canvas_course_id,
-                type=TEACHING_STAFF_ENROLLMENT_TYPES
-            )
-        except CanvasAPIError:
-            logger.exception("Failed to get canvas teaching staff enrollments for canvas_course_id", canvas_course_id)
-            raise
-        cache.set(cache_key, result)
-    return result
+    users = get_users_in_course(canvas_course_id)
+    enrollments = []
+    for user in users:
+        for enrollment in user['enrollments']:
+            if enrollment['type'] in TEACHING_STAFF_ENROLLMENT_TYPES:
+                enrollments.append(enrollment)
+    return enrollments
