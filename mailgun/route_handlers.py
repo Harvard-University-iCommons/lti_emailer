@@ -34,7 +34,21 @@ def handle_mailing_list_email_route(request):
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
+    in_reply_to = request.POST.get('In-Reply-To')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
+    if in_reply_to:
+        # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
+        # fields to avoid duplicate being sent
+        logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
+        to_cc_list = []
+        original_to_address = request.POST.get('To')
+        if original_to_address:
+            to_cc_list += original_to_address.replace(',', ';').split(';')
+
+        original_cc_address = request.POST.get('Cc')
+        if original_cc_address:
+            to_cc_list += original_cc_address.replace(',', ';').split(';')
+
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
@@ -79,13 +93,24 @@ def handle_mailing_list_email_route(request):
         subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
     else:
-        # Do not send to the sender
+        # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
+        # if they are already in the mailing list - to avoid duplicates being sent as the email client would
+        #  have already sent it
         try:
             member_addresses.remove(sender)
+            if in_reply_to:
+                logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
+                             % to_cc_list)
+                for item in to_cc_list:
+                    if item in member_addresses:
+                        member_addresses.remove(item)
+                        logger.debug("Removing  duplicate item %s" % item)
+
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
         for address in member_addresses:
-            ml.send_mail(address, subject, text=message_body)
+            ml.send_mail(sender, address, subject, text=message_body)
 
     return JsonResponse({'success': True})
+
