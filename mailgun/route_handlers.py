@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods
 from django.template.loader import get_template
 from django.template import Context
 
+from icommons_common.models import CourseInstance
 from mailing_list.models import MailingList
 
 from mailgun.decorators import authenticate
@@ -93,6 +94,28 @@ def handle_mailing_list_email_route(request):
         subject = "Undeliverable mail"
         ml.send_mail(sender, subject, html=content)
     else:
+        # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
+        try:
+            ci = CourseInstance.objects.get(canvas_course_id=ml.canvas_course_id)
+        except CourseInstance.DoesNotExist:
+            logger.warning(
+                'Unable to find the course instance for Canvas course id {}, '
+                'so we cannot prepend a short title to the email subject field.'
+                .format(canvas_course_id))
+        except CourseInstance.MultipleObjectsReturned:
+            logger.warning(
+                'Found multiple course instances for Canvas course id {}, '
+                'so we cannot prepend a short title to the email subject field.'
+                .format(canvas_course_id))
+        except RuntimeError:
+            logger.exception(
+                'Received unexpected error trying to look up course instance '
+                'for Canvas course id {}'.format(canvas_course_id))
+        else:
+            title_prefix = '[{}]'.format(ci.short_title)
+            if title_prefix not in subject:
+                subject = ' '.join((title_prefix, subject))
+
         # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
         # if they are already in the mailing list - to avoid duplicates being sent as the email client would
         #  have already sent it
