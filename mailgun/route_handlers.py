@@ -101,10 +101,8 @@ def handle_mailing_list_email_route(request):
             if in_reply_to:
                 logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
                              % to_cc_list)
-                for item in to_cc_list:
-                    if item in member_addresses:
-                        member_addresses.remove(item)
-                        logger.debug("Removing  duplicate item %s" % item)
+                member_addresses.difference_update(to_cc_list)
+                logger.debug(member_addresses)
 
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
