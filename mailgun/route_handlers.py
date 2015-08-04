@@ -50,15 +50,12 @@ def handle_mailing_list_email_route(request):
             to_cc_list += original_cc_address.replace(',', ';').split(';')
             logger.debug(" original_alt_cc_address=%s" % original_cc_address)
 
-        original_alt_cc_address = request.POST.get('Cc')
-        if original_alt_cc_address:
-            logger.debug(" original_alt_cc_address=%s" % original_alt_cc_address)
-        if request.POST.get('cc'):
-            original_alt2_cc_address = request.POST.get('cc')
-            logger.debug(" original_alt2_cc_address=%s" % original_alt2_cc_address)
         if request.POST.get('BCC'):
             original_alt_bcc_address = request.POST.get('BCC')
             logger.debug(" original_alt_bcc_address=%s" % original_alt_bcc_address)
+        if request.POST.get('Bcc'):
+            original_alt2_bcc_address = request.POST.get('Bcc')
+            logger.debug(" original_alt2_bcc_address=%s" % original_alt2_bcc_address)
 
         logger.debug("contents of to_cc_list")
         for item in to_cc_list:
@@ -118,7 +115,7 @@ def handle_mailing_list_email_route(request):
                 for item in to_cc_list:
                     if item in member_addresses:
                         member_addresses.remove(item)
-                        logger.debug("Removing  duplicate item" % item)
+                        logger.debug("Removing  duplicate item %s" % item)
 
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
