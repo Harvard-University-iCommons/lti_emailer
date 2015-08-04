@@ -206,11 +206,14 @@ class MailgunClient(object):
                     len(emails)
                 ))
 
-    def send_mail(self, from_address, to_address, subject='', text='', html=''):
+    def send_mail(self, from_address, to_address, mailing_list_address,  subject='', text='', html=''):
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL, settings.LISTSERV_DOMAIN)
         payload = {
             'from': from_address,
             'to': to_address,
+            'h:cc': mailing_list_address,
+            'sender': mailing_list_address,
+            'h:Reply-To': from_address,
             'subject': subject,
             'text': text,
             'html': html
