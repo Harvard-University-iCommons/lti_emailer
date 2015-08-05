@@ -1,15 +1,15 @@
 import logging
 
 from django.http import JsonResponse
+from django.template import Context
+from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.template.loader import get_template
-from django.template import Context
+from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
-from mailing_list.models import MailingList
-
 from mailgun.decorators import authenticate
+from mailing_list.models import MailingList
 
 
 logger = logging.getLogger(__name__)
@@ -35,21 +35,14 @@ def handle_mailing_list_email_route(request):
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
-    in_reply_to = request.POST.get('In-Reply-To')
+    in_reply_to = request.POST.get('in-reply-to')
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     if in_reply_to:
         # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
         # fields to avoid duplicate being sent
-        logger.debug("This is a reply!! in_reply_to=%s ", in_reply_to)
-        to_cc_list = []
-        original_to_address = request.POST.get('To')
-        if original_to_address:
-            to_cc_list += original_to_address.replace(',', ';').split(';')
-
-        original_cc_address = request.POST.get('Cc')
-        if original_cc_address:
-            to_cc_list += original_cc_address.replace(',', ';').split(';')
-
+        to_cc_list = (address.parse_list(request.POST.get('to')) 
+                          + address.parse_list(request.POST.get('cc')))
+        to_cc_list = [a.address for a in to_cc_list]
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
@@ -114,7 +107,7 @@ def handle_mailing_list_email_route(request):
         else:
             title_prefix = '[{}]'.format(ci.short_title)
             if title_prefix not in subject:
-                subject = ' '.join((title_prefix, subject))
+                subject = title_prefix + ' ' + subject
 
         # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
         # if they are already in the mailing list - to avoid duplicates being sent as the email client would
@@ -125,11 +118,31 @@ def handle_mailing_list_email_route(request):
                 logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
                              % to_cc_list)
                 member_addresses.difference_update(to_cc_list)
-
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
-        for address in member_addresses:
-            ml.send_mail(sender, address, subject, text=message_body)
+        # we want to add 'via Canvas' to the sender's name.  so first make
+        # sure we know their name.
+        sender_address = address.parse(sender)
+        if sender_address.display_name:
+            name = _get_name_for_email(sender_address.address)
+            if name:
+                sender_address.display_name = name
+
+        # now add in 'via Canvas'
+        if sender_address.display_name:
+            sender_address.display_name += ' via Canvas'
+        sender_address = sender_address.full_spec()
+
+        # and send it off
+        for member_address in member_addresses:
+            ml.send_mail(sender_address, member_address, subject,
+                         text=message_body)
 
     return JsonResponse({'success': True})
+
+
+def _get_name_for_email(canvas_course_id, address):
+    users = canvas_api_client.get_users_in_course(canvas_course_id)
+    names_by_email = {u['email']: u['name'] for u in users}
+    return names_by_email.get(address, '')
