@@ -36,10 +36,17 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
     in_reply_to = request.POST.get('in-reply-to')
+
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
+
+    # if we want to check email addresses against the sender, we need to parse
+    # out just the address.
+    sender_address = address.parse(sender)
+
     if in_reply_to:
         # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
         # fields to avoid duplicate being sent
+        logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
         to_cc_list = (address.parse_list(request.POST.get('to')) 
                           + address.parse_list(request.POST.get('cc')))
         to_cc_list = [a.address for a in to_cc_list]
@@ -55,14 +62,16 @@ def handle_mailing_list_email_route(request):
     member_addresses = teaching_staff_addresses.union(
                            [m['address'] for m in ml.members])
     bounce_back_email_template = None
-    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender not in member_addresses:
+    if (ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS
+            and sender_address.address not in member_addresses):
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender was not a member",
             sender,
             recipient
         )
         bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender not in teaching_staff_addresses:
+    elif (ml.access_level == MailingList.ACCESS_LEVEL_STAFF
+            and sender_address.address not in teaching_staff_addresses):
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender "
             "was not a staff member",
@@ -86,7 +95,7 @@ def handle_mailing_list_email_route(request):
             'message_body': message_body
         }))
         subject = "Undeliverable mail"
-        ml.send_mail(sender, subject, html=content)
+        ml.send_mail(sender_address.full_spec(), subject, html=content)
     else:
         # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
         try:
@@ -114,9 +123,10 @@ def handle_mailing_list_email_route(request):
         # if they are already in the mailing list - to avoid duplicates being sent as the email client would
         #  have already sent it
         try:
-            member_addresses.remove(sender)
+            member_addresses.remove(sender_address.address)
             if in_reply_to:
-                logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
+                logger.debug('Removing any duplicate addresses =%s from this '
+                             'message as it is a reply all'
                              % to_cc_list)
                 member_addresses.difference_update(to_cc_list)
         except KeyError:
@@ -124,7 +134,6 @@ def handle_mailing_list_email_route(request):
 
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
-        sender_address = address.parse(sender)
         if sender_address.display_name:
             name = _get_name_for_email(sender_address.address)
             if name:
@@ -133,11 +142,10 @@ def handle_mailing_list_email_route(request):
         # now add in 'via Canvas'
         if sender_address.display_name:
             sender_address.display_name += ' via Canvas'
-        sender_address = sender_address.full_spec()
 
         # and send it off
         for member_address in member_addresses:
-            ml.send_mail(sender_address, member_address, subject,
+            ml.send_mail(sender_address.full_spec(), member_address, subject,
                          text=message_body)
 
     return JsonResponse({'success': True})
