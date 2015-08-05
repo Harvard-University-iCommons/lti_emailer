@@ -115,9 +115,10 @@ def handle_mailing_list_email_route(request):
                 'Received unexpected error trying to look up course instance '
                 'for Canvas course id {}'.format(canvas_course_id))
         else:
-            title_prefix = '[{}]'.format(ci.short_title)
-            if title_prefix not in subject:
-                subject = title_prefix + ' ' + subject
+            if ci.short_title:
+                title_prefix = '[{}]'.format(ci.short_title)
+                if title_prefix not in subject:
+                    subject = title_prefix + ' ' + subject
 
         # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
         # if they are already in the mailing list - to avoid duplicates being sent as the email client would
@@ -145,6 +146,9 @@ def handle_mailing_list_email_route(request):
 
         # and send it off
         for member_address in member_addresses:
+            logger.info('Mailgun router handler sending email to {} from {}, '
+                        'subject {}'.format(
+                            member_address, sender_address.full_spec(), subject))
             ml.send_mail(sender_address.full_spec(), member_address, subject,
                          text=message_body)
 
