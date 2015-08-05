@@ -95,7 +95,8 @@ def handle_mailing_list_email_route(request):
             'message_body': message_body
         }))
         subject = "Undeliverable mail"
-        ml.send_mail(sender_address.full_spec(), subject, html=content)
+        ml.send_mail(sender_address.full_spec(), member_address, subject,
+                     html=content)
     else:
         # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
         try:
