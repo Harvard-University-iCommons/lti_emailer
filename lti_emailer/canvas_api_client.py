@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
+USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
 
 
 def get_users_in_course(canvas_course_id):
@@ -71,8 +72,7 @@ def get_enrollments(canvas_course_id, section_id):
     for user in users:
         for enrollment in user['enrollments']:
             if enrollment['course_section_id'] == section_id:
-                enrollment['email'] = user['email']
-                enrollment['sortable_name'] = user['sortable_name']
+                _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
     return enrollments
 
@@ -83,5 +83,10 @@ def get_teaching_staff_enrollments(canvas_course_id):
     for user in users:
         for enrollment in user['enrollments']:
             if enrollment['type'] in TEACHING_STAFF_ENROLLMENT_TYPES:
+                _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
     return enrollments
+
+
+def _copy_user_attributes_to_enrollment(user, enrollment):
+    enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
