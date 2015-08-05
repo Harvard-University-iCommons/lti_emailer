@@ -28,39 +28,40 @@
         ml.updatedAccessLevel = '';
         ml.accessLevels = [{
             id: 'staff',
-            name: {class: 'Staff Access', section: 'Staff Access Only'}
+            name: {class: 'Staff Access', section: 'Staff Access Only'},
+            description: {
+                class: 'Only members of the class with teaching related roles can email the mailing list. (e.g. TA, TF, Faculty, etc)',
+                section: 'Only members of the class with teaching related roles can email the mailing list. (e.g. TA, TF, Faculty, etc)'
+            }
         },{
             id: 'members',
-            name: {class: 'Course Access', section: 'Section Access'}
+            name: {class: 'Course Access', section: 'Section Access'},
+            description: {
+                class: 'Only teaching staff, students, and others added to this course can send and reply to this mailing list.',
+                section: 'Only teaching staff, students, and others added to this section can send and reply to this mailing list.'
+            }
         },{
             id: 'everyone',
-            name: {class: 'World Access', section: 'World Access'}
-        },{
-            id: 'readonly',
-            name: {class: 'Disabled', section: 'Disabled'}
-        }];
-        ml.accessLevelStatus = {
-            members: {
-                class: 'Only teaching staff, students, and others added to ' +
-                       'this course can send and reply to this mailing list.',
-                section: 'Only teaching staff, students, and others added to ' +
-                         'this section can send and reply to this mailing list.'
-            },
-            staff: {
-                class: 'Only members of the class with teaching related roles can email the mailing list.' +
-                ' (e.g. TA, TF, Faculty, etc)',
-                section: 'Only members of the class with teaching related roles can email the mailing list.' +
-                ' (e.g. TA, TF, Faculty, etc)'
-            },
-            everyone: {
+            name: {class: 'World Access', section: 'World Access'},
+            description: {
                 class: 'Anyone can send and reply to this mailing list.',
                 section: 'Anyone can send and reply to this mailing list.'
-            },
-            readonly: {
+            }
+        },{
+            id: 'readonly',
+            name: {class: 'Disabled', section: 'Disabled'},
+            description: {
                 class: 'This mailing list is disabled.',
                 section: 'This mailing list is disabled.'
             }
-        };
+        }];
+        ml.accessLevelDisplayNameMap = {};
+        ml.accessLevelDescriptionMap = {};
+        for (var i = 0; i < ml.accessLevels.length; i++) {
+            var accessLevel = ml.accessLevels[i];
+            ml.accessLevelDisplayNameMap[accessLevel.id] = accessLevel.name;
+            ml.accessLevelDescriptionMap[accessLevel.id] = accessLevel.description;
+        }
 
         $http.get(URL_LISTS).success(function(data){
             ml.isLoading = false;
