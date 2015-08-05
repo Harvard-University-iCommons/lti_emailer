@@ -39,7 +39,7 @@ def handle_mailing_list_email_route(request):
     if in_reply_to:
         # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
         # fields to avoid duplicate being sent
-        logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
+        logger.debug("This is a reply!! in_reply_to=%s ", in_reply_to)
         to_cc_list = []
         original_to_address = request.POST.get('To')
         if original_to_address:
@@ -58,7 +58,7 @@ def handle_mailing_list_email_route(request):
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
-    member_addresses = set([m['address'] for m in ml.members] + teaching_staff_addresses)
+    member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
     bounce_back_email_template = None
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender not in member_addresses:
         logger.info(
@@ -110,4 +110,3 @@ def handle_mailing_list_email_route(request):
             ml.send_mail(sender, address, subject, text=message_body)
 
     return JsonResponse({'success': True})
-
