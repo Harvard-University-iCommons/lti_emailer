@@ -8,7 +8,7 @@ from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
-from lti_emailer import canvas_api_client
+from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
 from mailing_list.models import MailingList
 
@@ -142,8 +142,7 @@ def handle_mailing_list_email_route(request):
         logger.debug('Original sender name: {}, address: {}'.format(
                         sender_address.display_name, sender_address.address))
         if not sender_address.display_name:
-            name = canvas_api_client.get_name_for_email(ml.canvas_course_id,
-                                                        sender_address.address)
+            name = get_name_for_email(ml.canvas_course_id, sender_address.address)
             if name:
                 sender_address.display_name = name
                 logger.debug('Looked up sender name: {}, address: {}'.format(
