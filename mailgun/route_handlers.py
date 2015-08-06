@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
+from lti_emailer import canvas_api_client
 from mailgun.decorators import authenticate
 from mailing_list.models import MailingList
 
