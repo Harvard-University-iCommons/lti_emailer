@@ -36,7 +36,7 @@ def handle_mailing_list_email_route(request):
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
-    in_reply_to = request.POST.get('in-reply-to')
+    in_reply_to = request.POST.get('In-Reply-To')
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug('Full mailgun post: {}'.format(request.POST))
@@ -49,8 +49,8 @@ def handle_mailing_list_email_route(request):
         # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
         # fields to avoid duplicate being sent
         logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
-        to_cc_list = (address.parse_list(request.POST.get('to')) 
-                          + address.parse_list(request.POST.get('cc')))
+        to_cc_list = (address.parse_list(request.POST.get('To')) 
+                          + address.parse_list(request.POST.get('Cc')))
         to_cc_list = [a.address for a in to_cc_list]
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
