@@ -126,7 +126,7 @@ def handle_mailing_list_email_route(request):
         # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
         # if they are already in the mailing list - to avoid duplicates being sent as the email client would
         #  have already sent it
-        logger.info('Full list of recipients: {}'.format(member_addresses))
+        logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
             member_addresses.remove(sender_address.address)
             if in_reply_to:
@@ -158,8 +158,8 @@ def handle_mailing_list_email_route(request):
         # and send it off
         logger.info('Final list of recipients: {}'.format(member_addresses))
         for member_address in member_addresses:
-            logger.info('Mailgun router handler sending email to {} from {}, '
-                        'subject {}'.format(
+            logger.debug('Mailgun router handler sending email to {} from {}, '
+                         'subject {}'.format(
                             member_address, sender_address.full_spec(), subject))
             ml.send_mail(sender_address.full_spec(), member_address, subject,
                          text=message_body)
