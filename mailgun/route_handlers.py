@@ -107,16 +107,16 @@ def handle_mailing_list_email_route(request):
             logger.warning(
                 'Unable to find the course instance for Canvas course id {}, '
                 'so we cannot prepend a short title to the email subject field.'
-                .format(canvas_course_id))
+                .format(ml.canvas_course_id))
         except CourseInstance.MultipleObjectsReturned:
             logger.warning(
                 'Found multiple course instances for Canvas course id {}, '
                 'so we cannot prepend a short title to the email subject field.'
-                .format(canvas_course_id))
+                .format(ml.canvas_course_id))
         except RuntimeError:
             logger.exception(
                 'Received unexpected error trying to look up course instance '
-                'for Canvas course id {}'.format(canvas_course_id))
+                'for Canvas course id {}'.format(ml.canvas_course_id))
         else:
             if ci.short_title:
                 title_prefix = '[{}]'.format(ci.short_title)
