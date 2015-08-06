@@ -32,9 +32,9 @@ def handle_mailing_list_email_route(request):
     :param request:
     :return:
     """
-    sender = request.POST.get('Sender')
-    recipient = request.POST.get('Recipient')
-    subject = request.POST.get('Subject')
+    sender = request.POST.get('sender')
+    recipient = request.POST.get('recipient')
+    subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
     in_reply_to = request.POST.get('In-Reply-To')
 
