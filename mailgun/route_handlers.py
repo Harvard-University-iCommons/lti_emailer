@@ -38,6 +38,7 @@ def handle_mailing_list_email_route(request):
     in_reply_to = request.POST.get('in-reply-to')
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
+    logger.debug('Full mailgun post: {}'.format(request.POST))
 
     # if we want to check email addresses against the sender, we need to parse
     # out just the address.
@@ -137,7 +138,7 @@ def handle_mailing_list_email_route(request):
 
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
-        if sender_address.display_name:
+        if not sender_address.display_name:
             name = _get_name_for_email(sender_address.address)
             if name:
                 sender_address.display_name = name
