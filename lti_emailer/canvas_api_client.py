@@ -89,7 +89,7 @@ def get_teaching_staff_enrollments(canvas_course_id):
 
 
 def get_name_for_email(canvas_course_id, address):
-    users = canvas_api_client.get_users_in_course(canvas_course_id)
+    users = get_users_in_course(canvas_course_id)
     names_by_email = {u['email']: u['name'] for u in users}
     return names_by_email.get(address, '')
 
