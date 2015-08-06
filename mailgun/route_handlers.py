@@ -138,14 +138,21 @@ def handle_mailing_list_email_route(request):
 
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
+        logger.debug('Original sender name: {}, address: {}'.format(
+                        sender_address.display_name, sender_address.address))
         if not sender_address.display_name:
-            name = _get_name_for_email(sender_address.address)
+            name = _get_name_for_email(ml.canvas_course_id,
+                                       sender_address.address)
             if name:
                 sender_address.display_name = name
+                logger.debug('Looked up sender name: {}, address: {}'.format(
+                                sender_address.display_name, sender_address.address))
 
         # now add in 'via Canvas'
         if sender_address.display_name:
             sender_address.display_name += ' via Canvas'
+        logger.debug('Final sender name: {}, address: {}'.format(
+                        sender_address.display_name, sender_address.address))
 
         # and send it off
         logger.info('Final list of recipients: {}'.format(member_addresses))
