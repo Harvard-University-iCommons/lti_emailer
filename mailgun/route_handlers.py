@@ -1,14 +1,16 @@
 import logging
 
 from django.http import JsonResponse
+from django.template import Context
+from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.template.loader import get_template
-from django.template import Context
+from flanker.addresslib import address
 
-from mailing_list.models import MailingList
-
+from icommons_common.models import CourseInstance
+from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
+from mailing_list.models import MailingList
 
 
 logger = logging.getLogger(__name__)
@@ -34,21 +36,22 @@ def handle_mailing_list_email_route(request):
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
     message_body = request.POST.get('body-plain')
-    in_reply_to = request.POST.get('In-Reply-To')
+    in_reply_to = request.POST.get('in-reply-to')
+
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
+    logger.debug('Full mailgun post: {}'.format(request.POST))
+
+    # if we want to check email addresses against the sender, we need to parse
+    # out just the address.
+    sender_address = address.parse(sender)
+
     if in_reply_to:
         # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
         # fields to avoid duplicate being sent
-        logger.debug("This is a reply!! in_reply_to=%s ", in_reply_to)
-        to_cc_list = []
-        original_to_address = request.POST.get('To')
-        if original_to_address:
-            to_cc_list += original_to_address.replace(',', ';').split(';')
-
-        original_cc_address = request.POST.get('Cc')
-        if original_cc_address:
-            to_cc_list += original_cc_address.replace(',', ';').split(';')
-
+        logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
+        to_cc_list = (address.parse_list(request.POST.get('to')) 
+                          + address.parse_list(request.POST.get('cc')))
+        to_cc_list = [a.address for a in to_cc_list]
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
@@ -58,16 +61,19 @@ def handle_mailing_list_email_route(request):
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
-    member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
+    member_addresses = teaching_staff_addresses.union(
+                           [m['address'] for m in ml.members])
     bounce_back_email_template = None
-    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender not in member_addresses:
+    if (ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS
+            and sender_address.address not in member_addresses):
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender was not a member",
             sender,
             recipient
         )
         bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender not in teaching_staff_addresses:
+    elif (ml.access_level == MailingList.ACCESS_LEVEL_STAFF
+            and sender_address.address not in teaching_staff_addresses):
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender "
             "was not a staff member",
@@ -91,22 +97,70 @@ def handle_mailing_list_email_route(request):
             'message_body': message_body
         }))
         subject = "Undeliverable mail"
-        ml.send_mail(sender, subject, html=content)
+        ml.send_mail(ml.address, sender_address.full_spec(),
+                     subject, html=content)
     else:
+        # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
+        try:
+            ci = CourseInstance.objects.get(canvas_course_id=ml.canvas_course_id)
+        except CourseInstance.DoesNotExist:
+            logger.warning(
+                'Unable to find the course instance for Canvas course id {}, '
+                'so we cannot prepend a short title to the email subject field.'
+                .format(ml.canvas_course_id))
+        except CourseInstance.MultipleObjectsReturned:
+            logger.warning(
+                'Found multiple course instances for Canvas course id {}, '
+                'so we cannot prepend a short title to the email subject field.'
+                .format(ml.canvas_course_id))
+        except RuntimeError:
+            logger.exception(
+                'Received unexpected error trying to look up course instance '
+                'for Canvas course id {}'.format(ml.canvas_course_id))
+        else:
+            if ci.short_title:
+                title_prefix = '[{}]'.format(ci.short_title)
+                if title_prefix not in subject:
+                    subject = title_prefix + ' ' + subject
+
         # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
         # if they are already in the mailing list - to avoid duplicates being sent as the email client would
         #  have already sent it
+        logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
-            member_addresses.remove(sender)
+            member_addresses.remove(sender_address.address)
             if in_reply_to:
-                logger.debug("Removing any duplicate addresses =%s from this message as it is a reply all"
+                logger.debug('Removing any duplicate addresses =%s from this '
+                             'message as it is a reply all'
                              % to_cc_list)
                 member_addresses.difference_update(to_cc_list)
-
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
 
-        for address in member_addresses:
-            ml.send_mail(sender, address, subject, text=message_body)
+        # we want to add 'via Canvas' to the sender's name.  so first make
+        # sure we know their name.
+        logger.debug('Original sender name: {}, address: {}'.format(
+                        sender_address.display_name, sender_address.address))
+        if not sender_address.display_name:
+            name = get_name_for_email(ml.canvas_course_id, sender_address.address)
+            if name:
+                sender_address.display_name = name
+                logger.debug('Looked up sender name: {}, address: {}'.format(
+                                sender_address.display_name, sender_address.address))
+
+        # now add in 'via Canvas'
+        if sender_address.display_name:
+            sender_address.display_name += ' via Canvas'
+        logger.debug('Final sender name: {}, address: {}'.format(
+                        sender_address.display_name, sender_address.address))
+
+        # and send it off
+        logger.info('Final list of recipients: {}'.format(member_addresses))
+        for member_address in member_addresses:
+            logger.debug('Mailgun router handler sending email to {} from {}, '
+                         'subject {}'.format(
+                            member_address, sender_address.full_spec(), subject))
+            ml.send_mail(sender_address.full_spec(), member_address, subject,
+                         text=message_body)
 
     return JsonResponse({'success': True})

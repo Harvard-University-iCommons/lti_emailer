@@ -88,5 +88,11 @@ def get_teaching_staff_enrollments(canvas_course_id):
     return enrollments
 
 
+def get_name_for_email(canvas_course_id, address):
+    users = get_users_in_course(canvas_course_id)
+    names_by_email = {u['email']: u['name'] for u in users}
+    return names_by_email.get(address, '')
+
+
 def _copy_user_attributes_to_enrollment(user, enrollment):
     enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
