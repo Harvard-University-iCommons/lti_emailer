@@ -142,8 +142,8 @@ def handle_mailing_list_email_route(request):
         logger.debug('Original sender name: {}, address: {}'.format(
                         sender_address.display_name, sender_address.address))
         if not sender_address.display_name:
-            name = _get_name_for_email(ml.canvas_course_id,
-                                       sender_address.address)
+            name = canvas_api_client.get_name_for_email(ml.canvas_course_id,
+                                                        sender_address.address)
             if name:
                 sender_address.display_name = name
                 logger.debug('Looked up sender name: {}, address: {}'.format(
@@ -165,9 +165,3 @@ def handle_mailing_list_email_route(request):
                          text=message_body)
 
     return JsonResponse({'success': True})
-
-
-def _get_name_for_email(canvas_course_id, address):
-    users = canvas_api_client.get_users_in_course(canvas_course_id)
-    names_by_email = {u['email']: u['name'] for u in users}
-    return names_by_email.get(address, '')
