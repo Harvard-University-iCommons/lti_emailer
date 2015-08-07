@@ -260,27 +260,24 @@ LOGGING = {
         # TODO: remove this catch-all handler in favor of app-specific handlers
         '': {
             'handlers': ['console', 'app_logfile'],
-            'level': 'DEBUG',
+            'level': _DEFAULT_LOG_LEVEL,
         },
         'django.request': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'app_logfile'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
             'propagate': False,
         },
         'huey': {
-            'handlers': ['huey_logfile'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'huey_logfile'],
             'propagate': False,
         },
-        'mailing_list': {
+        'py.warnings': {
             'handlers': ['console', 'app_logfile'],
-            'level': 'DEBUG',
             'propagate': False,
-        }
+        },
     }
 }
