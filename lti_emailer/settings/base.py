@@ -276,7 +276,7 @@ LOGGING = {
             'propagate': False,
         },
         'py.warnings': {
-            'handlers': ['console', 'app_logfile'],
+            'handlers': ['console'],
             'propagate': False,
         },
     }
