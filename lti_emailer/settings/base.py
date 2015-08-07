@@ -197,7 +197,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'console': {
-            'level': _DEFAULT_LOG_LEVEL,
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
             'filters': ['require_debug_true'],
@@ -208,26 +208,24 @@ LOGGING = {
         '': {
             'handlers': ['console', 'app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
-            'propagate': True,
         },
         'django.request': {
-            'handlers': ['app_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['console', 'app_logfile'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': _DEFAULT_LOG_LEVEL,
-            'propagate': True,
+            'propagate': False,
         },
         'huey': {
-            'handlers': ['huey_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['console', 'huey_logfile'],
+            'propagate': False,
         },
-        'mailing_list': {
-            'handlers': ['console', 'app_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
-        }
+        'py.warnings': {
+            'handlers': ['console'],
+            'propagate': False,
+        },
     }
 }
 
