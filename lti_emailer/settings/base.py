@@ -250,7 +250,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'console': {
-            'level': _DEFAULT_LOG_LEVEL,
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
             'filters': ['require_debug_true'],
@@ -260,26 +260,27 @@ LOGGING = {
         # TODO: remove this catch-all handler in favor of app-specific handlers
         '': {
             'handlers': ['console', 'app_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
-            'propagate': True,
+            'level': 'DEBUG',
         },
         'django.request': {
-            'handlers': ['app_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['console'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': _DEFAULT_LOG_LEVEL,
-            'propagate': True,
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'huey': {
             'handlers': ['huey_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'mailing_list': {
             'handlers': ['console', 'app_logfile'],
-            'level': _DEFAULT_LOG_LEVEL,
+            'level': 'DEBUG',
+            'propagate': False,
         }
     }
 }
