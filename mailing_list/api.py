@@ -13,6 +13,8 @@ from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
 from django_auth_lti.verification import has_lti_roles
 
+from icommons_common.auth.lti_decorators import has_account_permission
+from icommons_common.canvas_api.helpers import accounts as canvas_helpers_accounts
 from icommons_common.view_utils import create_json_200_response, create_json_500_response
 
 from lti_emailer import canvas_api_client
@@ -23,7 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required(const.TEACHING_STAFF_ROLES)
+@has_account_permission(canvas_helpers_accounts.ACCOUNT_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
 def lists(request):
     """
@@ -52,7 +55,8 @@ def lists(request):
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required(const.TEACHING_STAFF_ROLES)
+@has_account_permission(canvas_helpers_accounts.ACCOUNT_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['PUT'])
 def set_access_level(request, mailing_list_id):
     """

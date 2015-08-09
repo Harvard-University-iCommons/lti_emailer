@@ -48,9 +48,8 @@ def handle_mailing_list_email_route(request):
     if in_reply_to:
         # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
         # fields to avoid duplicate being sent
-        logger.debug("This is a reply!! in_reply_to=%s "% in_reply_to)
-        to_cc_list = (address.parse_list(request.POST.get('To')) 
-                          + address.parse_list(request.POST.get('Cc')))
+        logger.debug("This is a reply!! in_reply_to=%s ", in_reply_to)
+        to_cc_list = (address.parse_list(request.POST.get('To')) + address.parse_list(request.POST.get('Cc')))
         to_cc_list = [a.address for a in to_cc_list]
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
@@ -60,20 +59,20 @@ def handle_mailing_list_email_route(request):
         return JsonResponse({'error': message}, status=406)  # Return status 406 so Mailgun does not retry
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
-    teaching_staff_addresses = ml.teaching_staff_addresses
-    member_addresses = teaching_staff_addresses.union(
-                           [m['address'] for m in ml.members])
+    try:
+        teaching_staff_addresses = ml.teaching_staff_addresses
+    except Exception as e:
+        logger.exception("Failed to find teaching staff addresses")
+    member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
     bounce_back_email_template = None
-    if (ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS
-            and sender_address.address not in member_addresses):
+    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address.address not in member_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender was not a member",
             sender,
             recipient
         )
         bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif (ml.access_level == MailingList.ACCESS_LEVEL_STAFF
-            and sender_address.address not in teaching_staff_addresses):
+    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address.address not in teaching_staff_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender "
             "was not a staff member",
@@ -139,27 +138,30 @@ def handle_mailing_list_email_route(request):
 
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
-        logger.debug('Original sender name: {}, address: {}'.format(
-                        sender_address.display_name, sender_address.address))
+        logger.debug(
+            'Original sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address)
+        )
         if not sender_address.display_name:
             name = get_name_for_email(ml.canvas_course_id, sender_address.address)
             if name:
                 sender_address.display_name = name
-                logger.debug('Looked up sender name: {}, address: {}'.format(
-                                sender_address.display_name, sender_address.address))
+                logger.debug(
+                    'Looked up sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address)
+                )
 
         # now add in 'via Canvas'
         if sender_address.display_name:
             sender_address.display_name += ' via Canvas'
-        logger.debug('Final sender name: {}, address: {}'.format(
-                        sender_address.display_name, sender_address.address))
+        logger.debug('Final sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address))
 
         # and send it off
         logger.info('Final list of recipients: {}'.format(member_addresses))
         for member_address in member_addresses:
-            logger.debug('Mailgun router handler sending email to {} from {}, '
-                         'subject {}'.format(
-                            member_address, sender_address.full_spec(), subject))
+            logger.debug(
+                "Mailgun router handler sending email to {} from {}, subject {}".format(
+                    member_address, sender_address.full_spec(), subject
+                )
+            )
             ml.send_mail(sender_address.full_spec(), member_address, subject,
                          text=message_body)
 
