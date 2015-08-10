@@ -8,6 +8,9 @@ from django.views.decorators.http import require_http_methods
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
 
+from icommons_common.auth.lti_decorators import has_account_permission
+from icommons_common.canvas_api.helpers import accounts as canvas_helpers_accounts
+
 from lti_emailer.canvas_api_client import get_enrollments, get_section
 from mailing_list.models import MailingList
 
@@ -16,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT,
-                    const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required(const.TEACHING_STAFF_ROLES)
+@has_account_permission(canvas_helpers_accounts.ACCOUNT_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
 def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
@@ -27,8 +30,8 @@ def admin_index(request):
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT,
-                    const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required(const.TEACHING_STAFF_ROLES)
+@has_account_permission(canvas_helpers_accounts.ACCOUNT_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
 def list_members(request, section_id):
     logged_in_user_id = request.LTI.get('lis_person_sourcedid')
