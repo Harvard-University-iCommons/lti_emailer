@@ -59,10 +59,7 @@ def handle_mailing_list_email_route(request):
         return JsonResponse({'error': message}, status=406)  # Return status 406 so Mailgun does not retry
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
-    try:
-        teaching_staff_addresses = ml.teaching_staff_addresses
-    except Exception as e:
-        logger.exception("Failed to find teaching staff addresses")
+    teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
     bounce_back_email_template = None
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address.address not in member_addresses:
