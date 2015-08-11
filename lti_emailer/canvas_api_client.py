@@ -14,9 +14,10 @@ from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
 from icommons_common.canvas_utils import SessionInactivityExpirationRC
-from icommons_common.canvas_api.helpers import accounts as canvas_api_helpers_accounts
-from icommons_common.canvas_api.helpers import courses as canvas_api_helpers_courses
-from icommons_common.canvas_api.helpers import roles as canvas_api_helpers_roles
+from icommons_common.canvas_api.helpers import (
+    courses as canvas_api_helper_courses,
+    roles as canvas_api_helper_roles
+)
 
 
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ def get_enrollments(canvas_course_id, section_id):
 
 
 def get_teaching_staff_enrollments(canvas_course_id):
-    account_id = canvas_api_helpers_courses.get_course(canvas_course_id)['account_id']
+    account_id = canvas_api_helper_courses.get_course(canvas_course_id)['account_id']
     users = get_users_in_course(canvas_course_id)
     enrollments = []
     for user in users:
@@ -102,8 +103,8 @@ def _get_authorized_teaching_staff_enrollment_types(account_id):
     return [
         role_name
         for role_name in TEACHING_STAFF_ENROLLMENT_TYPES
-        if canvas_api_helpers_roles.has_permission(
-            role_name, account_id, canvas_api_helpers_accounts.ACCOUNT_PERMISSION_SEND_MESSAGES_ALL
+        if canvas_api_helper_roles.has_permission(
+            role_name, account_id, canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL
         )
     ]
 
