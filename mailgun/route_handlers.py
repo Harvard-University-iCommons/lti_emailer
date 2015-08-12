@@ -35,7 +35,8 @@ def handle_mailing_list_email_route(request):
     sender = request.POST.get('sender')
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
-    message_body = request.POST.get('body-plain')
+    body_plain = request.POST.get('body-plain')
+    body_html = request.POST.get('body-html')
     in_reply_to = request.POST.get('In-Reply-To')
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
@@ -90,7 +91,7 @@ def handle_mailing_list_email_route(request):
             'sender': sender,
             'recipient': recipient,
             'subject': subject,
-            'message_body': message_body
+            'message_body': body_plain or body_html,
         }))
         subject = "Undeliverable mail"
         ml.send_mail('', ml.address, sender_address.address, subject, html=content)
@@ -159,7 +160,8 @@ def handle_mailing_list_email_route(request):
                 )
             )
             ml.send_mail(
-                sender_address.display_name, sender_address.address, member_address, subject, text=message_body
+                sender_address.display_name, sender_address.address,
+                member_address, subject, text=body_plain, html=body_html
             )
 
     return JsonResponse({'success': True})
