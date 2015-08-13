@@ -18,7 +18,7 @@
 <div class="float-left col-60">
   <div class="float-left col-60">
     <p>
-      <strong ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']"></strong> - <span ng-bind="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
+      <strong ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']"></strong> - <span ng-bind-html="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
     </p>
   </div>
   <div class="float-left col-40">
@@ -64,7 +64,7 @@
 {% endverbatim %}
                   <span ng-bind="access_level.name['{{ scope }}']"></span>
                 </label>
-                  <span ng-bind="access_level.description['{{ scope }}']"></span>
+                  <span ng-bind-html="access_level.description['{{ scope }}']"></span>
                 <br/>
               </div>
             </div>
