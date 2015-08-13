@@ -1,5 +1,5 @@
 (function(){
-    var app = angular.module('mailingList', ['ngAnimate', 'ng.django.urls']).config(function($httpProvider){
+    var app = angular.module('mailingList', ['ngSanitize', 'ngAnimate', 'ng.django.urls']).config(function($httpProvider){
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -30,15 +30,15 @@
             id: 'staff',
             name: {class: 'Staff Access', section: 'Staff Access Only'},
             description: {
-                class: 'Only members of the class with teaching related roles can email the mailing list. (e.g. TA, TF, Faculty, etc)',
-                section: 'Only members of the class with teaching related roles can email the mailing list. (e.g. TA, TF, Faculty, etc)'
+                class: 'For staff to email members of this course; students and guests <b>cannot</b> send or reply to this mailing list.',
+                section: 'For staff to email members of this course; students and guests <b>cannot</b> send or reply to this mailing list.'
             }
         },{
             id: 'members',
             name: {class: 'Course Access', section: 'Section Access'},
             description: {
-                class: 'Only teaching staff, students, and others added to this course can send and reply to this mailing list.',
-                section: 'Only teaching staff, students, and others added to this section can send and reply to this mailing list.'
+                class: 'For all members of this course to email each other; students, and guests <b>can</b> send and reply to this mailing list.',
+                section: 'For members of this section and all staff to email each other; students and guests in this section <b>can</b> send and reply to this mailing list.'
             }
         },{
             id: 'everyone',
