@@ -37,7 +37,7 @@
             id: 'members',
             name: {class: 'Course Access', section: 'Section Access'},
             description: {
-                class: 'For all members of this course to email each other; students, and guests <b>can</b> send and reply to this mailing list.',
+                class: 'For all members of this course to email each other; students and guests <b>can</b> send and reply to this mailing list.',
                 section: 'For members of this section and all staff to email each other; students and guests in this section <b>can</b> send and reply to this mailing list.'
             }
         },{
