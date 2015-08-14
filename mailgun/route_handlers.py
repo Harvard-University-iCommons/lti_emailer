@@ -159,6 +159,7 @@ def handle_mailing_list_email_route(request):
         # mailgun won't let us specify the cid on post
         if inlines:
             for f in inlines:
+                logger.debug('Replacing "{}" with "{}" in body'.format(f.cid, f.name))
                 body_html = re.sub(f.cid, f.name, body_html)
 
         # and send it off
@@ -197,6 +198,7 @@ def _get_attachments_inlines(request):
         content_id_map = {}
     attachment_name_to_cid = {v: k.strip('<>')
                                   for k,v in content_id_map.iteritems()}
+    logger.debug('Attachment name to cid: {}'.format(attachment_name_to_cid))
 
     for n in xrange(1, attachment_count+1):
         attachment_name = 'attachment-{}'.format(n)
