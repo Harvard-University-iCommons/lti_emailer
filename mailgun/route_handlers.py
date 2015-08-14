@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from django.http import JsonResponse
 from django.template import Context
@@ -154,6 +155,12 @@ def handle_mailing_list_email_route(request):
             sender_address.display_name += ' via Canvas'
         logger.debug('Final sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address))
 
+        # make sure inline images actually show up inline, since fscking
+        # mailgun won't let us specify the cid on post
+        if inlines:
+            for f in inlines:
+                body_html = re.sub(f.cid, f.name, body_html)
+
         # and send it off
         logger.info('Final list of recipients: {}'.format(member_addresses))
         for member_address in member_addresses:
@@ -190,7 +197,7 @@ def _get_attachments_inlines(request):
         content_id_map = {}
     attachment_name_to_cid = {v: k for k,v in content_id_map.iteritems()}
 
-    for n in xrange(1, attachment_count):
+    for n in xrange(1, attachment_count+1):
         attachment_name = 'attachment-{}'.format(n)
         file_ = request.FILES[attachment_name]
         if attachment_name in attachment_name_to_cid:
