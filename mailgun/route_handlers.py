@@ -195,7 +195,8 @@ def _get_attachments_inlines(request):
         logger.exception('Unable to find content-id map in this email, '
                          'forwarding all files as attachments.')
         content_id_map = {}
-    attachment_name_to_cid = {v: k for k,v in content_id_map.iteritems()}
+    attachment_name_to_cid = {v: k.strip('<>')
+                                  for k,v in content_id_map.iteritems()}
 
     for n in xrange(1, attachment_count+1):
         attachment_name = 'attachment-{}'.format(n)
