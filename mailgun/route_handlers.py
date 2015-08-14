@@ -160,6 +160,7 @@ def handle_mailing_list_email_route(request):
         if inlines:
             for f in inlines:
                 logger.debug('Replacing "{}" with "{}" in body'.format(f.cid, f.name))
+                body_plain = re.sub(f.cid, f.name, body_plain)
                 body_html = re.sub(f.cid, f.name, body_html)
 
         # and send it off
