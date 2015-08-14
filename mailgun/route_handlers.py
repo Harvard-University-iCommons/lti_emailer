@@ -38,21 +38,8 @@ def handle_mailing_list_email_route(request):
     body_plain = request.POST.get('body-plain')
     body_html = request.POST.get('body-html')
     in_reply_to = request.POST.get('In-Reply-To')
-    try:
-        attachment_count = int(request.POST.get('attachment-count', 0))
-    except RuntimeError:
-        logger.exception('Unable to determine if there were attachments to '
-                         'this email')
-        attachment_count = 0
-    attachments = [request.FILES['attachment-{}'.format(n)]
-                       for n in xrange(1, attachment_count+1)]
 
-    # TEST TEST TEST
-    for n in xrange(1, attachment_count+1):
-        f = request.FILES['attachment-{}'.format(n)]
-        logger.debug(
-            'Attachment {}: name={}, size={}, content_type={}, content_type_extra={}'
-                .format(n, f.name, f.size, f.content_type, f.content_type_extra))
+    attachments, inlines = _get_attachments_inlines(request)
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug('Full mailgun post: {}'.format(request.POST))
@@ -177,7 +164,37 @@ def handle_mailing_list_email_route(request):
             ml.send_mail(
                 sender_address.display_name, sender_address.address,
                 member_address, subject, text=body_plain, html=body_html,
-                attachments=attachments
+                attachments=attachments, inlines=inlines
             )
 
     return JsonResponse({'success': True})
+
+
+def _get_attachments_inlines(request):
+    attachments = []
+    inlines = []
+
+    try:
+        attachment_count = int(request.POST.get('attachment-count', 0))
+    except RuntimeError:
+        logger.exception('Unable to determine if there were attachments to '
+                         'this email')
+        attachment_count = 0
+
+    try:
+        content_id_map = json.loads(request.POST.get('content-id-map', '{}'))
+    except RuntimeError:
+        logger.exception('Unable to find content-id map in this email, '
+                         'forwarding all files as attachments.')
+        content_id_map = {}
+    inline_attachment_names = content_id_map.values()
+
+    for n in xrange(1, attachment_count):
+        attachment_name = 'attachment-{}'.format(n)
+        file_ = request.FILES[attachment_name]
+        if attachment_name in inline_attachment_names:
+            inlines.append(file_)
+        else:
+            attachments.append(file_)
+
+    return attachments, inlines
