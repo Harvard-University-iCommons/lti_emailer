@@ -227,10 +227,8 @@ class MailgunClient(object):
                               for f in attachments])
         if inlines:
             for f in inlines:
-                disposition = 'inline; filename={}; size={}'.format(
-                                  f.name, f.size)
                 files.append(('inline', (f.name, f, f.content_type,
-                                         {'Content-Disposition': disposition})))
+                                         {'Content-ID': f.cid})))
 
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),
