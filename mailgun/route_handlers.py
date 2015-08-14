@@ -45,7 +45,7 @@ def handle_mailing_list_email_route(request):
                          'this email')
         attachment_count = 0
     attachments = [request.FILES['attachment-{}'.format(n)]
-                       for n in xrange(attachment_count)]
+                       for n in xrange(1, attachment_count+1)]
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug('Full mailgun post: {}'.format(request.POST))
