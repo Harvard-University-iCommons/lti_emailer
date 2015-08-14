@@ -38,6 +38,9 @@ def handle_mailing_list_email_route(request):
     body_plain = request.POST.get('body-plain')
     body_html = request.POST.get('body-html')
     in_reply_to = request.POST.get('In-Reply-To')
+    attachment_count = request.POST.get('attachment-count', 0)
+    attachments = [request.FILES['attachment-{}'.format(n)]
+                       for n in xrange(attachment_count)]
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug('Full mailgun post: {}'.format(request.POST))
@@ -161,7 +164,8 @@ def handle_mailing_list_email_route(request):
             )
             ml.send_mail(
                 sender_address.display_name, sender_address.address,
-                member_address, subject, text=body_plain, html=body_html
+                member_address, subject, text=body_plain, html=body_html,
+                attachments=attachments
             )
 
     return JsonResponse({'success': True})

@@ -206,8 +206,10 @@ class MailgunClient(object):
                     len(emails)
                 ))
 
-    def send_mail(self, from_address, reply_to_address, to_address, cc_address, subject='', text='', html=''):
-        api_url = "%s%s/messages" % (settings.LISTSERV_API_URL, settings.LISTSERV_DOMAIN)
+    def send_mail(self, from_address, reply_to_address, to_address, cc_address,
+                  subject='', text='', html='', attachments=None):
+        api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
+                                     settings.LISTSERV_DOMAIN)
         payload = {
             'from': from_address,
             'sender': from_address,
@@ -219,8 +221,15 @@ class MailgunClient(object):
             'html': html
         }
 
+        if attachments:
+            files = tuple(('attachment', (f.name, f, f.content_type))
+                               for f in attachments)
+        else:
+            files = None
+
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
-            response = requests.post(api_url, auth=(self.api_user, self.api_key), data=payload)
+            response = requests.post(api_url, auth=(self.api_user, self.api_key),
+                                     data=payload, files=files)
             timer.status_code = response.status_code
 
         if response.status_code != 200:
