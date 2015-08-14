@@ -188,12 +188,14 @@ def _get_attachments_inlines(request):
         logger.exception('Unable to find content-id map in this email, '
                          'forwarding all files as attachments.')
         content_id_map = {}
-    inline_attachment_names = content_id_map.values()
+    attachment_name_to_cid = {v: k.strip('<>')
+                                  for k,v in content_id_map.iteritems()}
 
     for n in xrange(1, attachment_count):
         attachment_name = 'attachment-{}'.format(n)
         file_ = request.FILES[attachment_name]
-        if attachment_name in inline_attachment_names:
+        if attachment_name in attachment_name_to_cid:
+            file_.cid = attachment_name_to_cid[attachment_name]
             inlines.append(file_)
         else:
             attachments.append(file_)
