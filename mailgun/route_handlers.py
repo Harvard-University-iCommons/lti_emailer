@@ -38,7 +38,12 @@ def handle_mailing_list_email_route(request):
     body_plain = request.POST.get('body-plain')
     body_html = request.POST.get('body-html')
     in_reply_to = request.POST.get('In-Reply-To')
-    attachment_count = request.POST.get('attachment-count', 0)
+    try:
+        attachment_count = int(request.POST.get('attachment-count', 0))
+    except RuntimeError:
+        logger.exception('Unable to determine if there were attachments to '
+                         'this email')
+        attachment_count = 0
     attachments = [request.FILES['attachment-{}'.format(n)]
                        for n in xrange(attachment_count)]
 

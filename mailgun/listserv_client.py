@@ -222,8 +222,8 @@ class MailgunClient(object):
         }
 
         if attachments:
-            files = tuple(('attachment', (f.name, f, f.content_type))
-                               for f in attachments)
+            files = [('attachment', (f.name, f, f.content_type))
+                         for f in attachments]
         else:
             files = None
 
