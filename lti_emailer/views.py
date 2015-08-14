@@ -9,10 +9,14 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+
 from ims_lti_py.tool_config import ToolConfig
 
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
+
+from icommons_common.auth.lti_decorators import has_course_permission
+from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +54,8 @@ def tool_config(request):
 
 
 @login_required
-@lti_role_required([const.INSTRUCTOR, const.TEACHING_ASSISTANT, const.ADMINISTRATOR, const.CONTENT_DEVELOPER])
+@lti_role_required(const.TEACHING_STAFF_ROLES)
+@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['POST'])
 @csrf_exempt
 def lti_launch(request):

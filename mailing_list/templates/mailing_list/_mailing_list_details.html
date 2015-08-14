@@ -1,69 +1,35 @@
 {% load static %}
 
-<div class="float-left col-50">
+{% verbatim %}
+<div>
   <p>
-    <strong>
-      <span ng-bind="list.name"></span>
-      (<ng-pluralize
-        count=list.members_count
-        when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}">
-        </ng-pluralize>)
-    </strong>
-  </p>
-  <p ng-class="{'caption-disabled': list.access_level == 'readonly'}">
-    <strong>
-      {% if scope == "class" %}
-        Class mailing list:
-      {% else %}
-        Section mailing list:
-      {% endif %}
-    </strong>
-    <span ng-bind="list.address"></span>
+    <strong>{{ list.name }}</strong>
+    (<a class="link-text" href="{{ ml.listMembersUrl(list) }}"><ng-pluralize count="list.members_count" when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}"></ng-pluralize></a>)
   </p>
 </div>
-<div class="float-left col-50 info-btn-status">
-{% verbatim %}
-  <a id="email-section-{{ list.section_id }}"
-     target="_top"
-     href="mailto:{{ list.address }}"
-{% endverbatim %}
-     class="btn"
-     {% if scope == "class" %}
-       ng-class="list.access_level == 'readonly'
-                 ? 'btn-submit-primary-disabled' : 'btn-submit-primary'"
-     {% else %}
-       ng-class="list.access_level == 'readonly'
-                 ? 'btn-submit-secondary-disabled' : 'btn-submit-secondary'"
-     {% endif %}
-     ng-disabled="list.access_level == 'readonly'">
-    <i class="fa fa-envelope"></i>
-    Email <span ng-bind="list.name"></span>
-  </a>
-  <p>
-    <span ng-bind="ml.accessLevelStatus[list.access_level]['{{ scope }}']"></span>
-    <br>
-    <a href="#"
-       data-toggle="modal"
-{% verbatim %}
-       data-target="#permissions-modal-{{ list.section_id }}"
-{% endverbatim %}
-       ng-click="ml.updatedAccessLevel = list.access_level">
-      Change who can email
-      {% if scope == "class" %}
-        the class
-      {% else %}
-        this section
-      {% endif %}
+<div class="float-left col-40" style="padding-left: 0;">
+  <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''">
+    <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'">
+       <i class="fa fa-envelope"></i> {{ list.address }}
     </a>
-    <img src="{% static 'images/ajax-loader-small.gif' %}"
-         ng-show="list.isUpdating"/>
-    <span class="text-success feedback" ng-show="list.updated">
-      &checkmark;
-    </span>
-    <span class="text-danger feedback" ng-show="list.update_failed">
-      &cross;
-    </span>
   </p>
+</div>
+{% endverbatim %}
+<div class="float-left col-60">
+  <div class="float-left col-60">
+    <p>
+      <strong ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']"></strong> - <span ng-bind-html="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
+    </p>
+  </div>
+  <div class="float-left col-40">
+{% verbatim %}
+    <button class="btn btn-submit" data-toggle="modal" data-target="#permissions-modal-{{ list.section_id }}" ng-click="ml.updatedAccessLevel = list.access_level"><i class="fa fa-gear"></i> Change</button>
+{% endverbatim %}
+    <img src="{% static 'images/ajax-loader-small.gif' %}" ng-show="list.isUpdating" class="ng-hide">
+    <span class="text-success feedback ng-hide" ng-show="list.updated">✓</span>
+    <span class="text-danger feedback ng-hide" ng-show="list.update_failed">✗</span>
+  </div>
+</div>
 {% verbatim %}
   <div id="permissions-modal-{{ list.section_id }}" class="modal fade">
 {% endverbatim %}
@@ -79,8 +45,7 @@
             </button>
             <h4 class="modal-title">
 {% verbatim %}
-              <label for="permissions-input-{{ list.section_id }}"
-                     class="ic-Label">
+              <label for="permissions-input-{{ list.section_id }}" class="ic-Label">
                 Change Permissions
               </label>
             </h4>
@@ -99,7 +64,7 @@
 {% endverbatim %}
                   <span ng-bind="access_level.name['{{ scope }}']"></span>
                 </label>
-                  <span ng-bind="ml.accessLevelStatus[access_level.id]['{{ scope }}']"></span>
+                  <span ng-bind-html="access_level.description['{{ scope }}']"></span>
                 <br/>
               </div>
             </div>

@@ -1,7 +1,7 @@
 {% load enrollment_tags %}
 
 {% with letter_ranges="A-D,E-H,I-L,M-P,Q-S,T-Z" %}
-{% regroup enrollments by user.sortable_name|to_letter_range:letter_ranges as enrollments_by_name %}
+{% regroup enrollments by sortable_name|to_letter_range:letter_ranges as enrollments_by_name %}
 <li class="list-group-item pagination-lti">
     <span class="pagination-lti-label pagination-lti-view">View: </span>
     {% with name_buckets=enrollments_by_name|list_comp:'grouper' %}
@@ -21,11 +21,11 @@
     {% for enrollee in enrollment_by_name.list %} 
         <li class="list-group-item list-student {{ enrollment_by_name.grouper|lower }}">
             <span class="studentRole">{{enrollee.role|get_enroll_type_display}}</span>
-            <span class="studentName">{{enrollee.user.name}}</span> 
+            <span class="studentName">{{enrollee.sortable_name}}</span>
             <span class="label label-{{enrollee.badge_label_name|lower}}">{{enrollee.badge_label_name|upper}}</span>
             <span>
-              <a href="mailto:{{ enrollee.email_address }}" target="_top">
-                {{ enrollee.email_address }}
+              <a href="mailto:{{ enrollee.email }}" target="_top">
+                {{ enrollee.email }}
               </a>
             </span>
         </li>

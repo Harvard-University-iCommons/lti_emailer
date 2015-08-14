@@ -26,7 +26,7 @@ ENROLLMENT_TYPE_DICTIONARY = {
 
 @register.filter
 def get_enroll_type_display(value):
-	return ENROLLMENT_TYPE_DICTIONARY.get(value, value)
+    return ENROLLMENT_TYPE_DICTIONARY.get(value, value)
 
 
 @register.filter(is_safe=True)
@@ -62,8 +62,7 @@ def list_comp(lst, arg):
 @register.filter(is_safe=True)
 def enrollment_lname(enrollment):
     try:
-        lname_first = enrollment['user']['sortable_name']
+        lname_first = enrollment['sortable_name']
     except KeyError:
         return ''
     return lname_first.split(',')[0]
-

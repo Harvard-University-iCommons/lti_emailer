@@ -12,11 +12,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-
 from django.core.urlresolvers import reverse_lazy
-import logging
-import time
-
 from .secure import SECURE_SETTINGS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,13 +22,6 @@ SECRET_KEY = SECURE_SETTINGS.get('django_secret_key', 'changeme')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = SECURE_SETTINGS.get('enable_debug', False)
-
-TEMPLATE_DEBUG = DEBUG
-
-ALLOWED_HOSTS = ['*']
-
-# These addresses will receive emails about certain errors
-ADMINS = ()
 
 # Application definition
 
@@ -84,6 +73,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'debug': DEBUG,
         },
     },
 ]
@@ -121,6 +111,33 @@ DATABASES = {
 
 COURSE_SCHEMA_DB_NAME = 'termtool'
 
+# Cache
+# https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-CACHES
+
+REDIS_HOST = SECURE_SETTINGS.get('redis_host', '127.0.0.1')
+REDIS_PORT = SECURE_SETTINGS.get('redis_port', 6379)
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': "redis://%s:%s/0" % (REDIS_HOST, REDIS_PORT),
+        'OPTIONS': {
+            'PARSER_CLASS': 'redis.connection.HiredisParser'
+        },
+        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
+        # See following for default timeout (5 minutes as of 1.7):
+        # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-CACHES-TIMEOUT
+        'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
+    },
+}
+
+# Sessions
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# NOTE: This setting only affects the session cookie, not the expiration of the session
+# being stored in the cache.  The session keys will expire according to the value of
+# SESSION_COOKIE_AGE, which defaults to 2 weeks when no value is given.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -135,7 +152,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
@@ -143,76 +159,10 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'http_static'))
 
-REDIS_HOST = SECURE_SETTINGS.get('redis_host', '127.0.0.1')
-REDIS_PORT = SECURE_SETTINGS.get('redis_port', 6379)
-
-CACHES = {
-    'default': {
-        'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': "%s:%s" % (REDIS_HOST, REDIS_PORT),
-        'OPTIONS': {
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
-        },
-        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
-        'TIMEOUT': 60 * 20,  # 20 minutes
-    },
-}
-
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# AWS/Prod environments are behind ssl - this can be set to False for local envs
-SESSION_COOKIE_SECURE = True
-LTI_OAUTH_CREDENTIALS = SECURE_SETTINGS.get('lti_oauth_credentials', None)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-CANVAS_URL = SECURE_SETTINGS.get('canvas_url', 'https://canvas.instructure.com')
-
-CANVAS_SDK_SETTINGS = {
-    'auth_token': SECURE_SETTINGS.get('canvas_token', None),
-    'base_api_url': CANVAS_URL + '/api',
-    'max_retries': 3,
-    'per_page': 40,
-    'session_inactivity_expiration_time_secs': 50,
-}
-
-ICOMMONS_COMMON = {
-    'ICOMMONS_API_HOST': SECURE_SETTINGS.get('icommons_api_host', None),
-    'ICOMMONS_API_USER': SECURE_SETTINGS.get('icommons_api_user', None),
-    'ICOMMONS_API_PASS': SECURE_SETTINGS.get('icommons_api_pass', None),
-    'CANVAS_API_BASE_URL': CANVAS_URL + '/api/v1',
-    'CANVAS_API_HEADERS': {
-        'Authorization': 'Bearer ' + SECURE_SETTINGS.get('canvas_token', 'canvas_token_missing_from_config')
-    },
-}
-
-REPORT_DIR = SECURE_SETTINGS.get('report_dir', BASE_DIR)
-
-LISTSERV_DOMAIN = SECURE_SETTINGS.get('listserv_domain')
-LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
-LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
-LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
-LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
-LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab', {'minute': '0'})
-
-MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
-
-CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
-CACHE_KEY_CANVAS_ENROLLMENTS_BY_CANVAS_SECTION_ID = "canvas_enrollments_by_canvas_section_id-%s"
-CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
-
-HUEY = {
-    'backend': 'huey.backends.redis_backend',
-    'connection': {'host': REDIS_HOST, 'port': int(REDIS_PORT)},  # huey needs port to be an int
-    'consumer_options': {'workers': 4},  # probably needs tweaking
-    'name': 'mailing list management',
-}
+# Logging
 
 _DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', 'DEBUG')
 _LOG_ROOT = SECURE_SETTINGS.get('log_root', '')  # Default to current directory
-
-# Make sure log timestamps are in GMT
-logging.Formatter.converter = time.gmtime
 
 LOGGING = {
     'version': 1,
@@ -228,9 +178,6 @@ LOGGING = {
     },
     # Borrowing some default filters for app loggers
     'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
@@ -280,4 +227,55 @@ LOGGING = {
             'propagate': False,
         },
     }
+}
+
+# Currently deployed environment
+ENV_NAME = SECURE_SETTINGS.get('env_name', 'local')
+
+# Other app specific settings
+
+LTI_OAUTH_CREDENTIALS = SECURE_SETTINGS.get('lti_oauth_credentials', None)
+
+CANVAS_URL = SECURE_SETTINGS.get('canvas_url', 'https://canvas.instructure.com')
+
+CANVAS_SDK_SETTINGS = {
+    'auth_token': SECURE_SETTINGS.get('canvas_token', None),
+    'base_api_url': CANVAS_URL + '/api',
+    'max_retries': 3,
+    'per_page': 40,
+    'session_inactivity_expiration_time_secs': 50,
+}
+
+ICOMMONS_COMMON = {
+    'ICOMMONS_API_HOST': SECURE_SETTINGS.get('icommons_api_host', None),
+    'ICOMMONS_API_USER': SECURE_SETTINGS.get('icommons_api_user', None),
+    'ICOMMONS_API_PASS': SECURE_SETTINGS.get('icommons_api_pass', None),
+    'CANVAS_API_BASE_URL': CANVAS_URL + '/api/v1',
+    'CANVAS_API_HEADERS': {
+        'Authorization': 'Bearer ' + SECURE_SETTINGS.get('canvas_token', 'canvas_token_missing_from_config')
+    },
+}
+
+REPORT_DIR = SECURE_SETTINGS.get('report_dir', BASE_DIR)
+
+LISTSERV_DOMAIN = SECURE_SETTINGS.get('listserv_domain')
+LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
+LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
+LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
+LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
+LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab', {'minute': '0'})
+
+MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
+
+IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)
+
+CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
+CACHE_KEY_USERS_BY_CANVAS_COURSE_ID = "users_by_canvas_course_id-%s"
+CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
+
+HUEY = {
+    'backend': 'huey.backends.redis_backend',
+    'connection': {'host': REDIS_HOST, 'port': int(REDIS_PORT)},  # huey needs port to be an int
+    'consumer_options': {'workers': 4},  # probably needs tweaking
+    'name': 'mailing list management',
 }

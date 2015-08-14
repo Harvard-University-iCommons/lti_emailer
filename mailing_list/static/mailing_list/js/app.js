@@ -1,5 +1,5 @@
 (function(){
-    var app = angular.module('mailingList', ['ngAnimate', 'ng.django.urls']).config(function($httpProvider){
+    var app = angular.module('mailingList', ['ngSanitize', 'ngAnimate', 'ng.django.urls']).config(function($httpProvider){
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -27,31 +27,41 @@
         // page from updating until the requested change has been saved via AJAX
         ml.updatedAccessLevel = '';
         ml.accessLevels = [{
+            id: 'staff',
+            name: {class: 'Staff Access', section: 'Staff Access Only'},
+            description: {
+                class: 'For staff to email members of this course; students and guests <b>cannot</b> send or reply to this mailing list.',
+                section: 'For staff to email members of this course; students and guests <b>cannot</b> send or reply to this mailing list.'
+            }
+        },{
             id: 'members',
-            name: {class: 'Course Access', section: 'Section Access'}
+            name: {class: 'Course Access', section: 'Section Access'},
+            description: {
+                class: 'For all members of this course to email each other; students and guests <b>can</b> send and reply to this mailing list.',
+                section: 'For members of this section and all staff to email each other; students and guests in this section <b>can</b> send and reply to this mailing list.'
+            }
         },{
             id: 'everyone',
-            name: {class: 'World Access', section: 'World Access'}
-        },{
-            id: 'readonly',
-            name: {class: 'Disabled', section: 'Disabled'}
-        }];
-        ml.accessLevelStatus = {
-            members: {
-                class: 'Only teaching staff, students, and others added to ' +
-                       'this course can send and reply to this mailing list.',
-                section: 'Only teaching staff, students, and others added to ' +
-                         'this section can send and reply to this mailing list.'
-            },
-            everyone: {
+            name: {class: 'World Access', section: 'World Access'},
+            description: {
                 class: 'Anyone can send and reply to this mailing list.',
                 section: 'Anyone can send and reply to this mailing list.'
-            },
-            readonly: {
+            }
+        },{
+            id: 'readonly',
+            name: {class: 'Disabled', section: 'Disabled'},
+            description: {
                 class: 'This mailing list is disabled.',
                 section: 'This mailing list is disabled.'
             }
-        };
+        }];
+        ml.accessLevelDisplayNameMap = {};
+        ml.accessLevelDescriptionMap = {};
+        for (var i = 0; i < ml.accessLevels.length; i++) {
+            var accessLevel = ml.accessLevels[i];
+            ml.accessLevelDisplayNameMap[accessLevel.id] = accessLevel.name;
+            ml.accessLevelDescriptionMap[accessLevel.id] = accessLevel.description;
+        }
 
         $http.get(URL_LISTS).success(function(data){
             ml.isLoading = false;

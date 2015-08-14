@@ -1,14 +1,4 @@
 # qa environment requirements
 
 #includes the base.txt requirements needed in all environments
--r base.txt 
- 
-# below are requirements specific to the qa environment
-
-oauthlib
-requests-oauthlib
-
-git+ssh://git@github.com/penzance/canvas_python_sdk.git@master#egg=canvas-python-sdk
-git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git@master#egg=django-icommons-common
-git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-ui.git@master#egg=django-icommons-ui
-git+ssh://git@github.com/Harvard-University-iCommons/django-auth-lti.git@master#egg=django-auth-lti
+-r aws.txt 

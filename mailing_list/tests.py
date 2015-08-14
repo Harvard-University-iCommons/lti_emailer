@@ -157,15 +157,6 @@ class MailingListModelTests(TestCase):
             members_count=4
         )
 
-    @patch('mailing_list.models.listserv_client.update_list')
-    def test_update_access_level(self, mock_update_list):
-        mock_update_list.return_value = None
-
-        mailing_list = MailingList.objects.get(id=1)
-        mailing_list.update_access_level('readonly')
-
-        mock_update_list.assert_called_with(mailing_list, 'readonly')
-
     @patch('mailing_list.models.MailingList.sync_listserv_membership')
     @patch('mailing_list.models.listserv_client.create_list')
     @patch('mailing_list.models.listserv_client.get_list')

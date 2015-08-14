@@ -3,11 +3,12 @@ import json
 
 from datetime import datetime
 
+from flanker import addresslib
+
 from django.conf import settings
 from django.db import models
 from django.core.cache import cache
-
-from icommons_common.models import Person
+from django.utils import timezone
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
@@ -65,12 +66,9 @@ class MailingListManager(models.Manager):
                     mailing_list = MailingList(**create_kwargs)
                     mailing_list.save()
 
-                access_level = MailingList.ACCESS_LEVEL_MEMBERS
                 listserv_list = listserv_client.get_list(mailing_list)
                 if not listserv_list:
                     listserv_client.create_list(mailing_list)
-                else:
-                    access_level = listserv_list['access_level']
 
                 members_count = mailing_list.sync_listserv_membership()
 
@@ -80,7 +78,7 @@ class MailingListManager(models.Manager):
                     'section_id': mailing_list.section_id,
                     'name': s['name'],
                     'address': mailing_list.address,
-                    'access_level': access_level,
+                    'access_level': mailing_list.access_level,
                     'members_count': members_count,
                     'is_primary_section': s['sis_section_id'] is not None
                 }
@@ -98,13 +96,15 @@ class MailingList(models.Model):
     ACCESS_LEVEL_MEMBERS = 'members'
     ACCESS_LEVEL_EVERYONE = 'everyone'
     ACCESS_LEVEL_READONLY = 'readonly'
+    ACCESS_LEVEL_STAFF = 'staff'
 
     canvas_course_id = models.IntegerField()
     section_id = models.IntegerField()
+    access_level = models.CharField(max_length=32, default='members')
     created_by = models.CharField(max_length=32)
     modified_by = models.CharField(max_length=32)
-    date_created = models.DateTimeField(blank=True, default=datetime.utcnow)
-    date_modified = models.DateTimeField(blank=True, default=datetime.utcnow)
+    date_created = models.DateTimeField(blank=True, default=timezone.now)
+    date_modified = models.DateTimeField(blank=True, default=timezone.now)
     subscriptions_updated = models.DateTimeField(null=True, blank=True)
 
     objects = MailingListManager()
@@ -122,21 +122,11 @@ class MailingList(models.Model):
     def _get_unsubscribed_email_set(self):
         return {x.email for x in self.unsubscribed_set.all()}
 
-    def _get_enrolled_persons(self):
-        univ_ids = []
-        canvas_enrollments = canvas_api_client.get_enrollments(
-                                 self.canvas_course_id, self.section_id)
-        for enrollment in canvas_enrollments:
-            try:
-                univ_ids.append(enrollment['user']['sis_user_id'])
-            except KeyError:
-                logger.debug(
-                    "Found canvas enrollment with missing sis_user_id %s",
-                    json.dumps(enrollment, indent=4))
-        return Person.objects.filter(univ_id__in=univ_ids)
-
     def _get_enrolled_email_set(self):
-        return {p.email_address for p in self._get_enrolled_persons()}
+        return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
+
+    def _get_enrolled_teaching_staff_email_set(self):
+        return {e['email'] for e in canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)}
 
     def _get_whitelist_email_set(self):
         return {x.email for x in EmailWhitelist.objects.all()}
@@ -152,7 +142,7 @@ class MailingList(models.Model):
         )
 
     @property
-    def access_level(self):
+    def listserv_access_level(self):
         listserv_list = listserv_client.get_list(self)
         return listserv_list['access_level']
 
@@ -160,24 +150,18 @@ class MailingList(models.Model):
     def members(self):
         return listserv_client.members(self)
 
-    def emails_by_user_id(self):
-        return {p.univ_id: p.email_address
-                    for p in self._get_enrolled_persons()}
+    @property
+    def teaching_staff_addresses(self):
+        return self._get_enrolled_teaching_staff_email_set()
 
-    def send_mail(self, to_address, subject='', text='', html=''):
-        listserv_client.send_mail(self.address, to_address, subject, text, html)
-
-    def update_access_level(self, access_level):
-        """
-        Update the access_level setting for this MailingList on the listserv.
-
-        :param access_level:
-        :return:
-        """
-        logger.debug("Updating access_level for listserv mailing list %s with %s", self.address, access_level)
-        listserv_client.update_list(self, access_level)
-        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
-        logger.debug("Finished updating listserv mailing list for canvas_course_id %s", self.canvas_course_id)
+    def send_mail(self, sender_display_name, sender_address, to_address, subject='', text='', html=''):
+        logger.debug("in send_mail: sender_address=%s, to_address=%s, mailing_list.address=%s "
+                     % (sender_address, to_address, self.address))
+        mailing_list_address = addresslib.address.parse(self.address)
+        mailing_list_address.display_name = sender_display_name
+        listserv_client.send_mail(
+            mailing_list_address.full_spec(), sender_address, to_address, self.address, subject, text, html
+        )
 
     def sync_listserv_membership(self):
         """
@@ -187,6 +171,9 @@ class MailingList(models.Model):
         :return: The members count for this mailing list.
         """
         logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
+
+        # Clear Canvas API user cache before syncing to make sure we have the latest data
+        cache.delete(settings.CACHE_KEY_USERS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
 
         unsubscribed_emails = self._get_unsubscribed_email_set()
         enrolled_emails = self._get_enrolled_email_set()
@@ -209,10 +196,11 @@ class MailingList(models.Model):
         listserv_client.delete_members(self, members_to_delete)
 
         # Update MailingList subscriptions_updated audit field
-        self.subscriptions_updated = datetime.utcnow()
+        self.subscriptions_updated = timezone.now()
         self.save()
 
         logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
+        cache.delete(settings.CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
         cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
 
         # Return the listserv members count
@@ -226,7 +214,7 @@ class Unsubscribed(models.Model):
     mailing_list = models.ForeignKey(MailingList)
     email = models.EmailField()
     created_by = models.CharField(max_length=32)
-    date_created = models.DateTimeField(blank=True, default=datetime.utcnow)
+    date_created = models.DateTimeField(blank=True, default=timezone.now)
 
     class Meta:
         db_table = 'ml_unsubscribed'
