@@ -156,26 +156,29 @@ def handle_mailing_list_email_route(request):
         logger.debug('Final sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address))
 
         # make sure inline images actually show up inline, since fscking
-        # mailgun won't let us specify the cid on post
+        # mailgun won't let us specify the cid on post.  see their docs at
+        #   https://documentation.mailgun.com/user_manual.html#sending-via-api
+        # where they explain that they use the inlined file's name attribute
+        # as the content-id.
         if inlines:
             for f in inlines:
-                logger.debug('Replacing "{}" with "{}" in body'.format(f.cid, f.name))
+                logger.debug('Replacing "{}" with "{}" in body'.format(f.cid,
+                                                                       f.name))
                 body_plain = re.sub(f.cid, f.name, body_plain)
                 body_html = re.sub(f.cid, f.name, body_html)
 
         # and send it off
         logger.info('Final list of recipients: {}'.format(member_addresses))
-        for member_address in member_addresses:
-            logger.debug(
-                "Mailgun router handler sending email to {} from {}, subject {}".format(
-                    member_address, sender_address.full_spec(), subject
-                )
+        logger.debug(
+            "Mailgun router handler sending email to {} from {}, subject {}".format(
+                member_addresses, sender_address.full_spec(), subject
             )
-            ml.send_mail(
-                sender_address.display_name, sender_address.address,
-                member_address, subject, text=body_plain, html=body_html,
-                attachments=attachments, inlines=inlines
-            )
+        )
+        ml.send_mail(
+            sender_address.display_name, sender_address.address,
+            member_addresses, subject, text=body_plain, html=body_html,
+            attachments=attachments, inlines=inlines
+        )
 
     return JsonResponse({'success': True})
 

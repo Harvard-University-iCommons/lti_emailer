@@ -221,6 +221,14 @@ class MailgunClient(object):
             'html': html
         }
 
+        # we accept a single address or a list of addresses in to_address.
+        # if it's a list, add in recipient_variables to make sure mailgun
+        # doesn't include the whole list in the to: field, per
+        #   https://documentation.mailgun.com/user_manual.html#batch-sending
+        if not isinstance(to_address, basestring):
+            recipient_variables = {e: {} for e in to_address}
+            payload['recipient_variabls'] = json.dumps(recipient_variables)
+
         files = []
         if attachments:
             files.extend([('attachment', (f.name, f, f.content_type))
