@@ -227,7 +227,7 @@ class MailgunClient(object):
         #   https://documentation.mailgun.com/user_manual.html#batch-sending
         if not isinstance(to_address, basestring):
             recipient_variables = {e: {} for e in to_address}
-            payload['recipient_variabls'] = json.dumps(recipient_variables)
+            payload['recipient_variables'] = json.dumps(recipient_variables)
 
         files = []
         if attachments:

@@ -176,7 +176,7 @@ def handle_mailing_list_email_route(request):
         )
         ml.send_mail(
             sender_address.display_name, sender_address.address,
-            member_addresses, subject, text=body_plain, html=body_html,
+            list(member_addresses), subject, text=body_plain, html=body_html,
             attachments=attachments, inlines=inlines
         )
 
