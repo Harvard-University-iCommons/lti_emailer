@@ -168,17 +168,26 @@ def handle_mailing_list_email_route(request):
                 body_html = re.sub(f.cid, f.name, body_html)
 
         # and send it off
+        member_addresses = list(member_addresses)
         logger.info('Final list of recipients: {}'.format(member_addresses))
         logger.debug(
             "Mailgun router handler sending email to {} from {}, subject {}".format(
                 member_addresses, sender_address.full_spec(), subject
             )
         )
-        ml.send_mail(
-            sender_address.display_name, sender_address.address,
-            list(member_addresses), subject, text=body_plain, html=body_html,
-            attachments=attachments, inlines=inlines
-        )
+        try:
+            ml.send_mail(
+                sender_address.display_name, sender_address.address,
+                member_addresses, subject, text=body_plain, html=body_html,
+                attachments=attachments, inlines=inlines
+            )
+        except RuntimeError:
+            logger.exception(
+                'Error attempting to send message from {} to {}, originally '
+                'sent to list {}, with subject {}'.format(
+                    sender_address.full_spec(), member_addresses, ml.address,
+                    subject))
+            return JsonResponse({'success': False}, status=500)
 
     return JsonResponse({'success': True})
 
