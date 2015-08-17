@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 
 from django.http import JsonResponse
 from django.template import Context
@@ -38,6 +40,8 @@ def handle_mailing_list_email_route(request):
     body_plain = request.POST.get('body-plain')
     body_html = request.POST.get('body-html')
     in_reply_to = request.POST.get('In-Reply-To')
+
+    attachments, inlines = _get_attachments_inlines(request)
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug('Full mailgun post: {}'.format(request.POST))
@@ -151,6 +155,14 @@ def handle_mailing_list_email_route(request):
             sender_address.display_name += ' via Canvas'
         logger.debug('Final sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address))
 
+        # make sure inline images actually show up inline, since fscking
+        # mailgun won't let us specify the cid on post
+        if inlines:
+            for f in inlines:
+                logger.debug('Replacing "{}" with "{}" in body'.format(f.cid, f.name))
+                body_plain = re.sub(f.cid, f.name, body_plain)
+                body_html = re.sub(f.cid, f.name, body_html)
+
         # and send it off
         logger.info('Final list of recipients: {}'.format(member_addresses))
         for member_address in member_addresses:
@@ -161,7 +173,42 @@ def handle_mailing_list_email_route(request):
             )
             ml.send_mail(
                 sender_address.display_name, sender_address.address,
-                member_address, subject, text=body_plain, html=body_html
+                member_address, subject, text=body_plain, html=body_html,
+                attachments=attachments, inlines=inlines
             )
 
     return JsonResponse({'success': True})
+
+
+def _get_attachments_inlines(request):
+    attachments = []
+    inlines = []
+
+    try:
+        attachment_count = int(request.POST.get('attachment-count', 0))
+    except RuntimeError:
+        logger.exception('Unable to determine if there were attachments to '
+                         'this email')
+        attachment_count = 0
+
+    try:
+        content_id_map = json.loads(request.POST.get('content-id-map', '{}'))
+    except RuntimeError:
+        logger.exception('Unable to find content-id map in this email, '
+                         'forwarding all files as attachments.')
+        content_id_map = {}
+    attachment_name_to_cid = {v: k.strip('<>')
+                                  for k,v in content_id_map.iteritems()}
+    logger.debug('Attachment name to cid: {}'.format(attachment_name_to_cid))
+
+    for n in xrange(1, attachment_count+1):
+        attachment_name = 'attachment-{}'.format(n)
+        file_ = request.FILES[attachment_name]
+        if attachment_name in attachment_name_to_cid:
+            file_.cid = attachment_name_to_cid[attachment_name]
+            file_.name = file_.name.replace(' ', '_')
+            inlines.append(file_)
+        else:
+            attachments.append(file_)
+
+    return attachments, inlines
