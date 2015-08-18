@@ -39,7 +39,8 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     body_plain = request.POST.get('body-plain')
     body_html = request.POST.get('body-html')
-    in_reply_to = request.POST.get('In-Reply-To')
+    to_list = address.parse_list(request.POST.get('To'))
+    cc_list = address.parse_list(request.POST.get('Cc'))
 
     attachments, inlines = _get_attachments_inlines(request)
 
@@ -50,12 +51,7 @@ def handle_mailing_list_email_route(request):
     # out just the address.
     sender_address = address.parse(sender)
 
-    if in_reply_to:
-        # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
-        # fields to avoid duplicate being sent
-        logger.debug("This is a reply!! in_reply_to=%s ", in_reply_to)
-        to_cc_list = (address.parse_list(request.POST.get('To')) + address.parse_list(request.POST.get('Cc')))
-        to_cc_list = [a.address for a in to_cc_list]
+    # make sure the mailing list exists
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
@@ -98,7 +94,8 @@ def handle_mailing_list_email_route(request):
             'message_body': body_plain or body_html,
         }))
         subject = "Undeliverable mail"
-        ml.send_mail('', ml.address, sender_address.address, subject, html=content)
+        ml.send_mail('', ml.address, sender_address.address, subject=subject,
+                     html=content)
     else:
         # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
         try:
@@ -123,19 +120,26 @@ def handle_mailing_list_email_route(request):
                 if title_prefix not in subject:
                     subject = title_prefix + ' ' + subject
 
-        # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
-        # if they are already in the mailing list - to avoid duplicates being sent as the email client would
-        #  have already sent it
+        # remove the sender and anyone in the to/cc fields from the list of
+        # recipients.
         logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
             member_addresses.remove(sender_address.address)
-            if in_reply_to:
-                logger.debug('Removing any duplicate addresses =%s from this '
-                             'message as it is a reply all'
-                             % to_cc_list)
-                member_addresses.difference_update(to_cc_list)
         except KeyError:
-            logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
+            logger.info("Email sent to mailing list %s from non-member address %s",
+                        ml.address, sender)
+        to_cc_list = {a.address for a in (to_list + cc_list)}
+        logger.debug(
+            'Removing anyone in the to/cc list %s from the list of recipients',
+            list(to_cc_list))
+        member_addresses.difference_update(to_cc_list)
+        member_addresses = list(member_addresses)
+        logger.info('Final list of recipients: {}'.format(member_addresses))
+
+        # double check to make sure the list is in the to/cc field somewhere,
+        # add it to cc if not.
+        if ml.address not in to_cc_list:
+            cc_list.append(address.parse(ml.address))
 
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
@@ -168,17 +172,18 @@ def handle_mailing_list_email_route(request):
                 body_html = re.sub(f.cid, f.name, body_html)
 
         # and send it off
-        member_addresses = list(member_addresses)
-        logger.info('Final list of recipients: {}'.format(member_addresses))
         logger.debug(
             "Mailgun router handler sending email to {} from {}, subject {}".format(
                 member_addresses, sender_address.full_spec(), subject
             )
         )
+        to_list = [a.full_spec() for a in to_list]
+        cc_list = [a.full_spec() for a in cc_list]
         try:
             ml.send_mail(
                 sender_address.display_name, sender_address.address,
                 member_addresses, subject, text=body_plain, html=body_html,
+                original_to_address=to_list, original_cc_address=cc_list,
                 attachments=attachments, inlines=inlines
             )
         except RuntimeError:

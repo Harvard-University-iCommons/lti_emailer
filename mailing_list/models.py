@@ -155,7 +155,8 @@ class MailingList(models.Model):
         return self._get_enrolled_teaching_staff_email_set()
 
     def send_mail(self, sender_display_name, sender_address, to_address,
-                  subject='', text='', html='', attachments=None, inlines=None):
+                  subject='', text='', html='', original_to_address=None,
+                  original_cc_address=None, attachments=None, inlines=None):
         logger.debug("in send_mail: sender_address=%s, to_address=%s, "
                      "mailing_list.address=%s ",
                      sender_address, to_address, self.address)
@@ -163,7 +164,8 @@ class MailingList(models.Model):
         mailing_list_address.display_name = sender_display_name
         listserv_client.send_mail(
             mailing_list_address.full_spec(), sender_address, to_address,
-            self.address, subject, text, html, attachments, inlines
+            subject, text, html, original_to_address, original_cc_address,
+            attachments, inlines
         )
 
     def sync_listserv_membership(self):
