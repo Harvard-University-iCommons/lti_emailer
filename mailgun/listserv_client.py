@@ -213,11 +213,12 @@ class MailgunClient(object):
                                      settings.LISTSERV_DOMAIN)
         payload = {
             'from': list_address,
+            'h:List-Id': '<{}>'.format(list_address),
             'h:Reply-To': from_address,
-            'to': to_address,
+            'html': html,
             'subject': subject,
             'text': text,
-            'html': html
+            'to': to_address,
         }
         if original_to_address:
             payload['h:To'] = original_to_address

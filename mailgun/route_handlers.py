@@ -124,6 +124,8 @@ def handle_mailing_list_email_route(request):
         # recipients.
         logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
+            logger.debug('Removing sender {} from the list of recipients'.format(
+                         sender_address.address))
             member_addresses.remove(sender_address.address)
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s",
