@@ -120,8 +120,9 @@ def handle_mailing_list_email_route(request):
                 if title_prefix not in subject:
                     subject = title_prefix + ' ' + subject
 
-        # remove the sender and anyone in the to/cc fields from the list of
-        # recipients.
+        # anyone in the to/cc field will already have gotten a copy of this
+        # email directly from the sender.  let's not send them a duplicate.
+        # let's also not send a copy to the sender.
         logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
             logger.debug('Removing sender {} from the list of recipients'.format(
@@ -139,7 +140,8 @@ def handle_mailing_list_email_route(request):
         logger.info('Final list of recipients: {}'.format(member_addresses))
 
         # double check to make sure the list is in the to/cc field somewhere,
-        # add it to cc if not.
+        # add it to cc if not.  do this to ensure that, even if someone decided
+        # to bcc the list, it will be possible to reply-all to the list.
         if ml.address not in to_cc_list:
             cc_list.append(address.parse(ml.address))
 
@@ -173,14 +175,17 @@ def handle_mailing_list_email_route(request):
                 body_plain = re.sub(f.cid, f.name, body_plain)
                 body_html = re.sub(f.cid, f.name, body_html)
 
+        # convert the original to/cc fields back to strings so we can send
+        # them along through the listserv
+        to_list = [a.full_spec() for a in to_list]
+        cc_list = [a.full_spec() for a in cc_list]
+
         # and send it off
         logger.debug(
             "Mailgun router handler sending email to {} from {}, subject {}".format(
                 member_addresses, sender_address.full_spec(), subject
             )
         )
-        to_list = [a.full_spec() for a in to_list]
-        cc_list = [a.full_spec() for a in cc_list]
         try:
             ml.send_mail(
                 sender_address.display_name, sender_address.address,

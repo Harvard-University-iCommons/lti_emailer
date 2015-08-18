@@ -220,6 +220,14 @@ class MailgunClient(object):
             'text': text,
             'to': to_address,
         }
+
+        # we want the to/cc fields as received by list users to be as close
+        # as possible to the same as those that were sent by the sender.
+        # mailgun will always add the individual recipient to the To field,
+        # but we can at least ensure that's the only change.
+        #
+        # these are prefixed with h: so that mailgun doesn't think we want it
+        # to send copies to these addresses as well.
         if original_to_address:
             payload['h:To'] = original_to_address
         if original_cc_address:
