@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 
 from django.http import JsonResponse
 from django.template import Context
@@ -37,7 +39,10 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     body_plain = request.POST.get('body-plain')
     body_html = request.POST.get('body-html')
-    in_reply_to = request.POST.get('In-Reply-To')
+    to_list = address.parse_list(request.POST.get('To'))
+    cc_list = address.parse_list(request.POST.get('Cc'))
+
+    attachments, inlines = _get_attachments_inlines(request)
 
     logger.info("Handling Mailgun mailing list email from %s to %s", sender, recipient)
     logger.debug('Full mailgun post: {}'.format(request.POST))
@@ -46,12 +51,7 @@ def handle_mailing_list_email_route(request):
     # out just the address.
     sender_address = address.parse(sender)
 
-    if in_reply_to:
-        # If it is a reply to the mailing list, extract the comma/semicolon separated addresses in the To/CC
-        # fields to avoid duplicate being sent
-        logger.debug("This is a reply!! in_reply_to=%s ", in_reply_to)
-        to_cc_list = (address.parse_list(request.POST.get('To')) + address.parse_list(request.POST.get('Cc')))
-        to_cc_list = [a.address for a in to_cc_list]
+    # make sure the mailing list exists
     try:
         ml = MailingList.objects.get_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
@@ -94,7 +94,8 @@ def handle_mailing_list_email_route(request):
             'message_body': body_plain or body_html,
         }))
         subject = "Undeliverable mail"
-        ml.send_mail('', ml.address, sender_address.address, subject, html=content)
+        ml.send_mail('', ml.address, sender_address.address, subject=subject,
+                     html=content)
     else:
         # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
         try:
@@ -119,19 +120,30 @@ def handle_mailing_list_email_route(request):
                 if title_prefix not in subject:
                     subject = title_prefix + ' ' + subject
 
-        # Do not send to the sender. Also check if it is a reply-all and do not send to users in the To/CC
-        # if they are already in the mailing list - to avoid duplicates being sent as the email client would
-        #  have already sent it
+        # anyone in the to/cc field will already have gotten a copy of this
+        # email directly from the sender.  let's not send them a duplicate.
+        # let's also not send a copy to the sender.
         logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
+            logger.debug('Removing sender {} from the list of recipients'.format(
+                         sender_address.address))
             member_addresses.remove(sender_address.address)
-            if in_reply_to:
-                logger.debug('Removing any duplicate addresses =%s from this '
-                             'message as it is a reply all'
-                             % to_cc_list)
-                member_addresses.difference_update(to_cc_list)
         except KeyError:
-            logger.info("Email sent to mailing list %s from non-member address %s", ml.address, sender)
+            logger.info("Email sent to mailing list %s from non-member address %s",
+                        ml.address, sender)
+        to_cc_list = {a.address for a in (to_list + cc_list)}
+        logger.debug(
+            'Removing anyone in the to/cc list %s from the list of recipients',
+            list(to_cc_list))
+        member_addresses.difference_update(to_cc_list)
+        member_addresses = list(member_addresses)
+        logger.info('Final list of recipients: {}'.format(member_addresses))
+
+        # double check to make sure the list is in the to/cc field somewhere,
+        # add it to cc if not.  do this to ensure that, even if someone decided
+        # to bcc the list, it will be possible to reply-all to the list.
+        if ml.address not in to_cc_list:
+            cc_list.append(address.parse(ml.address))
 
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
@@ -151,17 +163,76 @@ def handle_mailing_list_email_route(request):
             sender_address.display_name += ' via Canvas'
         logger.debug('Final sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address))
 
+        # make sure inline images actually show up inline, since fscking
+        # mailgun won't let us specify the cid on post.  see their docs at
+        #   https://documentation.mailgun.com/user_manual.html#sending-via-api
+        # where they explain that they use the inlined file's name attribute
+        # as the content-id.
+        if inlines:
+            for f in inlines:
+                logger.debug('Replacing "{}" with "{}" in body'.format(f.cid,
+                                                                       f.name))
+                body_plain = re.sub(f.cid, f.name, body_plain)
+                body_html = re.sub(f.cid, f.name, body_html)
+
+        # convert the original to/cc fields back to strings so we can send
+        # them along through the listserv
+        to_list = [a.full_spec() for a in to_list]
+        cc_list = [a.full_spec() for a in cc_list]
+
         # and send it off
-        logger.info('Final list of recipients: {}'.format(member_addresses))
-        for member_address in member_addresses:
-            logger.debug(
-                "Mailgun router handler sending email to {} from {}, subject {}".format(
-                    member_address, sender_address.full_spec(), subject
-                )
+        logger.debug(
+            "Mailgun router handler sending email to {} from {}, subject {}".format(
+                member_addresses, sender_address.full_spec(), subject
             )
+        )
+        try:
             ml.send_mail(
                 sender_address.display_name, sender_address.address,
-                member_address, subject, text=body_plain, html=body_html
+                member_addresses, subject, text=body_plain, html=body_html,
+                original_to_address=to_list, original_cc_address=cc_list,
+                attachments=attachments, inlines=inlines
             )
+        except RuntimeError:
+            logger.exception(
+                'Error attempting to send message from {} to {}, originally '
+                'sent to list {}, with subject {}'.format(
+                    sender_address.full_spec(), member_addresses, ml.address,
+                    subject))
+            return JsonResponse({'success': False}, status=500)
 
     return JsonResponse({'success': True})
+
+
+def _get_attachments_inlines(request):
+    attachments = []
+    inlines = []
+
+    try:
+        attachment_count = int(request.POST.get('attachment-count', 0))
+    except RuntimeError:
+        logger.exception('Unable to determine if there were attachments to '
+                         'this email')
+        attachment_count = 0
+
+    try:
+        content_id_map = json.loads(request.POST.get('content-id-map', '{}'))
+    except RuntimeError:
+        logger.exception('Unable to find content-id map in this email, '
+                         'forwarding all files as attachments.')
+        content_id_map = {}
+    attachment_name_to_cid = {v: k.strip('<>')
+                                  for k,v in content_id_map.iteritems()}
+    logger.debug('Attachment name to cid: {}'.format(attachment_name_to_cid))
+
+    for n in xrange(1, attachment_count+1):
+        attachment_name = 'attachment-{}'.format(n)
+        file_ = request.FILES[attachment_name]
+        if attachment_name in attachment_name_to_cid:
+            file_.cid = attachment_name_to_cid[attachment_name]
+            file_.name = file_.name.replace(' ', '_')
+            inlines.append(file_)
+        else:
+            attachments.append(file_)
+
+    return attachments, inlines
