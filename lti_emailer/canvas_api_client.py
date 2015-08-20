@@ -27,25 +27,21 @@ TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'Designe
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
 
 
-def get_users_in_course(canvas_course_id):
-    cache_key = settings.CACHE_KEY_USERS_BY_CANVAS_COURSE_ID % canvas_course_id
-    result = cache.get(cache_key)
-    if not result:
-        try:
-            result = get_all_list_data(
-                SDK_CONTEXT,
-                courses.list_users_in_course_users,
-                canvas_course_id,
-                ['email', 'enrollments']
-            )
-        except CanvasAPIError:
-            logger.exception(
-                "Failed to get users for canvas_course_id %s",
-                canvas_course_id
-            )
-            raise
-        cache.set(cache_key, result)
-    return result
+def get_enrollments(canvas_course_id, section_id):
+    users = get_users_in_course(canvas_course_id)
+    enrollments = []
+    for user in users:
+        for enrollment in user['enrollments']:
+            if enrollment['course_section_id'] == section_id:
+                _copy_user_attributes_to_enrollment(user, enrollment)
+                enrollments.append(enrollment)
+    return enrollments
+
+
+def get_name_for_email(canvas_course_id, address):
+    users = get_users_in_course(canvas_course_id)
+    names_by_email = {u['email']: u['name'] for u in users}
+    return names_by_email.get(address, '')
 
 
 def get_section(canvas_course_id, section_id):
@@ -70,17 +66,6 @@ def get_sections(canvas_course_id):
     return result
 
 
-def get_enrollments(canvas_course_id, section_id):
-    users = get_users_in_course(canvas_course_id)
-    enrollments = []
-    for user in users:
-        for enrollment in user['enrollments']:
-            if enrollment['course_section_id'] == section_id:
-                _copy_user_attributes_to_enrollment(user, enrollment)
-                enrollments.append(enrollment)
-    return enrollments
-
-
 def get_teaching_staff_enrollments(canvas_course_id):
     account_id = canvas_api_helper_courses.get_course(canvas_course_id)['account_id']
     users = get_users_in_course(canvas_course_id)
@@ -93,10 +78,29 @@ def get_teaching_staff_enrollments(canvas_course_id):
     return enrollments
 
 
-def get_name_for_email(canvas_course_id, address):
-    users = get_users_in_course(canvas_course_id)
-    names_by_email = {u['email']: u['name'] for u in users}
-    return names_by_email.get(address, '')
+def get_users_in_course(canvas_course_id):
+    cache_key = settings.CACHE_KEY_USERS_BY_CANVAS_COURSE_ID % canvas_course_id
+    result = cache.get(cache_key)
+    if not result:
+        try:
+            result = get_all_list_data(
+                SDK_CONTEXT,
+                courses.list_users_in_course_users,
+                canvas_course_id,
+                ['email', 'enrollments']
+            )
+        except CanvasAPIError:
+            logger.exception(
+                "Failed to get users for canvas_course_id %s",
+                canvas_course_id
+            )
+            raise
+        cache.set(cache_key, result)
+    return result
+
+
+def _copy_user_attributes_to_enrollment(user, enrollment):
+    enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
 
 
 def _get_authorized_teaching_staff_enrollment_types(account_id):
@@ -107,7 +111,3 @@ def _get_authorized_teaching_staff_enrollment_types(account_id):
             role_name, account_id, canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL
         )
     ]
-
-
-def _copy_user_attributes_to_enrollment(user, enrollment):
-    enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
