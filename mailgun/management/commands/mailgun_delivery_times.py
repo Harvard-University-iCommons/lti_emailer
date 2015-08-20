@@ -45,8 +45,8 @@ class Command(BaseCommand):
             'limit': EVENTS_MAX_PAGE_SIZE,
             'event': ' OR '.join(EVENTS_OF_INTEREST),
         }
-        resp = requests.get(url, auth=auth, params=params)
         try:
+            resp = requests.get(url, auth=auth, params=params)
             resp.raise_for_status()
         except requests.exceptions.RequestException as e:
             raise CommandError(str(e))
@@ -55,8 +55,8 @@ class Command(BaseCommand):
         # follow 'next' links until we get a blank page
         while True:
             url = resp.json()['paging']['next']
-            resp = requests.get(url, auth=auth)
             try:
+                resp = requests.get(url, auth=auth)
                 resp.raise_for_status()
             except requests.exceptions.RequestException as e:
                 raise CommandError(str(e))
