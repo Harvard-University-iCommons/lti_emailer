@@ -32,8 +32,8 @@ class Command(BaseCommand):
         except RuntimeError as e:
             raise CommandError(str(e))
 
-        course_lists = {}
-        failures = {}
+        course_lists, failures = {}, {}
+        num_lists = 0
         defaults = {'access_level': MailingList.ACCESS_LEVEL_MEMBERS}
         for course in courses:
             try:
@@ -43,8 +43,16 @@ class Command(BaseCommand):
             except RuntimeError as e:
                 failures[course['id']] = str(e)
                 continue
-            course_lists[course['id']] = [ml for ml in lists
-                                              if ml['is_primary_section']]
+
+            primary, secondary = [], []
+            for ml in lists:
+                num_lists += 1
+                if ml['is_primary_section']:
+                    primary.append(ml)
+                else:
+                    secondary.append(ml)
+            course_lists[course['id']] = {'primary': primary,
+                                          'secondary': secondary}
 
         if failures:
             for course_id, error_message in failures.iteritems():
@@ -55,7 +63,6 @@ class Command(BaseCommand):
                 'Failed to get/create lists for {} courses'.format(
                     len(failures)))
 
-        num_lists = reduce(operator.add, map(len, course_lists.values()), 0)
         self.stdout.write('Total of {} list(s) for {} course(s)'.format(
                               num_lists, len(courses)))
 
@@ -63,11 +70,14 @@ class Command(BaseCommand):
             courses_by_id = {c['id']: c for c in courses}
             writer = csv.writer(options['output_file'])
             writer.writerow(('canvas_course_id', 'sis_course_id', 'course_name',
-                             'course_code', 'course_lists'))
+                             'course_code', 'primary_section_lists',
+                             'secondary_section_lists'))
             for course_id in sorted(course_lists):
                 course = courses_by_id[course_id]
-                lists = course_lists[course_id]
+                primary = ';'.join([l['address'] for l in
+                                        course_lists[course_id]['primary']])
+                secondary = ';'.join([l['address'] for l in
+                                          course_lists[course_id]['secondary']])
                 row = (course_id, course['sis_course_id'], course['name'],
-                       course['course_code'],
-                       ';'.join([l['address'] for l in lists]))
+                       course['course_code'], primary, secondary)
                 writer.writerow(row)
