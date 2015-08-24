@@ -9,7 +9,7 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 
-from canvas_sdk.methods import enrollments, sections, courses
+from canvas_sdk.methods import accounts, courses, enrollments, sections
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
@@ -25,6 +25,26 @@ logger = logging.getLogger(__name__)
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
+
+
+def get_courses_for_account_in_term(account_id, enrollment_term_id,
+                                    include_sections=False):
+    kwargs = {
+        'account_id': account_id,
+        'enrollment_term_id': enrollment_term_id,
+    }
+    if include_sections:
+        kwargs['include'] = 'sections'
+
+    try:
+        result = get_all_list_data(
+                     SDK_CONTEXT, accounts.list_active_courses_in_account,
+                     **kwargs)
+    except CanvasAPIError:
+        logger.error('Unable to get courses for account {}, term {}'.format(
+                         account_id, enrollment_term_id))
+        raise
+    return result
 
 
 def get_enrollments(canvas_course_id, section_id):
