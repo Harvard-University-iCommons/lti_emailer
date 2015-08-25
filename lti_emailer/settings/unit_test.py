@@ -4,12 +4,7 @@ from .base import *
 
 DATABASE_ROUTERS = []
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'lti_emailer',
-    },
-}
+del DATABASES['termtool']
 
 CACHES = {
     'default': {
