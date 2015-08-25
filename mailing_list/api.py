@@ -16,6 +16,7 @@ from django_auth_lti.verification import has_lti_roles
 from icommons_common.auth.lti_decorators import has_course_permission
 from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
 from icommons_common.view_utils import create_json_200_response, create_json_500_response
+import time
 
 from lti_emailer import canvas_api_client
 from .models import MailingList
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
+# @has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
 def lists(request):
     """
@@ -36,6 +37,7 @@ def lists(request):
     :return: JSON response containing the mailing lists for the course in this session context
     """
     try:
+        start = time.time()
         canvas_course_id = request.LTI['custom_canvas_course_id']
         logged_in_user_id = request.LTI['lis_person_sourcedid']
 
@@ -46,6 +48,10 @@ def lists(request):
                 'modified_by': logged_in_user_id
             }
         )
+        end = time.time()
+        print("in api.lists, timing=------>")
+        print end - start
+
     except Exception:
         message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
         logger.exception(message)
@@ -56,7 +62,7 @@ def lists(request):
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
+# @has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['PUT'])
 def set_access_level(request, mailing_list_id):
     """
