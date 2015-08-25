@@ -1,8 +1,6 @@
 import logging
 import json
 
-from datetime import datetime
-
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
@@ -11,13 +9,11 @@ from django.core.cache import cache
 
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
-from django_auth_lti.verification import has_lti_roles
 
 from icommons_common.auth.lti_decorators import has_course_permission
 from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
 from icommons_common.view_utils import create_json_200_response, create_json_500_response
 
-from lti_emailer import canvas_api_client
 from .models import MailingList
 
 

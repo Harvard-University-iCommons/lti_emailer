@@ -37,8 +37,7 @@ INSTALLED_APPS = (
     'djangular',
     'lti_emailer',
     'mailing_list',
-    'mailgun',
-    'huey.djhuey'
+    'mailgun'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -190,12 +189,6 @@ LOGGING = {
             'filename': os.path.join(_LOG_ROOT, 'django-lti_emailer.log'),
             'formatter': 'verbose',
         },
-        'huey_logfile': {
-            'level': _DEFAULT_LOG_LEVEL,
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(_LOG_ROOT, 'huey-lti_emailer.log'),
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
@@ -216,10 +209,6 @@ LOGGING = {
         },
         'django': {
             'handlers': ['console'],
-            'propagate': False,
-        },
-        'huey': {
-            'handlers': ['console', 'huey_logfile'],
             'propagate': False,
         },
         'py.warnings': {
@@ -263,7 +252,6 @@ LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
-LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab', {'minute': '0'})
 
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
@@ -272,10 +260,3 @@ IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)
 CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
 CACHE_KEY_USERS_BY_CANVAS_COURSE_ID = "users_by_canvas_course_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
-
-HUEY = {
-    'backend': 'huey.backends.redis_backend',
-    'connection': {'host': REDIS_HOST, 'port': int(REDIS_PORT)},  # huey needs port to be an int
-    'consumer_options': {'workers': 4},  # probably needs tweaking
-    'name': 'mailing list management',
-}
