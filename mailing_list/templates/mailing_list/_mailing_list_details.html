@@ -9,7 +9,7 @@
 </div>
 <div class="float-left col-40" style="padding-left: 0;">
   <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''">
-    <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'">
+    <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'" ng-click="ml.handleAddressClick(list)">
        <i class="fa fa-envelope"></i> {{ list.address }}
     </a>
   </p>

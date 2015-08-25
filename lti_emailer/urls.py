@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^mailgun/', include('mailgun.urls', namespace='mailgun')),
     url(r'^not_authorized/$', 'icommons_ui.views.not_authorized',
         name='not_authorized'),
+    url(r'^interactions/', include('interactions.urls', namespace='interactions')),
 ]

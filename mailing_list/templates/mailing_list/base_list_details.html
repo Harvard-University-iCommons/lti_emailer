@@ -17,10 +17,12 @@
     <link rel="stylesheet" type="text/css" href="{% static "harvard-bootstrap/css/harvard-bootstrap.css" %}" media="screen"/>
     {% block css %}{% endblock css %}
     <script src="{% static 'jquery-1.10.2/jquery-1.10.2.min.js' %}"></script>
-    <script src="{% static "bootstrap-3.0.3/dist/js/bootstrap.min.js" %}"></script>
-    <script src="{% static "bootstrap-datepicker/js/bootstrap-datepicker.js" %}"></script>
-    <script src="{% static "listjs/list.min.js" %}"></script>
+    <script src="{% static 'bootstrap-3.0.3/dist/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'listjs/list.min.js' %}"></script>
     {% include 'django_auth_lti/resource_link_id.html' %}
+    {% include 'interactions/interactions.html' %}
+    <script src="{% static 'mailing_list/js/list_details.js' %}"></script>
     {% block js %}{% endblock js %}
     <title>Course Emailer</title>
 </head>

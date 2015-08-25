@@ -92,6 +92,17 @@
                 'mailing_list:api_lists_set_access_level',
                 [list.id]
             );
+            LTIAnalytics.pushInteraction({
+                action: 'update',
+                entity_type: 'mailing_list_access_level',
+                entity_value: {
+                    canvas_course_id: list.canvas_course_id,
+                    section_id: list.section_id,
+                    address: list.address,
+                    old_access_level: list.access_level,
+                    new_access_level: ml.updatedAccessLevel
+                }
+            });
             $http.put(url, {access_level: ml.updatedAccessLevel})
                 .success(function(data){
                     list.access_level = ml.updatedAccessLevel;
@@ -114,5 +125,17 @@
                        $djangoUrl.reverse('mailing_list:list_members',
                                           [list.section_id]));
         };
+
+        ml.handleAddressClick = function(list) {
+            LTIAnalytics.pushInteraction({
+                action: 'click',
+                entity_type: 'mailing_list_address',
+                entity_value: {
+                    canvas_course_id: list.canvas_course_id,
+                    section_id: list.section_id,
+                    address: list.address
+                }
+            });
+        }
     }]);
 })();

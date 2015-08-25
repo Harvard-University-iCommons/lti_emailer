@@ -38,7 +38,8 @@ INSTALLED_APPS = (
     'lti_emailer',
     'mailing_list',
     'mailgun',
-    'huey.djhuey'
+    'huey.djhuey',
+    'interactions'
 )
 
 MIDDLEWARE_CLASSES = (

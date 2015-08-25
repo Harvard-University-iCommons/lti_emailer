@@ -26,7 +26,7 @@
     </p>
     <div class="row row-lti col-md-8 lti-section">
       {% if enrollments %}
-      <ul id="people-list" class="list-group list-section">
+      <ul id="people-list" class="list-group list-section" data-canvas_course_id="{{ section.course_id }}" data-section_id="{{ section.course_id }}">
         {% include "mailing_list/_mailing_list_members_by_name.html" %}
       </ul>
       {% else %}

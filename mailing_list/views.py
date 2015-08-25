@@ -49,5 +49,7 @@ def list_members(request, section_id):
     enrollments = get_enrollments(canvas_course_id, int(section_id))
     enrollments.sort(key=lambda x: x['sortable_name'])
     section = get_section(canvas_course_id, section_id)
-    return render(request, 'mailing_list/list_details.html',
-                  {'section': section, 'enrollments': enrollments})
+    return render(request, 'mailing_list/list_details.html', {
+        'section': section,
+        'enrollments': enrollments
+    })
