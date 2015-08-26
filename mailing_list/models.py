@@ -1,13 +1,9 @@
 import logging
-import json
-
-from datetime import datetime
 
 from flanker import addresslib
 
 from django.conf import settings
 from django.db import models
-from django.core.cache import cache
 from django.utils import timezone
 
 from lti_emailer import canvas_api_client
@@ -63,12 +59,6 @@ class MailingListManager(models.Manager):
                 mailing_list = MailingList(**create_kwargs)
                 mailing_list.save()
 
-            listserv_list = listserv_client.get_list(mailing_list)
-            if not listserv_list:
-                listserv_client.create_list(mailing_list)
-
-            members_count = mailing_list.sync_listserv_membership()
-
             mailing_lists_by_section_id[section_id] = {
                 'id': mailing_list.id,
                 'canvas_course_id': mailing_list.canvas_course_id,
@@ -76,7 +66,7 @@ class MailingListManager(models.Manager):
                 'name': s['name'],
                 'address': mailing_list.address,
                 'access_level': mailing_list.access_level,
-                'members_count': members_count,
+                'members_count': len(mailing_list.members),
                 'is_primary_section': s['sis_section_id'] is not None
             }
 
@@ -100,7 +90,6 @@ class MailingList(models.Model):
     modified_by = models.CharField(max_length=32)
     date_created = models.DateTimeField(blank=True, default=timezone.now)
     date_modified = models.DateTimeField(blank=True, default=timezone.now)
-    subscriptions_updated = models.DateTimeField(null=True, blank=True)
 
     objects = MailingListManager()
 
@@ -114,9 +103,6 @@ class MailingList(models.Model):
             self.section_id
         )
 
-    def _get_unsubscribed_email_set(self):
-        return {x.email for x in self.unsubscribed_set.all()}
-
     def _get_enrolled_email_set(self):
         return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
 
@@ -126,9 +112,6 @@ class MailingList(models.Model):
     def _get_whitelist_email_set(self):
         return {x.email for x in EmailWhitelist.objects.all()}
 
-    def _get_listserv_email_set(self):
-        return {m['address'] for m in listserv_client.members(self)}
-
     @property
     def address(self):
         return settings.LISTSERV_ADDRESS_FORMAT.format(
@@ -137,13 +120,11 @@ class MailingList(models.Model):
         )
 
     @property
-    def listserv_access_level(self):
-        listserv_list = listserv_client.get_list(self)
-        return listserv_list['access_level']
-
-    @property
     def members(self):
-        return listserv_client.members(self)
+        mailing_list_emails = self._get_enrolled_email_set()
+        if not getattr(settings, 'IGNORE_WHITELIST', False):
+            mailing_list_emails = mailing_list_emails.intersection(self._get_whitelist_email_set())
+        return [{'address': e} for e in mailing_list_emails]
 
     @property
     def teaching_staff_addresses(self):
@@ -161,65 +142,6 @@ class MailingList(models.Model):
             mailing_list_address.full_spec(), sender_address, to_address,
             subject, text, html, original_to_address, original_cc_address,
             attachments, inlines
-        )
-
-    def sync_listserv_membership(self):
-        """
-        Synchronize the listserv mailing list membership with the course enrollments
-        for the given canvas_course_id:section_id.
-
-        :return: The members count for this mailing list.
-        """
-        logger.debug("Synchronizing listserv membership for canvas course id %s", self.canvas_course_id)
-
-        unsubscribed_emails = self._get_unsubscribed_email_set()
-        enrolled_emails = self._get_enrolled_email_set()
-        mailing_list_emails = enrolled_emails - unsubscribed_emails
-
-        # Only add subscribers to the listserv if:
-        # 1. The subscriber is on the whitelist
-        # OR
-        # 2. Settings tell us to ignore the whitelist
-        if not getattr(settings, 'IGNORE_WHITELIST', False):
-            whitelist_emails = self._get_whitelist_email_set()
-            mailing_list_emails = mailing_list_emails.intersection(whitelist_emails)
-
-        listserv_emails = self._get_listserv_email_set()
-
-        members_to_add = mailing_list_emails - listserv_emails
-        members_to_delete = listserv_emails - mailing_list_emails
-
-        listserv_client.add_members(self, members_to_add)
-        listserv_client.delete_members(self, members_to_delete)
-
-        # Update MailingList subscriptions_updated audit field
-        self.subscriptions_updated = timezone.now()
-        self.save()
-
-        logger.debug("Finished synchronizing listserv membership for canvas_course_id %s", self.canvas_course_id)
-        cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % self.canvas_course_id)
-
-        # Return the listserv members count
-        return len(listserv_emails) + len(members_to_add) - len(members_to_delete)
-
-
-class Unsubscribed(models.Model):
-    """
-    This model is used to keep track of mailing list members who have unsubscribed from the list.
-    """
-    mailing_list = models.ForeignKey(MailingList)
-    email = models.EmailField()
-    created_by = models.CharField(max_length=32)
-    date_created = models.DateTimeField(blank=True, default=timezone.now)
-
-    class Meta:
-        db_table = 'ml_unsubscribed'
-        unique_together = ('mailing_list', 'email')
-
-    def __unicode__(self):
-        return u'mailing_list_id: {}, email: {}'.format(
-            self.mailing_list.id,
-            self.email
         )
 
 
