@@ -277,8 +277,6 @@ MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
 IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)
 
-CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
-CACHE_KEY_USERS_BY_CANVAS_COURSE_ID = "users_by_canvas_course_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 HUEY = {
