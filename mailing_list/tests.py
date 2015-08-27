@@ -14,8 +14,8 @@ class MailingListModelTests(TestCase):
 
     @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
-    def test_get_or_create_mailing_lists_for_canvas_course_id_with_existing_list(self, mock_get_sections,
-                                                                                 mock_get_enrollments):
+    def test_get_or_create_or_delete_mailing_lists_for_canvas_course_id_with_existing_list(self, mock_get_sections,
+                                                                                           mock_get_enrollments):
         mock_get_sections.return_value = [{
             'id': 1582,
             'name': 'section name',
@@ -23,7 +23,7 @@ class MailingListModelTests(TestCase):
         }]
         mock_get_enrollments.return_value = []
 
-        result = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(3716)
+        result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
         address = settings.LISTSERV_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
             section_id=1582
@@ -42,8 +42,8 @@ class MailingListModelTests(TestCase):
 
     @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
-    def test_get_or_create_mailing_lists_for_canvas_course_id_with_new_list(self, mock_get_sections,
-                                                                            mock_get_enrollments):
+    def test_get_or_create_or_delete_mailing_lists_for_canvas_course_id_with_new_list(self, mock_get_sections,
+                                                                                      mock_get_enrollments):
         mock_get_sections.return_value = [{
             'id': 1583,
             'name': 'section name 1',
@@ -55,7 +55,7 @@ class MailingListModelTests(TestCase):
         }]
         mock_get_enrollments.return_value = []
 
-        result = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(3716)
+        result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
         address_1 = settings.LISTSERV_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
             section_id=1583

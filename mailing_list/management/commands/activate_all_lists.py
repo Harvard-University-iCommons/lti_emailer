@@ -37,7 +37,7 @@ class Command(BaseCommand):
         defaults = {'access_level': MailingList.ACCESS_LEVEL_MEMBERS}
         for course in courses:
             try:
-                lists = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(
+                lists = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(
                     course['id'], defaults=defaults
                 )
             except RuntimeError as e:
