@@ -38,7 +38,8 @@ class MailingListManager(models.Manager):
                 mailing_list = MailingList(canvas_course_id=canvas_course_id, section_id=section_id)
                 mailing_list.save()
         else:
-            mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id).delete()
+            # Section with section_id no longer exists, so delete the associated mailing list
+            MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id).delete()
             raise MailingList.DoesNotExist
 
         return mailing_list
