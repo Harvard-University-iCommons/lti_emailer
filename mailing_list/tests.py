@@ -12,13 +12,16 @@ class MailingListModelTests(TestCase):
     ]
     longMessage = True
 
+    @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
-    def test_get_or_create_mailing_lists_for_canvas_course_id_with_existing_list(self, mock_get_sections):
+    def test_get_or_create_mailing_lists_for_canvas_course_id_with_existing_list(self, mock_get_sections,
+                                                                                 mock_get_enrollments):
         mock_get_sections.return_value = [{
             'id': 1582,
             'name': 'section name',
             'sis_section_id': 334562
         }]
+        mock_get_enrollments.return_value = []
 
         result = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(3716)
         address = settings.LISTSERV_ADDRESS_FORMAT.format(
@@ -37,8 +40,10 @@ class MailingListModelTests(TestCase):
             'is_primary_section': True
         }])
 
+    @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
-    def test_get_or_create_mailing_lists_for_canvas_course_id_with_new_list(self, mock_get_sections):
+    def test_get_or_create_mailing_lists_for_canvas_course_id_with_new_list(self, mock_get_sections,
+                                                                            mock_get_enrollments):
         mock_get_sections.return_value = [{
             'id': 1583,
             'name': 'section name 1',
@@ -48,6 +53,7 @@ class MailingListModelTests(TestCase):
             'name': 'section name 2',
             'sis_section_id': None
         }]
+        mock_get_enrollments.return_value = []
 
         result = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(3716)
         address_1 = settings.LISTSERV_ADDRESS_FORMAT.format(
