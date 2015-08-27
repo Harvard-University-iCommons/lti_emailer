@@ -134,6 +134,7 @@ CACHES = {
         'OPTIONS': {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
+        'KEY_PREFIX': 'tlt_shared',
         'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
     }
 }
