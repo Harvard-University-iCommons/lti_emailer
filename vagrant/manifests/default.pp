@@ -100,6 +100,11 @@ package {'sqlite3':
     require => Exec['apt-get-update'],
 }
 
+package {'vim':
+    ensure => latest,
+    require => Exec['apt-get-update'],
+}
+
 # Install Postgresql
 package {'postgresql':
     ensure => latest,
@@ -119,13 +124,15 @@ package {'libpq-dev':
 # Create vagrant user for postgresql
 exec {'create-postgresql-user':
     require => Package['postgresql'],
-    command => 'sudo -u postgres createuser --superuser vagrant'
+    command => 'sudo -u postgres psql -c "CREATE ROLE vagrant SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN PASSWORD \'vagrant\'"',
+    unless => 'sudo -u postgres psql -qt -c "select 1 from pg_roles where rolname=\'vagrant\'" | grep -q 1',
 }
 
 # Create vagrant db for postgresql
 exec {'create-postgresql-db':
     require => Exec['create-postgresql-user'],
-    command => 'sudo -u postgres createdb vagrant'
+    command => 'sudo -u postgres createdb vagrant',
+    unless => 'sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -wq vagrant',
 }
 
 # Install the Oracle instant client
@@ -269,18 +276,45 @@ exec {'create-virtualenv':
     creates => '/home/vagrant/.virtualenvs/lti_emailer',
 }
 
+# set the DJANGO_SETTINGS_MODULE environment variable
+file_line {'add DJANGO_SETTINGS_MODULE env to postactivate':
+    ensure => present,
+    line => 'export DJANGO_SETTINGS_MODULE=lti_emailer.settings.local',
+    path => '/home/vagrant/.virtualenvs/lti_emailer/bin/postactivate',
+    require => Exec['create-virtualenv'],
+}
+
+file_line {'add DJANGO_SETTINGS_MODULE env to postdeactivate':
+    ensure => present,
+    line => 'unset DJANGO_SETTINGS_MODULE',
+    path => '/home/vagrant/.virtualenvs/lti_emailer/bin/postdeactivate',
+    require => Exec['create-virtualenv'],
+}
+
+# init the development db, and run initial migrations
+exec {'init-db-and-migrate':
+    provider => 'shell',
+    user => 'vagrant',
+    group => 'vagrant',
+    require => [ File_line['add DJANGO_SETTINGS_MODULE env to postactivate'], ],
+    environment => ["ORACLE_HOME=/opt/oracle/instantclient_11_2","LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2","HOME=/home/vagrant","WORKON_HOME=/home/vagrant/.virtualenvs"],
+    command => '/vagrant/vagrant/django_postgres_bootstrap.sh',
+    unless => 'psql -lqt | cut -d \| -f 1 | grep -wq lti_emailer',
+    logoutput => true,
+}
+
 # Active this virtualenv upon login
 file {'/home/vagrant/.bash_profile':
     owner => 'vagrant',
     content => '
-echo "Activating python virtual environment \"lti_emailer\""
-workon lti_emailer
-        
 # Show git repo branch at bash prompt
 parse_git_branch() {
     git branch 2> /dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/(\1)/\'
 }
 PS1="${debian_chroot:+($debian_chroot)}\u@\h:\w\$(parse_git_branch) $ "
+
+echo "Activating python virtual environment \"lti_emailer\""
+workon lti_emailer
     ',
     require => Exec['create-virtualenv'],
 }
