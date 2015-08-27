@@ -4,7 +4,6 @@ from flanker import addresslib
 
 from django.conf import settings
 from django.db import models
-from django.core.cache import cache
 from django.utils import timezone
 
 from lti_emailer import canvas_api_client
@@ -43,40 +42,35 @@ class MailingListManager(models.Manager):
         :param kwargs:
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
-        cache_key = settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id
-        lists = cache.get(cache_key, {})
-        if not lists:
-            canvas_sections = canvas_api_client.get_sections(canvas_course_id)
-            mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
+        canvas_sections = canvas_api_client.get_sections(canvas_course_id)
+        mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
-            overrides = kwargs.get('defaults', {})
-            for s in canvas_sections:
-                section_id = s['id']
-                mailing_list = mailing_lists_by_section_id.get(section_id)
-                if not mailing_list:
-                    create_kwargs = {
-                        'canvas_course_id': canvas_course_id,
-                        'section_id': section_id
-                    }
-                    create_kwargs.update(overrides)
-
-                    mailing_list = MailingList(**create_kwargs)
-                    mailing_list.save()
-
-                lists[section_id] = {
-                    'id': mailing_list.id,
-                    'canvas_course_id': mailing_list.canvas_course_id,
-                    'section_id': mailing_list.section_id,
-                    'name': s['name'],
-                    'address': mailing_list.address,
-                    'access_level': mailing_list.access_level,
-                    'members_count': len(mailing_list.members),
-                    'is_primary_section': s['sis_section_id'] is not None
+        overrides = kwargs.get('defaults', {})
+        for s in canvas_sections:
+            section_id = s['id']
+            mailing_list = mailing_lists_by_section_id.get(section_id)
+            if not mailing_list:
+                create_kwargs = {
+                    'canvas_course_id': canvas_course_id,
+                    'section_id': section_id
                 }
+                create_kwargs.update(overrides)
 
-            cache.set(cache_key, lists)
+                mailing_list = MailingList(**create_kwargs)
+                mailing_list.save()
 
-        return lists.values()
+            mailing_lists_by_section_id[section_id] = {
+                'id': mailing_list.id,
+                'canvas_course_id': mailing_list.canvas_course_id,
+                'section_id': mailing_list.section_id,
+                'name': s['name'],
+                'address': mailing_list.address,
+                'access_level': mailing_list.access_level,
+                'members_count': len(mailing_list.members),
+                'is_primary_section': s['sis_section_id'] is not None
+            }
+
+        return mailing_lists_by_section_id.values()
 
 
 class MailingList(models.Model):

@@ -4,19 +4,18 @@ Utility methods for working with canvas_python_sdk which add a caching layer to 
 TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
 """
 import logging
-import json
 
 from django.conf import settings
-from django.core.cache import cache
 
-from canvas_sdk.methods import accounts, courses, enrollments, sections
+from canvas_sdk.methods import accounts
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
 from icommons_common.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.canvas_api.helpers import (
     courses as canvas_api_helper_courses,
-    roles as canvas_api_helper_roles
+    roles as canvas_api_helper_roles,
+    sections as canvas_api_helper_sections
 )
 
 
@@ -37,12 +36,9 @@ def get_courses_for_account_in_term(account_id, enrollment_term_id,
         kwargs['include'] = 'sections'
 
     try:
-        result = get_all_list_data(
-                     SDK_CONTEXT, accounts.list_active_courses_in_account,
-                     **kwargs)
+        result = get_all_list_data(SDK_CONTEXT, accounts.list_active_courses_in_account, **kwargs)
     except CanvasAPIError:
-        logger.error('Unable to get courses for account {}, term {}'.format(
-                         account_id, enrollment_term_id))
+        logger.error('Unable to get courses for account {}, term {}'.format(account_id, enrollment_term_id))
         raise
     return result
 
@@ -74,16 +70,7 @@ def get_section(canvas_course_id, section_id):
 
 
 def get_sections(canvas_course_id):
-    cache_key = settings.CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID % canvas_course_id
-    result = cache.get(cache_key)
-    if not result:
-        try:
-            result = get_all_list_data(SDK_CONTEXT, sections.list_course_sections, canvas_course_id)
-        except CanvasAPIError:
-            logger.exception("Failed to get canvas sections for canvas_course_id %s", canvas_course_id)
-            raise
-        cache.set(cache_key, result)
-    return result
+    return canvas_api_helper_sections.get_sections(canvas_course_id)
 
 
 def get_teaching_staff_enrollments(canvas_course_id):
@@ -99,24 +86,7 @@ def get_teaching_staff_enrollments(canvas_course_id):
 
 
 def get_users_in_course(canvas_course_id):
-    cache_key = settings.CACHE_KEY_USERS_BY_CANVAS_COURSE_ID % canvas_course_id
-    result = cache.get(cache_key)
-    if not result:
-        try:
-            result = get_all_list_data(
-                SDK_CONTEXT,
-                courses.list_users_in_course_users,
-                canvas_course_id,
-                ['email', 'enrollments']
-            )
-        except CanvasAPIError:
-            logger.exception(
-                "Failed to get users for canvas_course_id %s",
-                canvas_course_id
-            )
-            raise
-        cache.set(cache_key, result)
-    return result
+    return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
 
 
 def _copy_user_attributes_to_enrollment(user, enrollment):

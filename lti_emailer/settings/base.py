@@ -124,11 +124,20 @@ CACHES = {
         'OPTIONS': {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
-        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
+        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for intra-app cache
         # See following for default timeout (5 minutes as of 1.7):
         # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-CACHES-TIMEOUT
         'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
     },
+    'shared': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': "redis://%s:%s/0" % (REDIS_HOST, REDIS_PORT),
+        'OPTIONS': {
+            'PARSER_CLASS': 'redis.connection.HiredisParser'
+        },
+        'KEY_PREFIX': 'tlt_shared',
+        'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
+    }
 }
 
 # Sessions
@@ -284,6 +293,4 @@ MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
 IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)
 
-CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
-CACHE_KEY_USERS_BY_CANVAS_COURSE_ID = "users_by_canvas_course_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
