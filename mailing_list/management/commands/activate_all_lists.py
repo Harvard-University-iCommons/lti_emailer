@@ -1,8 +1,9 @@
 import argparse
-import csv
 import logging
 
 from django.core.management.base import BaseCommand, CommandError
+
+from icommons_common.canvas_utils import UnicodeCSVWriter
 
 from lti_emailer.canvas_api_client import get_courses_for_account_in_term
 from mailing_list.models import MailingList
@@ -69,15 +70,16 @@ class Command(BaseCommand):
 
         if options.get('output_file'):
             courses_by_id = {c['id']: c for c in courses}
-            writer = csv.writer(options['output_file'])
+            writer = UnicodeCSVWriter(options['output_file'])
             writer.writerow(('canvas_course_id', 'sis_course_id', 'course_name',
                              'course_code', 'primary_section_lists',
                              'secondary_section_lists'))
             for course_id in sorted(course_lists):
                 course = courses_by_id[course_id]
-                primary = ';'.join([l['address'] for l in course_lists[course_id]['primary']])
-                secondary = ';'.join([l['address'] for l in course_lists[course_id]['secondary']])
+                primary = u';'.join([l['address'] for l in course_lists[course_id]['primary']])
+                secondary = u';'.join([l['address'] for l in course_lists[course_id]['secondary']])
                 row = (
-                    course_id, course['sis_course_id'], course['name'], course['course_code'], primary, secondary
+                    unicode(course_id), unicode(course['sis_course_id']),
+                    course['name'], course['course_code'], primary, secondary
                 )
                 writer.writerow(row)

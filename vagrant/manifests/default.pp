@@ -85,6 +85,11 @@ package {'openssl':
     require => Exec['apt-get-update'],
 }
 
+package {'libffi-dev':
+    ensure => latest,
+    require => Exec['apt-get-update'],
+}
+
 package {'zlib1g-dev':
     ensure => latest,
     require => Exec['apt-get-update'],
