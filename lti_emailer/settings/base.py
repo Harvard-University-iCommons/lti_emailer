@@ -127,8 +127,8 @@ CACHES = {
         'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
         # See following for default timeout (5 minutes as of 1.7):
         # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-CACHES-TIMEOUT
-        #Increasing the timeout to 60 mins
-        'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 3600),
+        # Temporarily decreasing teh cache timeout for testing
+        'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 5),
     },
 }
 
