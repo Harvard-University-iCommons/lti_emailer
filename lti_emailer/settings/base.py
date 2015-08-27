@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import logging
 from django.core.urlresolvers import reverse_lazy
 from .secure import SECURE_SETTINGS
 
@@ -144,8 +145,10 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
-
-USE_I18N = True
+# A boolean that specifies whether Django's translation system should be enabled. This provides
+# an easy way to turn it off, for performance. If this is set to False, Django will make some
+# optimizations so as not to load the translation machinery.
+USE_I18N = False
 
 USE_L10N = True
 
@@ -162,6 +165,10 @@ STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'http_static'))
 
 _DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', 'DEBUG')
 _LOG_ROOT = SECURE_SETTINGS.get('log_root', '')  # Default to current directory
+
+# Turn off default Django logging
+# https://docs.djangoproject.com/en/1.8/topics/logging/#disabling-logging-configuration
+LOGGING_CONFIG = None
 
 LOGGING = {
     'version': 1,
@@ -181,6 +188,16 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugTrue',
         },
     },
+    # This is the default logger for any apps or libraries that use the logger
+    # package, but are not represented in the `loggers` dict below.  A level
+    # must be set and handlers defined.  Setting this logger is equivalent to
+    # setting and empty string logger in the loggers dict below, but the separation
+    # here is a bit more explicit.  See link for more details:
+    # https://docs.python.org/2.7/library/logging.config.html#dictionary-schema-details
+    'root': {
+        'level': logging.WARNING,
+        'handlers': ['console', 'app_logfile'],
+    },
     'handlers': {
         # Log to a text file that can be rotated by logrotate
         'app_logfile': {
@@ -190,7 +207,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': logging.DEBUG,
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
             'filters': ['require_debug_true'],
@@ -215,6 +232,16 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
+        'mailgun': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['console', 'app_logfile'],
+            'propagate': False,
+        },
+        'mailing_list': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['console', 'app_logfile'],
+            'propagate': False,
+        }
     }
 }
 

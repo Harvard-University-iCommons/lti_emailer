@@ -1,4 +1,4 @@
-from .base import *
+from .local import *
 
 # Make tests faster
 
