@@ -30,8 +30,8 @@ class MailingListManager(models.Manager):
             logger.error("Failed to parse address in get_or_create_or_delete_mailing_list_by_address %s", address)
             raise MailingList.DoesNotExist
 
-        canvas_sections = canvas_api_client.get_sections(canvas_course_id)
-        if section_id in canvas_sections:
+        canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)
+        if canvas_section:
             try:
                 mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
             except MailingList.DoesNotExist:
