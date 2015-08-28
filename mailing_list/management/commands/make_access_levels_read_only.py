@@ -17,5 +17,12 @@ class Command(BaseCommand):
     help = 'Sets access_level on all Mailgun mailing lists to read only'
 
     def handle(self, *args, **options):
+        non_readonly = []
         for ml in MailingList.objects.all():
-            listserv_client.update_list(ml, 'readonly')
+            l = listserv_client.get_list(ml)
+            if l['access_level'] != 'readonly':
+                non_readonly.append(l)
+                listserv_client.update_list(ml, 'readonly')
+        for l in non_readonly:
+            logger.info(l)
+        logger.info("Found %d non-readonly lists and set them to readonly", len(non_readonly))
