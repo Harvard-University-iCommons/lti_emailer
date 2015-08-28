@@ -63,4 +63,5 @@ def lti_launch(request):
         "lti_emailer launched with params: %s",
         json.dumps(request.POST.dict(), indent=4)
     )
+    logger.info("lti_emailer lti_launch, fwding to admin_index ")
     return redirect('mailing_list:admin_index')
