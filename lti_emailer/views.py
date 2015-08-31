@@ -31,8 +31,11 @@ def tool_config(request):
     env = settings.ENV_NAME if hasattr(settings, 'ENV_NAME') else ''
     url = "%s://%s%s" % (request.scheme, request.get_host(),
                          reverse('lti_launch', exclude_resource_link_id=True))
+    title = 'Course Emailer'
+    if env and env != 'prod':
+        title += ' ' + env
     lti_tool_config = ToolConfig(
-        title="Course Emailer %s" % env,
+        title=title,
         launch_url=url,
         secure_launch_url=url,
         description="This LTI tool allows email functionality for this course site."
@@ -41,7 +44,7 @@ def tool_config(request):
     # this is how to tell Canvas that this tool provides a course navigation link:
     course_nav_params = {
         'enabled': 'true',
-        'text': "Course Emailer %s" % env,
+        'text': title,
         'default': 'disabled',
         'visibility': 'admins',
     }
