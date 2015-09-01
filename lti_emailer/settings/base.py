@@ -287,7 +287,8 @@ LISTSERV_DOMAIN = SECURE_SETTINGS.get('listserv_domain')
 LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
-LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
+LISTSERV_SECTION_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
+LISTSERV_COURSE_ADDRESS_FORMAT = "canvas-{canvas_course_id}@%s" % LISTSERV_DOMAIN
 
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 

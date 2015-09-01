@@ -45,6 +45,26 @@ class MailingListManager(models.Manager):
         canvas_sections = canvas_api_client.get_sections(canvas_course_id)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
+        # get a list of the primary sections
+        primary_sections = [s['id'] for s in canvas_sections if s['sis_section_id'] is not None]
+
+        # if there is more than one primary section
+        # create a primary list, this will have no section id
+        if len(primary_sections) > 1:
+            canvas_sections.append({
+                'integration_id': None,
+                'start_at': None,
+                'name': 'course',
+                'sis_import_id': None,
+                'end_at': None,
+                'sis_course_id': canvas_sections[0].get('sis_course_id'),
+                'sis_section_id': 'course',
+                'course_id': canvas_course_id,
+                'nonxlist_course_id': None,
+                'id': 0
+            })
+
+
         overrides = kwargs.get('defaults', {})
         for s in canvas_sections:
             section_id = s['id']
@@ -104,6 +124,8 @@ class MailingList(models.Model):
         )
 
     def _get_enrolled_email_set(self):
+        if self.section_id == 0:
+            return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id)}
         return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
 
     def _get_enrolled_teaching_staff_email_set(self):
@@ -114,7 +136,9 @@ class MailingList(models.Model):
 
     @property
     def address(self):
-        return settings.LISTSERV_ADDRESS_FORMAT.format(
+        if self.section_id == 0:
+            return settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(canvas_course_id=self.canvas_course_id)
+        return settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=self.canvas_course_id,
             section_id=self.section_id
         )
