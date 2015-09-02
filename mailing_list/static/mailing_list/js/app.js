@@ -18,11 +18,13 @@
     app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
         var ml = this;
         var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
+        var GET_COURSE = $djangoUrl.reverse('mailing_list:api_course');
 
         ml.isLoading = true;
         ml.isUpdating = false;
         ml.primarySectionLists = [];
         ml.otherSectionLists = [];
+        ml.course_code = null;
         // temp storage for modal interaction to access level to prevent base
         // page from updating until the requested change has been saved via AJAX
         ml.updatedAccessLevel = '';
@@ -75,6 +77,10 @@
                 }
             }
             ml.loaded = true;
+        });
+
+        $http.get(GET_COURSE).success(function(data){
+            ml.course_code = data.course_code;
         });
 
         ml.hasPrimarySections = function() {
