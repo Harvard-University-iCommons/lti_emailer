@@ -1,35 +1,62 @@
 {% load static %}
 
+
+<hr width="98%">
 {% verbatim %}
-<div>
+
+<!-- column 1 -->
+<div class="col-md-3">
   <p>
     <strong>{{ list.name }}</strong>
-    (<a class="link-text" href="{{ ml.listMembersUrl(list) }}"><ng-pluralize count="list.members_count" when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}"></ng-pluralize></a>)
+    (<a class="link-text lti-tooltip"
+        rel="tooltip"
+        title=""
+        data-original-title="Members emails"
+        data-toggle="tooltip"
+        href="{{ ml.listMembersUrl(list) }}"><ng-pluralize count="list.members_count" when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}"></ng-pluralize></a>)
   </p>
 </div>
-<div class="float-left col-40" style="padding-left: 0;">
+
+<!-- column 2 -->
+<div class="col-md-3">
   <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''">
-    <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'">
-       <i class="fa fa-envelope"></i> {{ list.address }}
+    <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'" class="ng-binding editSection lti-tooltip" rel="tooltip" data-toggle="tooltip" title="" data-original-title="Click this link to send an email">
+       <i class="fa fa-envelope"></i> {{ list.address | limitTo: 15 }}{{list.address.length > 15 ? '...' : ''}}
     </a>
   </p>
 </div>
+
 {% endverbatim %}
-<div class="float-left col-60">
-  <div class="float-left col-60">
+
+<!-- column 3 -->
+<div class="col-md-5">
     <p>
-      <strong ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']"></strong> - <span ng-bind-html="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
+        <strong ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']"></strong> - <span ng-bind-html="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
     </p>
-  </div>
-  <div class="float-left col-40">
-{% verbatim %}
-    <button class="btn btn-submit" data-toggle="modal" data-target="#permissions-modal-{{ list.section_id }}" ng-click="ml.updatedAccessLevel = list.access_level"><i class="fa fa-gear"></i> Change</button>
-{% endverbatim %}
+</div>
+
+<!-- column 4 -->
+<div class="col-md-1 editMenu">
+    {% verbatim %}
+    <a href="#"
+       class="editSection lti-tooltip"
+       rel="tooltip"
+       data-toggle="modal"
+       data-target="#permissions-modal-{{ list.section_id }}"
+       ng-click="ml.updatedAccessLevel = list.access_level"
+       title="Edit {{ list.name }}"
+       data-original-title="Edit {{ list.name }}">
+        <i class="fa fa-gear"></i>
+    </a>
+    {% endverbatim %}
     <img src="{% static 'images/ajax-loader-small.gif' %}" ng-show="list.isUpdating" class="ng-hide">
     <span class="text-success feedback ng-hide" ng-show="list.updated">✓</span>
     <span class="text-danger feedback ng-hide" ng-show="list.update_failed">✗</span>
-  </div>
 </div>
+
+
+<!-- Modal -->
+
 {% verbatim %}
   <div id="permissions-modal-{{ list.section_id }}" class="modal fade">
 {% endverbatim %}

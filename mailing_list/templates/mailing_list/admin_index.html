@@ -2,44 +2,134 @@
 
 {% load static %}
 
+{% block js %}
+<script type="text/javascript">
+$(document).ready(function(){
+    //tooltip for buttons (done this way because of dynamically created icons)
+    $('body').tooltip({
+        selector: '[rel=tooltip]'
+    });
+    $('[rel=tooltip]').tooltip({
+        container: 'body'
+    });
+});
+</script>
+{% endblock js %}
+
 {% block body %}
 <body class="lti-tool"
       role="application"
       ng-controller="MailingListController as ml">
+
   <header>
-    <h1>
-      {% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}
-    </h1>
+    <div class="row lti-header">
+      <h1>
+        {% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}
+      </h1>
+    </div>
   </header>
+
   <div class="loading-indicator" ng-show="ml.isLoading">
     <img src="{% static 'images/ajax-loader-large.gif' %}"/>
   </div>
+
   <main class="ng-hide" ng-show="ml.loaded">
-    <div ng-show="ml.hasPrimarySections()">
-      <h2><strong>Official course mailing list:</strong></h2>
+
+    <div ng-show="ml.hasPrimarySections()" class="col-md-12">
+      {% verbatim %}
+      <h2>Mailing List for {{ml.course_code}}</h2>
+      {% endverbatim %}
       <p class="caption">
         The mailing list contains staff, students, and guests who have been added to this course.
         <a target="_blank" href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer " title="More info about the Course Emailer"><i class="fa fa-question-circle"></i></a>
+        <div ng-show="ml.primarySectionLists.length > 1">
+          This course site includes enrollment from two or more schools.
+          <a target="_blank" href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer" class="lti-tooltip" rel="tooltip" data-toggle="tooltip" title="" data-original-title="More info about cross listed courses"><i class="fa fa-question-circle"></i></a>
+        </div>
       </p>
-      <div ng-repeat="list in ml.primarySectionLists">
-        {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
-      </div>
     </div>
-    <div ng-show="!ml.hasPrimarySections()">
+
+    <hr width="98%">
+    <!-- show combined mailing list or single primary list -->
+    <!-- if there is a combined mailing list show it -->
+    <div ng-if="ml.primarySectionLists.length > 1 && list.section_id == 0" ng-repeat="list in ml.primarySectionLists">
+      {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+    </div>
+    <!-- otherwise show the primary section -->
+    <div ng-if="ml.primarySectionLists.length == 1" ng-repeat="list in ml.primarySectionLists">
+      {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+    </div>
+    <!-- end show combined mailing list or single primary list -->
+    <hr width="98%">
+
+
+    <div ng-show="!ml.hasPrimarySections()" class="col-md-12">
       <p>
         There was an error retrieving the class mailing list for this course.
         Please contact your local academic support staff for assistance.
       </p>
     </div>
-    <div ng-show="ml.hasOtherSections()">
-      <h2><strong>Sections:</strong></h2>
-        <p class="caption">
-          These sections are created in the Manage Sections tool (if installed in your account) or are being sent from the Registrar's Office. Any changes made to those sections will be reflected within these lists.
-        </p>
-        <div class="content-section" ng-repeat="list in ml.otherSectionLists">
-          {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
+
+    <div class="btn-group col-md-12">
+
+      <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+        <div class="panel panel-default" ng-show="ml.primarySectionLists.length > 1">
+
+          <div class="panel-heading" role="tab" id="headingOne">
+            <h4 class="panel-title">
+              {% verbatim %}
+              <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                      Official Course Sections for {{ml.course_code}}
+              </a>
+              {% endverbatim %}
+             </h4>
+          </div>
+
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+            <div class="panel-body">
+              <div class="col-md-12">
+                <h2>Official Course Sections</h2>
+                <p class="caption">
+                    Click these links to email the enrollees from individual schools.
+                </p>
+              </div>
+              <div  ng-repeat="list in ml.primarySectionLists" ng-if="list.section_id > 0">
+                {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+              </div>
+            </div>
+          </div>
         </div>
+
+        <div class="panel panel-default" ng-show="ml.otherSectionLists.length > 0">
+          <div class="panel-heading" role="tab" id="headingOne">
+            <h4 class="panel-title">
+              {% verbatim %}
+              <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                <ng-pluralize count="ml.otherSectionLists.length" when="{'0': 'No Sections for ', 'one': '1 Section for ', 'other': '{} Sections for '}"></ng-pluralize>{{ml.course_code}}
+              </a>
+              {% endverbatim %}
+             </h4>
+          </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+            <div class="panel-body">
+              <div class="col-md-12">
+                <h2>Sections</h2>
+                <p class="caption">
+                    These sections are created in the Manage Sections tool (if installed in your account) or are being sent from the Registrar's Office. Any changes made to those sections will be reflected within these lists.
+                </p>
+              </div>
+              <div class="content-section" ng-repeat="list in ml.otherSectionLists">
+                {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
+
   </main>
 </body>
 {% endblock body %}
+
