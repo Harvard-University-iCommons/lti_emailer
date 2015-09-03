@@ -13,14 +13,23 @@
         title=""
         data-original-title="Members emails"
         data-toggle="tooltip"
-        href="{{ ml.listMembersUrl(list) }}"><ng-pluralize count="list.members_count" when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}"></ng-pluralize></a>)
+        href="{{ ml.listMembersUrl(list) }}">
+      <ng-pluralize count="list.members_count"
+                    when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}"></ng-pluralize></a>)
   </p>
 </div>
 
 <!-- column 2 -->
 <div class="col-md-3">
   <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''">
-    <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'" class="ng-binding editSection lti-tooltip" rel="tooltip" data-toggle="tooltip" title="" data-original-title="Click this link to send an email">
+    <a id="email-section-{{ list.section_id }}"
+       target="_top"
+       href="mailto:{{ list.address }}"
+       ng-disabled="list.access_level == 'readonly'"
+       class="ng-binding editSection lti-tooltip"
+       rel="tooltip"
+       data-toggle="tooltip"
+       title="" data-original-title="Click this link to send an email">
        <i class="fa fa-envelope"></i> {{ list.address }}
     </a>
   </p>
@@ -31,7 +40,9 @@
 <!-- column 3 -->
 <div class="col-md-5">
     <p>
-        <strong ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']"></strong> - <span ng-bind-html="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
+        <strong
+                ng-bind="ml.accessLevelDisplayNameMap[list.access_level]['{{ scope }}']">
+        </strong> - <span ng-bind-html="ml.accessLevelDescriptionMap[list.access_level]['{{ scope }}']"></span>
     </p>
 </div>
 
@@ -83,7 +94,8 @@
                 If you would like a copy of your email, add your own email address to the CC or BCC field.
               </p>
               <p ng-show="!list.is_primary_section" class="caption">
-                Any email sent to a section will be delivered to all staff in the course, even if they have not been added to the section.
+                Any email sent to a section will be delivered to all staff in the course, even if they
+                  have not been added to the section.
               </p>
               <div id="permissions-input-{{ list.section_id }}">
                   <div class="indented-radio-block"

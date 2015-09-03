@@ -41,10 +41,22 @@ $(document).ready(function(){
       {% endverbatim %}
       <p class="caption">
         The mailing list contains staff, students, and guests who have been added to this course.
-        <a target="_blank" href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer " class="lti-tooltip" rel="tooltip" data-toggle="tooltip" title="" data-original-title="More info about the Course Emailer"><i class="fa fa-question-circle"></i></a>
+        <a target="_blank"
+           href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
+           class="lti-tooltip"
+           rel="tooltip"
+           data-toggle="tooltip"
+           title=""
+           data-original-title="More info about the Course Emailer"><i class="fa fa-question-circle"></i></a>
         <div ng-show="ml.hasPrimarySections()">
           This course site includes enrollment from two or more schools.
-          <a target="_blank" href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer" class="lti-tooltip" rel="tooltip" data-toggle="tooltip" title="" data-original-title="More info about cross listed courses"><i class="fa fa-question-circle"></i></a>
+          <a target="_blank"
+             href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer"
+             class="lti-tooltip"
+             rel="tooltip"
+             data-toggle="tooltip"
+             title=""
+             data-original-title="More info about cross listed courses"><i class="fa fa-question-circle"></i></a>
         </div>
       </p>
     </div>
@@ -52,7 +64,8 @@ $(document).ready(function(){
     <hr width="98%">
     <!-- show combined mailing list or single primary list -->
     <!-- if there is a combined mailing list show it -->
-    <div ng-if="ml.primarySectionLists.length > 1 && list.section_id == 0" ng-repeat="list in ml.primarySectionLists">
+    <div ng-if="ml.primarySectionLists.length > 1 && list.section_id == 0"
+         ng-repeat="list in ml.primarySectionLists">
       {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
     </div>
     <!-- otherwise show the primary section -->
@@ -76,7 +89,11 @@ $(document).ready(function(){
           <div class="panel-heading" role="tab" id="headingOne">
             <h4 class="panel-title">
               {% verbatim %}
-              <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+              <a class="collapsed"
+                 role="button"
+                 data-toggle="collapse"
+                 data-parent="#accordion"
+                 href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                       Official Course Sections for {{ml.course_code}}
               </a>
               {% endverbatim %}
@@ -102,8 +119,15 @@ $(document).ready(function(){
           <div class="panel-heading" role="tab" id="headingOne">
             <h4 class="panel-title">
               {% verbatim %}
-              <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                <ng-pluralize count="ml.otherSectionLists.length" when="{'0': 'No Sections for ', 'one': '1 Section for ', 'other': '{} Sections for '}"></ng-pluralize>{{ml.course_code}}
+              <a class="collapsed"
+                 role="button"
+                 data-toggle="collapse"
+                 data-parent="#accordion"
+                 href="#collapseTwo"
+                 aria-expanded="false" aria-controls="collapseTwo">
+                <ng-pluralize count="ml.otherSectionLists.length"
+                              when="{'0': 'No Sections for ', 'one': '1 Section for ', 'other': '{} Sections for '}">
+                </ng-pluralize>{{ml.course_code}}
               </a>
               {% endverbatim %}
              </h4>
@@ -113,10 +137,14 @@ $(document).ready(function(){
               <div class="col-md-12">
                 <h2>Sections</h2>
                 <p class="caption">
-                  If you would like a copy of your email, add your own email address to the CC or BCC field. Any email sent to a section will be delivered to all staff in the course, even if they have not been added to the section.
+                  If you would like a copy of your email, add your own email address to the CC or BCC field.
+                  Any email sent to a section will be delivered to all staff in the course, even if they have
+                  not been added to the section.
                 </p>
                 <p class="caption">
-                  These sections are created in the Manage Sections tool (if installed in your account) or are being sent from the Registrar's Office. Any changes made to those sections will be reflected within these lists.
+                  These sections are created in the Manage Sections tool (if installed in your account) or are being
+                  sent from the Registrar's Office. Any changes made to those sections will be reflected
+                  within these lists.
                 </p>
               </div>
               <div class="content-section" ng-repeat="list in ml.otherSectionLists">
