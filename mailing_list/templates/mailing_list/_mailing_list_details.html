@@ -21,7 +21,7 @@
 <div class="col-md-3">
   <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''">
     <a id="email-section-{{ list.section_id }}" target="_top" href="mailto:{{ list.address }}" ng-disabled="list.access_level == 'readonly'" class="ng-binding editSection lti-tooltip" rel="tooltip" data-toggle="tooltip" title="" data-original-title="Click this link to send an email">
-       <i class="fa fa-envelope"></i> {{ list.address | limitTo: 15 }}{{list.address.length > 15 ? '...' : ''}}
+       <i class="fa fa-envelope"></i> {{ list.address }}
     </a>
   </p>
 </div>
@@ -76,36 +76,43 @@
                 Change Permissions
               </label>
             </h4>
+
           </div>
           <div class="modal-body">
-            <div id="permissions-input-{{ list.section_id }}">
-              <div class="indented-radio-block"
-                   ng-repeat="access_level in ml.accessLevels">
-                <input type="radio"
-                       class="indented-radio-block-input"
-                       id="permissions-radio-{{ list.section_id }}-{{ access_level.id }}"
-                       ng-model="ml.updatedAccessLevel"
-                       value="{{ access_level.id }}">
-                <label class="indented-radio-block-label"
-                       for="permissions-radio-{{ list.section_id }}-{{ access_level.id }}">
+              <p class="caption">
+                If you would like a copy of your email, add your own email address to the CC or BCC field.
+              </p>
+              <p ng-show="!list.is_primary_section" class="caption">
+                Any email sent to a section will be delivered to all staff in the course, even if they have not been added to the section.
+              </p>
+              <div id="permissions-input-{{ list.section_id }}">
+                  <div class="indented-radio-block"
+                       ng-repeat="access_level in ml.accessLevels">
+                      <input type="radio"
+                             class="indented-radio-block-input"
+                             id="permissions-radio-{{ list.section_id }}-{{ access_level.id }}"
+                             ng-model="ml.updatedAccessLevel"
+                             value="{{ access_level.id }}">
+                      <label class="indented-radio-block-label"
+                             for="permissions-radio-{{ list.section_id }}-{{ access_level.id }}">
 {% endverbatim %}
-                  <span ng-bind="access_level.name['{{ scope }}']"></span>
-                </label>
-                  <span ng-bind-html="access_level.description['{{ scope }}']"></span>
-                <br/>
+                          <span ng-bind="access_level.name['{{ scope }}']"></span>
+                      </label>
+                      <span ng-bind-html="access_level.description['{{ scope }}']"></span>
+                      <br/>
+                  </div>
               </div>
-            </div>
           </div>
-          <div class="modal-footer">
-            <div class="ic-Form-actions">
-              <a href="#" data-dismiss="modal">Cancel</a>
-              <button type="button"
-                      class="btn btn-primary btn-submit"
-                      ng-click="ml.updateAccessLevel(list)">
-                Update Permissions
-              </button>
+            <div class="modal-footer">
+                <div class="ic-Form-actions">
+                    <a href="#" data-dismiss="modal">Cancel</a>
+                    <button type="button"
+                            class="btn btn-primary btn-submit"
+                            ng-click="ml.updateAccessLevel(list)">
+                        Update Permissions
+                    </button>
+                </div>
             </div>
-          </div>
         </form>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
