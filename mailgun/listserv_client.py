@@ -140,7 +140,9 @@ class MailgunClient(object):
                 raise ListservApiError("Failed to get mailing list members %s range [%d-%d]" % (address, start, end))
             else:
                 data = response.json()
-                result += data['items']
+                for m in data['items']:
+                    m['address'] = m['address'].lower()
+                    result.append(m)
                 if len(result) >= data['total_count']:
                     # We have retrieved all members, so stop sending API requests
                     break
