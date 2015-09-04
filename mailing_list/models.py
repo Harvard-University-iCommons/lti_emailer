@@ -49,12 +49,14 @@ class MailingListManager(models.Manager):
         primary_sections = [s['id'] for s in canvas_sections if s['sis_section_id'] is not None]
 
         # if there is more than one primary section
-        # create a primary list, this will have no section id
+        # create a primary list by creating a primary section with an id of 0.
+        # This section will never be input into canvas, it's only for the purposes of
+        # the mailing list.
         if len(primary_sections) > 1:
             canvas_sections.append({
                 'integration_id': None,
                 'start_at': None,
-                'name': 'course',
+                'name': canvas_api_client.get_course(canvas_course_id)['course_code'],
                 'sis_import_id': None,
                 'end_at': None,
                 'sis_course_id': canvas_sections[0].get('sis_course_id'),
@@ -63,7 +65,6 @@ class MailingListManager(models.Manager):
                 'nonxlist_course_id': None,
                 'id': 0
             })
-
 
         overrides = kwargs.get('defaults', {})
         for s in canvas_sections:
@@ -124,6 +125,11 @@ class MailingList(models.Model):
         )
 
     def _get_enrolled_email_set(self):
+        """
+        When we add enrollment emails to the mailing list, check if this is a whole course list
+        by checking if the section_id is 0. If it is we want to add all the enrollments that exist
+        in the course. If not, we build the mailing with the enrollments for the specified section.
+        """
         if self.section_id == 0:
             return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id)}
         return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}

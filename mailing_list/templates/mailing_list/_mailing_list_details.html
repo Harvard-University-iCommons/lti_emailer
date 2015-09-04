@@ -1,27 +1,27 @@
 {% load static %}
 
+<div class="col-md-12">
+    <hr width="98%">
+</div>
 
-<hr width="98%">
 {% verbatim %}
-
+<!-- 4 column row  -->
 <!-- column 1 -->
 <div class="col-md-3">
   <p>
-    <strong>{{ list.name }}</strong>
-    (<a class="link-text lti-tooltip"
+    <strong>{{ list.name }}</strong><br />(<a class="link-text lti-tooltip"
         rel="tooltip"
         title=""
         data-original-title="Members emails"
         data-toggle="tooltip"
-        href="{{ ml.listMembersUrl(list) }}">
-      <ng-pluralize count="list.members_count"
+        href="{{ ml.listMembersUrl(list) }}"><ng-pluralize count="list.members_count"
                     when="{'0': 'No members', 'one': '1 member', 'other': '{} members'}"></ng-pluralize></a>)
   </p>
 </div>
 
 <!-- column 2 -->
 <div class="col-md-3">
-  <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''">
+  <p ng-class="list.access_level == 'readonly' ? 'caption-disabled' : ''" style="word-wrap:break-word;">
     <a id="email-section-{{ list.section_id }}"
        target="_top"
        href="mailto:{{ list.address }}"
@@ -129,4 +129,3 @@
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
-</div>

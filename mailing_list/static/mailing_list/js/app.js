@@ -91,6 +91,10 @@
             return ml.otherSectionLists.length > 0;
         };
 
+        ml.isCourseList = function(list){
+          return list.section_id == 0;
+        };
+
         ml.updateAccessLevel = function(list) {
             $('#permissions-modal-' + list.section_id).modal('hide');
             list.isUpdating = true;

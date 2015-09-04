@@ -26,6 +26,10 @@ TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'Designe
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
 
 
+def get_course(canvas_course_id):
+    return canvas_api_helper_courses.get_course(canvas_course_id)
+
+
 def get_courses_for_account_in_term(account_id, enrollment_term_id,
                                     include_sections=False):
     kwargs = {
