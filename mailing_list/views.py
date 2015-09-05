@@ -1,17 +1,15 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
-
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
-
+from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from icommons_common.auth.lti_decorators import has_course_permission
 from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
 
-from lti_emailer.canvas_api_client import get_enrollments, get_section
+from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
 from mailing_list.models import MailingList
 
 
@@ -45,9 +43,23 @@ def list_members(request, section_id):
                 'canvas course {}, section {}'.format(
                     logged_in_user_id, canvas_course_id, section_id))
 
-    mailing_list = get_object_or_404(MailingList, section_id=section_id)
-    enrollments = get_enrollments(canvas_course_id, int(section_id))
+    mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id=section_id)
+
+    if section_id == 'None':
+        logger.debug('calling first option')
+        enrollments = get_enrollments(canvas_course_id)
+    else:
+        enrollments = get_enrollments(canvas_course_id, section_id)
+
     enrollments.sort(key=lambda x: x['sortable_name'])
     section = get_section(canvas_course_id, section_id)
+
+    if not section:
+        course_code = get_course(canvas_course_id)['course_code']
+        section = {
+            'id' : 0,
+            'name' : course_code,
+        }
+
     return render(request, 'mailing_list/list_details.html',
                   {'section': section, 'enrollments': enrollments})

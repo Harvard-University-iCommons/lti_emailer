@@ -60,12 +60,17 @@ def get_enrollments(canvas_course_id, section_id=None):
     for user in users:
         for enrollment in user['enrollments']:
             if section_id:
-                if enrollment['course_section_id'] == section_id:
+                if str(enrollment['course_section_id']) == section_id:
                     _copy_user_attributes_to_enrollment(user, enrollment)
                     enrollments.append(enrollment)
             else:
+                # if the user has any enrollment in the course
+                # we add them to the list and then stop (break)
+                # on to the next user.
                 _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
+                break
+
     return enrollments
 
 
@@ -77,7 +82,6 @@ def get_name_for_email(canvas_course_id, address):
 
 def get_section(canvas_course_id, section_id):
     sections = get_sections(canvas_course_id)
-    section_id = int(section_id)
     for section in sections:
         if section['id'] == section_id:
             return section

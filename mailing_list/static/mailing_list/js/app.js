@@ -83,6 +83,10 @@
             ml.course_code = data.course_code;
         });
 
+        ml.hasMultiplePrimarySections = function() {
+          return ml.primarySectionLists.length > 1;
+        };
+
         ml.hasPrimarySections = function() {
             return ml.primarySectionLists.length > 0;
         };
@@ -92,7 +96,7 @@
         };
 
         ml.isCourseList = function(list){
-          return list.section_id == 0;
+          return list.section_id == 'None';
         };
 
         ml.updateAccessLevel = function(list) {

@@ -51,7 +51,7 @@ $(document).ready(function(){
                    data-original-title="More info about the Course Emailer">
                     <i class="fa fa-question-circle"></i>
                 </a>
-                <div ng-show="ml.hasPrimarySections()">
+                <div ng-show="ml.hasMultiplePrimarySections()">
                     This course site includes enrollment from two or more schools.
                     <a target="_blank"
                        href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer"
@@ -70,7 +70,7 @@ $(document).ready(function(){
             <!--<hr width="98%">-->
             <!-- show combined mailing list or single primary list -->
             <!-- if there is a combined mailing list show it -->
-            <div ng-if="ml.hasPrimarySections() && ml.isCourseList(list)"
+            <div ng-if="ml.isCourseList(list)"
                ng-repeat="list in ml.primarySectionLists">
               {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
                 <div class="col-md-12">
