@@ -54,7 +54,7 @@
             name: {class: 'Disabled:', section: 'Disabled:'},
             description: {
                 class: 'this mailing list is disabled.',
-                section: 'his mailing list is disabled.'
+                section: 'this mailing list is disabled.'
             }
         }];
         ml.accessLevelDisplayNameMap = {};
