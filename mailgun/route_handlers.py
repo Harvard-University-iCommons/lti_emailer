@@ -7,15 +7,20 @@ from django.template import Context
 from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
+
 from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
+from mailgun.listserv_client import MailgunClient as ListservClient
 from mailing_list.models import MailingList
 
 
 logger = logging.getLogger(__name__)
+
+listserv_client = ListservClient()
 
 
 @csrf_exempt
@@ -52,17 +57,28 @@ def handle_mailing_list_email_route(request):
     sender_address = address.parse(sender)
 
     # make sure the mailing list exists
+    bounce_back_email_template = None
     try:
-        ml = MailingList.objects.get_mailing_list_by_address(recipient)
+        ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(recipient)
     except MailingList.DoesNotExist:
-        message = "Could not find MailingList for email address %s" % recipient
-        logger.error(message)
-        return JsonResponse({'error': message}, status=406)  # Return status 406 so Mailgun does not retry
+        logger.info(
+            "Sending mailing list bounce back email to %s for mailing list %s because the mailing list does not exist",
+            sender,
+            recipient
+        )
+        bounce_back_email_template = get_template('mailgun/email/bounce_back_does_not_exist.html')
+        content = bounce_back_email_template.render(Context({
+            'sender': sender,
+            'recipient': recipient,
+            'subject': subject,
+            'message_body': body_plain or body_html,
+        }))
+        listserv_client.send_mail(recipient, recipient, sender_address.address, subject="Undeliverable mail", html=content)
+        return JsonResponse({'success': True})
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    bounce_back_email_template = None
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address.address not in member_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender was not a member",
@@ -221,11 +237,10 @@ def _get_attachments_inlines(request):
         logger.exception('Unable to find content-id map in this email, '
                          'forwarding all files as attachments.')
         content_id_map = {}
-    attachment_name_to_cid = {v: k.strip('<>')
-                                  for k,v in content_id_map.iteritems()}
+    attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.iteritems()}
     logger.debug('Attachment name to cid: {}'.format(attachment_name_to_cid))
 
-    for n in xrange(1, attachment_count+1):
+    for n in xrange(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
         file_ = request.FILES[attachment_name]
         if attachment_name in attachment_name_to_cid:

@@ -35,7 +35,7 @@ def lists(request):
         canvas_course_id = request.LTI['custom_canvas_course_id']
         logged_in_user_id = request.LTI['lis_person_sourcedid']
 
-        mailing_lists = MailingList.objects.get_or_create_mailing_lists_for_canvas_course_id(
+        mailing_lists = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(
             canvas_course_id,
             defaults={
                 'created_by': logged_in_user_id,
