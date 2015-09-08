@@ -49,7 +49,9 @@ def handle_mailing_list_email_route(request):
 
     # if we want to check email addresses against the sender, we need to parse
     # out just the address.
-    sender_address = address.parse(sender)
+    parsed_sender = address.parse(sender)
+    sender_address = parsed_sender.address.lower()
+    sender_display_name = parsed_sender.display_name
 
     # make sure the mailing list exists
     try:
@@ -63,14 +65,14 @@ def handle_mailing_list_email_route(request):
     teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
     bounce_back_email_template = None
-    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address.address not in member_addresses:
+    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender was not a member",
             sender,
             recipient
         )
         bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address.address not in teaching_staff_addresses:
+    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender "
             "was not a staff member",
@@ -94,7 +96,7 @@ def handle_mailing_list_email_route(request):
             'message_body': body_plain or body_html,
         }))
         subject = "Undeliverable mail"
-        ml.send_mail('', ml.address, sender_address.address, subject=subject,
+        ml.send_mail('', ml.address, sender_address, subject=subject,
                      html=content)
     else:
         # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
@@ -126,8 +128,8 @@ def handle_mailing_list_email_route(request):
         logger.debug('Full list of recipients: {}'.format(member_addresses))
         try:
             logger.debug('Removing sender {} from the list of recipients'.format(
-                         sender_address.address))
-            member_addresses.remove(sender_address.address)
+                         sender_address))
+            member_addresses.remove(sender_address)
         except KeyError:
             logger.info("Email sent to mailing list %s from non-member address %s",
                         ml.address, sender)
@@ -148,20 +150,20 @@ def handle_mailing_list_email_route(request):
         # we want to add 'via Canvas' to the sender's name.  so first make
         # sure we know their name.
         logger.debug(
-            'Original sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address)
+            'Original sender name: {}, address: {}'.format(sender_display_name, sender_address)
         )
-        if not sender_address.display_name:
-            name = get_name_for_email(ml.canvas_course_id, sender_address.address)
+        if not sender_display_name:
+            name = get_name_for_email(ml.canvas_course_id, sender_address)
             if name:
-                sender_address.display_name = name
+                sender_display_name = name
                 logger.debug(
-                    'Looked up sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address)
+                    'Looked up sender name: {}, address: {}'.format(sender_display_name, sender_address)
                 )
 
         # now add in 'via Canvas'
-        if sender_address.display_name:
-            sender_address.display_name += ' via Canvas'
-        logger.debug('Final sender name: {}, address: {}'.format(sender_address.display_name, sender_address.address))
+        if sender_display_name:
+            sender_display_name += ' via Canvas'
+        logger.debug('Final sender name: {}, address: {}'.format(sender_display_name, sender_address))
 
         # make sure inline images actually show up inline, since fscking
         # mailgun won't let us specify the cid on post.  see their docs at
@@ -183,12 +185,12 @@ def handle_mailing_list_email_route(request):
         # and send it off
         logger.debug(
             "Mailgun router handler sending email to {} from {}, subject {}".format(
-                member_addresses, sender_address.full_spec(), subject
+                member_addresses, parsed_sender.full_spec(), subject
             )
         )
         try:
             ml.send_mail(
-                sender_address.display_name, sender_address.address,
+                sender_display_name, sender_address,
                 member_addresses, subject, text=body_plain, html=body_html,
                 original_to_address=to_list, original_cc_address=cc_list,
                 attachments=attachments, inlines=inlines
@@ -197,7 +199,7 @@ def handle_mailing_list_email_route(request):
             logger.exception(
                 'Error attempting to send message from {} to {}, originally '
                 'sent to list {}, with subject {}'.format(
-                    sender_address.full_spec(), member_addresses, ml.address,
+                    parsed_sender.full_spec(), member_addresses, ml.address,
                     subject))
             return JsonResponse({'success': False}, status=500)
 
