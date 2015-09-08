@@ -18,13 +18,11 @@
     app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
         var ml = this;
         var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
-        var GET_COURSE = $djangoUrl.reverse('mailing_list:api_course');
 
         ml.isLoading = true;
         ml.isUpdating = false;
         ml.primarySectionLists = [];
         ml.otherSectionLists = [];
-        ml.course_code = null;
         // temp storage for modal interaction to access level to prevent base
         // page from updating until the requested change has been saved via AJAX
         ml.updatedAccessLevel = '';
@@ -79,10 +77,6 @@
             ml.loaded = true;
         });
 
-        $http.get(GET_COURSE).success(function(data){
-            ml.course_code = data.course_code;
-        });
-
         ml.hasMultiplePrimarySections = function() {
           return ml.primarySectionLists.length > 1;
         };
@@ -96,7 +90,10 @@
         };
 
         ml.isCourseList = function(list){
-          return list.section_id == 'None';
+            if(typeof list.is_course_list !== 'undefined'){
+                return list.is_course_list == true;
+            }
+            return false;
         };
 
         ml.updateAccessLevel = function(list) {
@@ -124,9 +121,14 @@
         };
 
         ml.listMembersUrl = function(list) {
-            return window.globals.append_resource_link_id(
-                       $djangoUrl.reverse('mailing_list:list_members',
-                                          [list.section_id]));
+            if(list.section_id) {
+                return window.globals.append_resource_link_id(
+                  $djangoUrl.reverse('mailing_list:list_members',
+                    [list.section_id]));
+            }else{
+                return window.globals.append_resource_link_id(
+                  $djangoUrl.reverse('mailing_list:list_members_no_id'));
+            }
         };
     }]);
 })();

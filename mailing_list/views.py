@@ -22,18 +22,23 @@ logger = logging.getLogger(__name__)
 @require_http_methods(['GET'])
 def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
+    canvas_course_id = request.LTI.get('custom_canvas_course_id')
+
+    course_code = get_course(canvas_course_id)['course_code']
+
     logger.info("Rendering mailing_list admin_index view for user %s"
                 % logged_in_user_id)
-    return render(request, 'mailing_list/admin_index.html', {})
+    return render(request, 'mailing_list/admin_index.html', { 'course_code' : course_code})
 
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
 @has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
-def list_members(request, section_id):
+def list_members(request, section_id=None):
     logged_in_user_id = request.LTI.get('lis_person_sourcedid')
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
+
     if not logged_in_user_id:
         return HttpResponseForbidden('Unable to determine logged in user')
     if not canvas_course_id:
@@ -43,13 +48,12 @@ def list_members(request, section_id):
                 'canvas course {}, section {}'.format(
                     logged_in_user_id, canvas_course_id, section_id))
 
-    mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id=section_id)
-
-    if section_id == 'None':
-        logger.debug('calling first option')
-        enrollments = get_enrollments(canvas_course_id)
+    if section_id:
+        mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id=section_id)
     else:
-        enrollments = get_enrollments(canvas_course_id, section_id)
+        mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id__isnull=True)
+
+    enrollments = get_enrollments(canvas_course_id, section_id)
 
     enrollments.sort(key=lambda x: x['sortable_name'])
     section = get_section(canvas_course_id, section_id)
@@ -62,4 +66,5 @@ def list_members(request, section_id):
         }
 
     return render(request, 'mailing_list/list_details.html',
-                  {'section': section, 'enrollments': enrollments})
+                  {'section': section,
+                   'enrollments': enrollments})

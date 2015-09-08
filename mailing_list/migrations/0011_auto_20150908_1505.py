@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mailinglist',
             name='section_id',
-            field=models.CharField(max_length=32),
+            field=models.IntegerField(null=True),
         ),
     ]

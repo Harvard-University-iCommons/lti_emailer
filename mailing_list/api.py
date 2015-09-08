@@ -88,25 +88,3 @@ def set_access_level(request, mailing_list_id):
     return create_json_200_response(result)
 
 
-@login_required
-@lti_role_required(const.TEACHING_STAFF_ROLES)
-@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
-@require_http_methods(['GET'])
-def get_course(request):
-    """
-    Gets the current canvas course
-
-    :param request:
-    :return: JSON response containing the course object
-    """
-    try:
-        canvas_course_id = request.LTI['custom_canvas_course_id']
-        course = canvas_api_helper_courses.get_course(canvas_course_id)
-
-    except Exception:
-        message = "Failed to get_course with LTI params %s" % json.dumps(request.LTI)
-        logger.exception(message)
-        return create_json_500_response(message)
-
-    return create_json_200_response(course)
-

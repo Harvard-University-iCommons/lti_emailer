@@ -37,9 +37,7 @@ $(document).ready(function(){
     <main class="ng-hide" ng-show="ml.loaded">
 
         <div ng-show="ml.hasPrimarySections()" class="col-md-12">
-        {% verbatim %}
-          <h2>Mailing List for {{ml.course_code}}</h2>
-        {% endverbatim %}
+          <h2>Mailing List for {{course_code}}</h2>
             <p class="caption">
                 The mailing list contains staff, students, and guests who have been added to this course.
                 <a target="_blank"
@@ -70,8 +68,7 @@ $(document).ready(function(){
             <!--<hr width="98%">-->
             <!-- show combined mailing list or single primary list -->
             <!-- if there is a combined mailing list show it -->
-            <div ng-if="ml.isCourseList(list)"
-               ng-repeat="list in ml.primarySectionLists">
+            <div ng-if="ml.isCourseList(list)" ng-repeat="list in ml.primarySectionLists">
               {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
                 <div class="col-md-12">
                     <hr width="98%">
@@ -96,15 +93,15 @@ $(document).ready(function(){
                   <div class="panel panel-default" ng-show="ml.hasPrimarySections()">
                       <div class="panel-heading" role="tab" id="headingOne">
                           <h4 class="panel-title">
-                              {% verbatim %}
+
                               <a class="collapsed"
                                  role="button"
                                  data-toggle="collapse"
                                  data-parent="#accordion"
                                  href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                                  Official Course Sections for {{ml.course_code}}
+                                  Official Course Sections for {{course_code}}
                               </a>
-                              {% endverbatim %}
+
                           </h4>
                       </div>
 
@@ -128,7 +125,7 @@ $(document).ready(function(){
                   <div class="panel panel-default" ng-show="ml.hasOtherSections">
                       <div class="panel-heading" role="tab" id="headingOne">
                           <h4 class="panel-title">
-                              {% verbatim %}
+
                               <a class="collapsed"
                                  role="button"
                                  data-toggle="collapse"
@@ -138,9 +135,9 @@ $(document).ready(function(){
                                   <ng-pluralize count="ml.otherSectionLists.length"
                                                 when="{'0': 'No Sections for ', 'one': '1 Section for ', 'other': '{} Sections for '}">
 
-                                  </ng-pluralize>{{ml.course_code}}
+                                  </ng-pluralize>{{course_code}}
                               </a>
-                              {% endverbatim %}
+
                           </h4>
                       </div>
 
