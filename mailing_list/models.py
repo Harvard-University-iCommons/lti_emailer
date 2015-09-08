@@ -126,13 +126,19 @@ class MailingList(models.Model):
         )
 
     def _get_enrolled_email_set(self):
-        return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
+        return {
+            e['email'].lower() for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
+            if e['email'] is not None
+        }
 
     def _get_enrolled_teaching_staff_email_set(self):
-        return {e['email'] for e in canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)}
+        return {
+            e['email'].lower() for e in canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)
+            if e['email'] is not None
+        }
 
     def _get_whitelist_email_set(self):
-        return {x.email for x in EmailWhitelist.objects.all()}
+        return {x.email.lower() for x in EmailWhitelist.objects.all()}
 
     @property
     def address(self):
