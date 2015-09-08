@@ -1,9 +1,9 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
+from django.http import HttpResponseBadRequest
 
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
@@ -34,16 +34,15 @@ def admin_index(request):
 @has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
 def list_members(request, section_id):
-    logged_in_user_id = request.LTI.get('lis_person_sourcedid')
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
-    if not logged_in_user_id:
-        return HttpResponseForbidden('Unable to determine logged in user')
     if not canvas_course_id:
         return HttpResponseBadRequest('Unable to determine canvas course id')
 
-    logger.info('Rendering mailing_list section_list_details view for user {}, '
-                'canvas course {}, section {}'.format(
-                    logged_in_user_id, canvas_course_id, section_id))
+    logger.info(
+        'Rendering mailing_list section_list_details view for canvas course {}, section {}'.format(
+            canvas_course_id, section_id
+        )
+    )
 
     mailing_list = get_object_or_404(MailingList, section_id=section_id)
     enrollments = get_enrollments(canvas_course_id, int(section_id))
