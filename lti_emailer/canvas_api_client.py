@@ -26,6 +26,10 @@ TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'Designe
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
 
 
+def get_course(canvas_course_id):
+    return canvas_api_helper_courses.get_course(canvas_course_id)
+
+
 def get_courses_for_account_in_term(account_id, enrollment_term_id,
                                     include_sections=False):
     kwargs = {
@@ -43,14 +47,30 @@ def get_courses_for_account_in_term(account_id, enrollment_term_id,
     return result
 
 
-def get_enrollments(canvas_course_id, section_id):
+def get_enrollments(canvas_course_id, section_id=None):
+    """
+    Get the enrollments for a section if a section id is provided.
+    Otherwise get all enrollents for the course.
+    :param canvas_course_id:
+    :param section_id:
+    :return enrollments list:
+    """
     users = get_users_in_course(canvas_course_id)
     enrollments = []
     for user in users:
         for enrollment in user['enrollments']:
-            if enrollment['course_section_id'] == section_id:
+            if section_id:
+                if enrollment['course_section_id'] == int(section_id):
+                    _copy_user_attributes_to_enrollment(user, enrollment)
+                    enrollments.append(enrollment)
+            else:
+                # if the user has any enrollment in the course
+                # we add them to the list and then stop (break)
+                # on to the next user.
                 _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
+                break
+
     return enrollments
 
 
@@ -61,11 +81,12 @@ def get_name_for_email(canvas_course_id, address):
 
 
 def get_section(canvas_course_id, section_id):
-    sections = get_sections(canvas_course_id)
-    section_id = int(section_id)
-    for section in sections:
-        if section['id'] == section_id:
-            return section
+    if section_id:
+        sections = get_sections(canvas_course_id)
+        section_id = int(section_id)
+        for section in sections:
+            if section['id'] == section_id:
+                return section
     return None
 
 

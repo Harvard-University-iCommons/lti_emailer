@@ -1,14 +1,13 @@
 import logging
 
+import re
 from flanker import addresslib
-
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,25 +22,50 @@ class MailingListManager(models.Manager):
     def _get_mailing_lists_by_section_id(self, canvas_course_id):
         return {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
 
-    def get_or_create_or_delete_mailing_list_by_address(self, address):
+    def _parse_address(self, address):
+        """
+        Try to parse out the canvas_course_id and section_id from the email address.
+        :param address:
+        :return (canvas_course_id, section_id):
+        """
         try:
-            (_, canvas_course_id, section_id) = address.split('@')[0].split('-')
-        except (AttributeError, ValueError):
-            logger.error("Failed to parse address in get_or_create_or_delete_mailing_list_by_address %s", address)
+            # Try to match course/section address
+            m = re.search(settings.LISTSERV_SECTION_ADDRESS_RE, address)
+            if m:
+                canvas_course_id = int(m.group('canvas_course_id'))
+                section_id = int(m.group('section_id'))
+            else:
+                # Try to match course address
+                m = re.search(settings.LISTSERV_COURSE_ADDRESS_RE, address)
+                canvas_course_id = int(m.group('canvas_course_id'))
+                # section needs to be None for this kind of address
+                section_id = None
+        except (IndexError, AttributeError):
             raise MailingList.DoesNotExist
 
-        canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)
-        if canvas_section:
-            try:
-                mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
-            except MailingList.DoesNotExist:
-                mailing_list = MailingList(canvas_course_id=canvas_course_id, section_id=section_id)
-                mailing_list.save()
+        return canvas_course_id, section_id
+
+    def get_or_create_or_delete_mailing_list_by_address(self, address):
+
+        (canvas_course_id, section_id) = self._parse_address(address)
+        if section_id:
+            # if there is a section id, make sure that a section exists in canvas.
+            canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)
+            if canvas_section:
+                try:
+                    mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
+                except MailingList.DoesNotExist:
+                    mailing_list = MailingList(canvas_course_id=canvas_course_id, section_id=section_id)
+                    mailing_list.save()
+            else:
+                # Section with section_id no longer exists, so delete the associated mailing list
+                MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id).delete()
+                raise MailingList.DoesNotExist
         else:
-            # Section with section_id no longer exists, so delete the associated mailing list
-            MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id).delete()
-            raise MailingList.DoesNotExist
-
+            # if there is not a section_id, this is a class list, try to get it otherwise it will throw DoesNotExist
+            # This address is created in the calling method.
+            mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id__isnull=True)
+            
         return mailing_list
 
     def get_or_create_or_delete_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
@@ -58,8 +82,45 @@ class MailingListManager(models.Manager):
         canvas_sections = canvas_api_client.get_sections(canvas_course_id)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
+        # get a list of the primary sections
+        primary_sections = [s['id'] for s in canvas_sections if s['sis_section_id'] is not None]
+
         overrides = kwargs.get('defaults', {})
         result = []
+
+        # if there is more than one primary section
+        # create a primary mailing list.
+        course_list = None
+        if len(primary_sections) > 1:
+            try:
+                course_list = mailing_lists_by_section_id.pop(None)
+            except KeyError:
+                course_list = None
+
+            if not course_list:
+                create_kwargs = {
+                    'canvas_course_id': canvas_course_id,
+                    'section_id': None
+                }
+                create_kwargs.update(overrides)
+                course_list = MailingList(**create_kwargs)
+                course_list.save()
+
+        # if there is a course_list, append it to the result list so
+        # it can be used by the template.
+        if course_list:
+            result.append({
+                'id': course_list.id,
+                'canvas_course_id': course_list.canvas_course_id,
+                'section_id': course_list.section_id,
+                'name': canvas_api_client.get_course(canvas_course_id)['course_code'],
+                'address': course_list.address,
+                'access_level': course_list.access_level,
+                'members_count': len(course_list.members),
+                'is_primary_section': True,
+                'is_course_list': True,
+            })
+
         for s in canvas_sections:
             section_id = s['id']
             try:
@@ -73,7 +134,6 @@ class MailingListManager(models.Manager):
                     'section_id': section_id
                 }
                 create_kwargs.update(overrides)
-
                 mailing_list = MailingList(**create_kwargs)
                 mailing_list.save()
 
@@ -106,7 +166,7 @@ class MailingList(models.Model):
     ACCESS_LEVEL_STAFF = 'staff'
 
     canvas_course_id = models.IntegerField()
-    section_id = models.IntegerField()
+    section_id = models.IntegerField(null=True)
     access_level = models.CharField(max_length=32, default='members')
     created_by = models.CharField(max_length=32)
     modified_by = models.CharField(max_length=32)
@@ -126,6 +186,12 @@ class MailingList(models.Model):
         )
 
     def _get_enrolled_email_set(self):
+
+        """
+        When we add enrollment emails to the mailing list, check if this is a whole course list
+        by checking if the section_id is 0. If it is we want to add all the enrollments that exist
+        in the course. If not, we build the mailing with the enrollments for the specified section.
+        """
         return {
             e['email'].lower() for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
             if e['email'] is not None
@@ -142,7 +208,9 @@ class MailingList(models.Model):
 
     @property
     def address(self):
-        return settings.LISTSERV_ADDRESS_FORMAT.format(
+        if not self.section_id:
+            return settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(canvas_course_id=self.canvas_course_id)
+        return settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=self.canvas_course_id,
             section_id=self.section_id
         )

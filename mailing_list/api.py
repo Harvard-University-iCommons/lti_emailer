@@ -42,6 +42,7 @@ def lists(request):
                 'modified_by': logged_in_user_id
             }
         )
+
     except Exception:
         message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
         logger.exception(message)
@@ -85,3 +86,5 @@ def set_access_level(request, mailing_list_id):
         return create_json_500_response(message)
 
     return create_json_200_response(result)
+
+
