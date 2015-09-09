@@ -150,9 +150,7 @@ class MailingListManager(models.Manager):
 
         # Delete existing mailing lists who's section no longer exists
         for section_id, mailing_list in mailing_lists_by_section_id.iteritems():
-            # we don't want to delete the course list here
-            if section_id:
-                mailing_list.delete()
+            mailing_list.delete()
 
         return result
 
