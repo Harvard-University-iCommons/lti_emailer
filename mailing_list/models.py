@@ -35,22 +35,29 @@ class MailingListManager(models.Manager):
                 # Try to match course address
                 m = re.search(settings.LISTSERV_COURSE_ADDRESS_RE, address)
                 canvas_course_id = int(m.group('canvas_course_id'))
-                section_id = m.group('section_id')
+                # section is is None for this kind of address
+                section_id = None
         except (IndexError, AttributeError):
             raise MailingList.DoesNotExist
 
-        canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)
-        if canvas_section:
-            try:
-                mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
-            except MailingList.DoesNotExist:
-                mailing_list = MailingList(canvas_course_id=canvas_course_id, section_id=section_id)
-                mailing_list.save()
+        if section_id:
+            # if there is a section id, make sure that a section exists in canvas.
+            canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)
+            if canvas_section:
+                try:
+                    mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
+                except MailingList.DoesNotExist:
+                    mailing_list = MailingList(canvas_course_id=canvas_course_id, section_id=section_id)
+                    mailing_list.save()
+            else:
+                # Section with section_id no longer exists, so delete the associated mailing list
+                MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id).delete()
+                raise MailingList.DoesNotExist
         else:
-            # Section with section_id no longer exists, so delete the associated mailing list
-            MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id).delete()
-            raise MailingList.DoesNotExist
-
+            # if there is not a section_id, this is a class list, try to get it otherwise it will throw DoesNotExist
+            # This address is created in the calling method.
+            mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id__isnull=True)
+            
         return mailing_list
 
     def get_or_create_or_delete_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
@@ -104,7 +111,6 @@ class MailingListManager(models.Manager):
             })
 
         for s in canvas_sections:
-
             section_id = s['id']
             try:
                 mailing_list = mailing_lists_by_section_id.pop(section_id)
@@ -176,8 +182,6 @@ class MailingList(models.Model):
         by checking if the section_id is 0. If it is we want to add all the enrollments that exist
         in the course. If not, we build the mailing with the enrollments for the specified section.
         """
-        #if self.section_id == 'None':
-        #    return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id)}
 
         return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
 
