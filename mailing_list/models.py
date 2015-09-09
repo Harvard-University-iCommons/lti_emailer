@@ -93,8 +93,8 @@ class MailingListManager(models.Manager):
         course_list = None
         if len(primary_sections) > 1:
             try:
-                course_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id__isnull=True)
-            except MailingList.DoesNotExist:
+                course_list = mailing_lists_by_section_id.pop(None)
+            except KeyError:
                 course_list = None
 
             if not course_list:
