@@ -142,17 +142,22 @@ class MailingListModelTests(TestCase):
             'is_primary_section': True
         }], result)
 
+    @patch('mailing_list.models.MailingList.objects.get')
     @patch('mailing_list.models.canvas_api_client.get_course')
     @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
     def test_get_or_create_or_delete_mailing_lists_for_canvas_course_id_with_multiple_primary_sections(self,
                                                                                                        mock_get_sections,
                                                                                                        mock_get_enrollments,
-                                                                                                       mock_get_course):
+                                                                                                       mock_get_course,
+                                                                                                       mock_get_mailinglist):
         """
         Test that a new mailing list is created when the course has multiple primary sections. The address of this new list
         should contain only the course id and the newly created list should have a section id of 'None'.
         """
+
+        mock_get_mailinglist.side_effect = MailingList.DoesNotExist
+
         sections = list(self.sections)
         mock_get_course.return_value = {
             'course_code' : 'Test Course',

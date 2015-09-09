@@ -95,6 +95,9 @@ class MailingListManager(models.Manager):
             try:
                 course_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id__isnull=True)
             except MailingList.DoesNotExist:
+                course_list = None
+
+            if not course_list:
                 create_kwargs = {
                     'canvas_course_id': canvas_course_id,
                     'section_id': None
