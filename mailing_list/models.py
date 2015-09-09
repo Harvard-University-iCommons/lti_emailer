@@ -1,15 +1,13 @@
 import logging
+
 import re
-
 from flanker import addresslib
-
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
-
 
 logger = logging.getLogger(__name__)
 
@@ -177,19 +175,25 @@ class MailingList(models.Model):
         )
 
     def _get_enrolled_email_set(self):
+
         """
         When we add enrollment emails to the mailing list, check if this is a whole course list
         by checking if the section_id is 0. If it is we want to add all the enrollments that exist
         in the course. If not, we build the mailing with the enrollments for the specified section.
         """
-
-        return {e['email'] for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)}
+        return {
+            e['email'].lower() for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
+            if e['email'] is not None
+        }
 
     def _get_enrolled_teaching_staff_email_set(self):
-        return {e['email'] for e in canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)}
+        return {
+            e['email'].lower() for e in canvas_api_client.get_teaching_staff_enrollments(self.canvas_course_id)
+            if e['email'] is not None
+        }
 
     def _get_whitelist_email_set(self):
-        return {x.email for x in EmailWhitelist.objects.all()}
+        return {x.email.lower() for x in EmailWhitelist.objects.all()}
 
     @property
     def address(self):
