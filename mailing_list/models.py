@@ -22,22 +22,32 @@ class MailingListManager(models.Manager):
     def _get_mailing_lists_by_section_id(self, canvas_course_id):
         return {ml.section_id: ml for ml in MailingList.objects.filter(canvas_course_id=canvas_course_id)}
 
-    def get_or_create_or_delete_mailing_list_by_address(self, address):
+    def _parse_address(self, address):
+        """
+        Try to parse out the canvas_course_id and section_id from the email address.
+        :param address:
+        :return (canvas_course_id, section_id):
+        """
         try:
             # Try to match course/section address
             m = re.search(settings.LISTSERV_SECTION_ADDRESS_RE, address)
             if m:
                 canvas_course_id = int(m.group('canvas_course_id'))
-                section_id = m.group('section_id')
+                section_id = int(m.group('section_id'))
             else:
                 # Try to match course address
                 m = re.search(settings.LISTSERV_COURSE_ADDRESS_RE, address)
                 canvas_course_id = int(m.group('canvas_course_id'))
-                # section is is None for this kind of address
+                # section needs to be None for this kind of address
                 section_id = None
         except (IndexError, AttributeError):
             raise MailingList.DoesNotExist
 
+        return canvas_course_id, section_id
+
+    def get_or_create_or_delete_mailing_list_by_address(self, address):
+
+        (canvas_course_id, section_id) = self._parse_address(address)
         if section_id:
             # if there is a section id, make sure that a section exists in canvas.
             canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)

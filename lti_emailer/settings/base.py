@@ -289,7 +289,7 @@ LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
 
-LISTSERV_SECTION_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)-(?P<section>\d+)@%s$" % LISTSERV_DOMAIN)
+LISTSERV_SECTION_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)-(?P<section_id>\d+)@%s$" % LISTSERV_DOMAIN)
 LISTSERV_COURSE_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)@%s$" % LISTSERV_DOMAIN)
 
 LISTSERV_SECTION_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.test import TestCase
 
-from mock import patch
+from mock import patch, call
 
 from .models import MailingList
 
@@ -76,15 +76,15 @@ class MailingListModelTests(TestCase):
         result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
         address_1 = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
-            section_id='1582'
+            section_id=1582
         )
         address_2 = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
-            section_id='1583'
+            section_id=1583
         )
         address_3 = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
-            section_id='1584'
+            section_id=1584
         )
 
         self.assertEqual([{
@@ -128,7 +128,7 @@ class MailingListModelTests(TestCase):
         result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
         address_1 = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
-            section_id='1582'
+            section_id=1582
         )
 
         self.assertEqual([{
@@ -186,4 +186,68 @@ class MailingListModelTests(TestCase):
             'is_primary_section': True
         }, result[-1])
 
+    def test_parse_address_with_course_list(self):
+        """ test that _parse_address return the correct data for the course list address """
+        # address of the course list should be set in new mailing list
+        list_address = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
+            canvas_course_id=3716,
+        )
+        result = MailingList.objects._parse_address(list_address)
+        self.assertEqual((3716, None), result)
+
+    def test_parse_address_with_section_list(self):
+        """ test that _parse_address return the correct data for a section list address """
+        # address of the course list should be set in new mailing list
+        list_address = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
+            canvas_course_id=3716,
+            section_id=12345
+        )
+        result = MailingList.objects._parse_address(list_address)
+        self.assertEqual((3716, 12345), result)
+
+    def test_parse_address_throws_doesnotexist_when_no_match_is_found(self):
+        """ test that _parse_address raises a DoesNotExist exception when an invalid address is passed in """
+        # address of the course list should be set in new mailing list
+        list_address = "somename12345@mydomain.com"
+        with self.assertRaises(MailingList.DoesNotExist):
+            MailingList.objects._parse_address(list_address)
+
+    @patch('mailing_list.models.canvas_api_client.get_section')
+    @patch('mailing_list.models.MailingList.objects.get')
+    def test_get_or_create_or_delete_mailing_list_by_address_with_section_calls_get_with_correct_args(self,
+                                                                                                      mock_get_mailing_list,
+                                                                                                      mock_get_section):
+        """ test that get_or_create_or_delete_mailing_list_by_address with section calls get with
+        correct args """
+        # address of the course list should be set in new mailing list
+        list_address = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
+            canvas_course_id=3716,
+            section_id=12345
+        )
+
+        mock_get_section.return_value = {
+            'id': 12345,
+            'name': 'test',
+            'sis_section_id': 123456,
+        }
+
+        MailingList.objects.get_or_create_or_delete_mailing_list_by_address(list_address)
+        mock_get_mailing_list.assert_called_with(canvas_course_id=3716, section_id=12345)
+
+
+    @patch('mailing_list.models.canvas_api_client.get_section')
+    @patch('mailing_list.models.MailingList.objects.get')
+    def test_get_or_create_or_delete_mailing_list_by_address_with_none_as_section_calls_get_with_correct_args(self,
+                                                                                                              mock_get_mailing_list,
+                                                                                                              mock_get_section):
+        """ test that get_or_create_or_delete_mailing_list_by_address with None as section calls get with
+        correct args """
+        # address of the course list should be set in new mailing list
+        list_address = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
+            canvas_course_id=3716,
+        )
+
+        mock_get_section.return_value = None
+        MailingList.objects.get_or_create_or_delete_mailing_list_by_address(list_address)
+        mock_get_mailing_list.assert_called_with(canvas_course_id=3716, section_id__isnull=True)
 
