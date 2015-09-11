@@ -35,7 +35,7 @@ def admin_index(request):
 @lti_role_required(const.TEACHING_STAFF_ROLES)
 @has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
 @require_http_methods(['GET'])
-def list_members(request, section_id):
+def list_members(request, section_id=None):
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
 
     if not canvas_course_id:
