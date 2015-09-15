@@ -75,13 +75,13 @@ def handle_mailing_list_email_route(request):
             'subject': subject,
             'message_body': body_plain or body_html,
         }))
-        listserv_client.send_mail(recipient, recipient, sender_address.address, subject="Undeliverable mail", html=content)
+        listserv_client.send_mail(recipient, recipient, sender_address, subject="Undeliverable mail", html=content)
         return JsonResponse({'success': True})
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address.address not in member_addresses:
+    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
         logger.info(
             "Sending mailing list bounce back email to %s for mailing list %s because the sender was not a member",
             sender,
