@@ -35,6 +35,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_auth_lti',
     'icommons_common',
+    'lti_permissions',
     'icommons_ui',
     'djangular',
     'lti_emailer',

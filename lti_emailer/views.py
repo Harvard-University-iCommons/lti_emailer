@@ -48,10 +48,10 @@ def tool_config(request):
         'default': 'disabled',
         'visibility': 'admins',
     }
-    lti_tool_config.set_ext_param(
-        'canvas.instructure.com', 'course_navigation', course_nav_params)
-    lti_tool_config.set_ext_param(
-        'canvas.instructure.com', 'privacy_level', 'public')
+    custom_fields = {'canvas_membership_roles': '$Canvas.membership.roles'}
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'custom_fields', custom_fields)
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'course_navigation', course_nav_params)
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'privacy_level', 'public')
 
     return HttpResponse(lti_tool_config.to_xml(), content_type='text/xml')
 

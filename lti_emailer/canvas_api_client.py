@@ -17,6 +17,7 @@ from icommons_common.canvas_api.helpers import (
     roles as canvas_api_helper_roles,
     sections as canvas_api_helper_sections
 )
+from lti_permissions.verification import is_allowed
 
 
 logger = logging.getLogger(__name__)
@@ -95,12 +96,11 @@ def get_sections(canvas_course_id):
 
 
 def get_teaching_staff_enrollments(canvas_course_id):
-    account_id = canvas_api_helper_courses.get_course(canvas_course_id)['account_id']
     users = get_users_in_course(canvas_course_id)
     enrollments = []
     for user in users:
         for enrollment in user['enrollments']:
-            if enrollment['type'] in _get_authorized_teaching_staff_enrollment_types(account_id):
+            if is_allowed(canvas_course_id, [enrollment['role']], 'lti_emailer_send_all'):
                 _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
     return enrollments
@@ -112,13 +112,3 @@ def get_users_in_course(canvas_course_id):
 
 def _copy_user_attributes_to_enrollment(user, enrollment):
     enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
-
-
-def _get_authorized_teaching_staff_enrollment_types(account_id):
-    return [
-        role_name
-        for role_name in TEACHING_STAFF_ENROLLMENT_TYPES
-        if canvas_api_helper_roles.has_permission(
-            role_name, account_id, canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL
-        )
-    ]
