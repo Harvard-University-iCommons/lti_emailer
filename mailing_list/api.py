@@ -10,9 +10,8 @@ from django.core.cache import cache
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
 
-from icommons_common.auth.lti_decorators import has_course_permission
-from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
 from icommons_common.view_utils import create_json_200_response, create_json_500_response
+from lti_permissions.decorators import lti_permission_required
 
 from .models import MailingList
 
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
+@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(['GET'])
 def lists(request):
     """
@@ -53,7 +52,7 @@ def lists(request):
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
+@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(['PUT'])
 def set_access_level(request, mailing_list_id):
     """
@@ -86,5 +85,3 @@ def set_access_level(request, mailing_list_id):
         return create_json_500_response(message)
 
     return create_json_200_response(result)
-
-

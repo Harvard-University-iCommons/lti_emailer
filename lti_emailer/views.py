@@ -15,8 +15,7 @@ from ims_lti_py.tool_config import ToolConfig
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
 
-from icommons_common.auth.lti_decorators import has_course_permission
-from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
+from lti_permissions.decorators import lti_permission_required
 
 
 logger = logging.getLogger(__name__)
@@ -48,17 +47,17 @@ def tool_config(request):
         'default': 'disabled',
         'visibility': 'admins',
     }
-    lti_tool_config.set_ext_param(
-        'canvas.instructure.com', 'course_navigation', course_nav_params)
-    lti_tool_config.set_ext_param(
-        'canvas.instructure.com', 'privacy_level', 'public')
+    custom_fields = {'canvas_membership_roles': '$Canvas.membership.roles'}
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'custom_fields', custom_fields)
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'course_navigation', course_nav_params)
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'privacy_level', 'public')
 
     return HttpResponse(lti_tool_config.to_xml(), content_type='text/xml')
 
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@has_course_permission(canvas_api_helper_courses.COURSE_PERMISSION_SEND_MESSAGES_ALL)
+@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(['POST'])
 @csrf_exempt
 def lti_launch(request):
