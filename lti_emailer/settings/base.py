@@ -296,6 +296,9 @@ LISTSERV_COURSE_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)@%s$" 
 LISTSERV_SECTION_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
 LISTSERV_COURSE_ADDRESS_FORMAT = "canvas-{canvas_course_id}@%s" % LISTSERV_DOMAIN
 
+PERMISSION_LTI_EMAILER_VIEW = 'lti_emailer_view'
+PERMISSION_LTI_EMAILER_SEND_ALL = 'lti_emailer_send_all'
+
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
 IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)

@@ -100,7 +100,7 @@ def get_teaching_staff_enrollments(canvas_course_id):
     enrollments = []
     for user in users:
         for enrollment in user['enrollments']:
-            if is_allowed([enrollment['role']], 'lti_emailer_send_all', canvas_course_id):
+            if is_allowed([enrollment['role']], settings.PERMISSION_LTI_EMAILER_SEND_ALL, canvas_course_id):
                 _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
     return enrollments

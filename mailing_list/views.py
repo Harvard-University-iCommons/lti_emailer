@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
@@ -7,8 +8,6 @@ from django.http import HttpResponseBadRequest
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
 
-from icommons_common.auth.lti_decorators import has_course_permission
-from icommons_common.canvas_api.helpers import courses as canvas_api_helper_courses
 from lti_permissions.decorators import lti_permission_required
 
 from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@lti_permission_required('lti_emailer_view')
+@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(['GET'])
 def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
@@ -35,7 +34,7 @@ def admin_index(request):
 
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
-@lti_permission_required('lti_emailer_view')
+@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(['GET'])
 def list_members(request, section_id=None):
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
