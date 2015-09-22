@@ -1,6 +1,3 @@
-"""
-This file models some of the page objects on the Manage People Search Page.  (find_user.html)
-"""
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium_tests.pin.page_objects.base_page_object import PinBasePageObject
@@ -8,10 +5,10 @@ import abc
 
 class PinPageLocators(object):
     # List of WebElements found on Pin Page (Locators)
-    LOGIN_TYPE_XID_RADIO_BUTTON = (By.CSS_SELECTOR, "input[value=\"XID\"]")
     USERNAME = (By.ID, "username")
     PASSWORD = (By.ID, "password")
-    SUBMIT_BUTTON = (By.CSS_SELECTOR, "input[name=\"_eventId_submit\"]")
+    SUBMIT_BUTTON = (By.ID, "submitLogin")
+    LoginType = (By.XPATH, "//div[@id='XID']")
 
 
 class PinLoginPageObject(PinBasePageObject):
@@ -23,10 +20,18 @@ class PinLoginPageObject(PinBasePageObject):
     def is_loaded(self):
         """ determine if the page loaded by looking for a specific element on the page """
         try:
-            self.find_element(*PinPageLocators.LOGIN_TYPE_XID_RADIO_BUTTON)
+            self.find_element(*PinPageLocators.USERNAME)
         except NoSuchElementException:
             return False
         return True
+
+
+    def set_login_type_xid(self):
+        """ set the login type to XID """
+        driver = self._driver
+        comp_auth_source_type_element = self.find_element(*PinPageLocators.LoginType)
+        comp_auth_source_type_element.click()
+
 
     def set_username(self, username):
         """ set the username """
@@ -39,11 +44,6 @@ class PinLoginPageObject(PinBasePageObject):
         password_element = self.find_element(*PinPageLocators.PASSWORD)
         password_element.clear()
         password_element.send_keys(password)
-
-    def set_login_type_xid(self):
-        """ set the compositeAuthenticationSourceType3 option """
-        comp_auth_source_type_element = self.find_element(*PinPageLocators.LOGIN_TYPE_XID_RADIO_BUTTON)
-        comp_auth_source_type_element.click()
 
     def click_submit(self):
         """ click the submit button """
@@ -64,4 +64,5 @@ class PinLoginPageObject(PinBasePageObject):
         self.set_username(username)
         self.set_password(password)
         self.click_submit()
+
 
