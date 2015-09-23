@@ -29,7 +29,7 @@ class RouteHandlerRegressionTests(TestCase):
                                              password='unittest')
 
     @patch('mailgun.route_handlers.CourseInstance.objects.get')
-    @patch('mailgun.route_handlers.MailingList.objects.get_mailing_list_by_address')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_empty_body_html(self, mock_ml_get, mock_ci_get):
         ''' TLT-2006
         Verifies that we can handle emails that
