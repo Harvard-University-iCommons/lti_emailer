@@ -42,8 +42,8 @@ def handle_mailing_list_email_route(request):
     sender = request.POST.get('sender')
     recipient = request.POST.get('recipient')
     subject = request.POST.get('subject')
-    body_plain = request.POST.get('body-plain')
-    body_html = request.POST.get('body-html')
+    body_plain = request.POST.get('body-plain', '')
+    body_html = request.POST.get('body-html', '')
     to_list = address.parse_list(request.POST.get('To'))
     cc_list = address.parse_list(request.POST.get('Cc'))
 
