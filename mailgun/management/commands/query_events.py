@@ -70,10 +70,10 @@ class Command(BaseCommand):
     def process_events(self, events):
         count = 0
         for event in events:
-            # if 'canvas-4395-8694@coursemail.harvard.edu' in event['message']['headers']['from']:
-            # if 'canvas-4779-6168@coursemail.harvard.edu' in event['message']['headers']['from']:
-            # if 'canvas-3958-7530@coursemail.harvard.edu' in event['message']['headers']['from']:
-            if 'canvas-2043-13874@coursemail.harvard.edu' in event['message']['headers']['from']:
+            # if 'canvas-4395-8694@coursemail.harvard.edu' in event['message']['headers']['to']:
+            # if 'canvas-4779-6168@coursemail.harvard.edu' in event['message']['headers']['to']:
+            # if 'canvas-3958-7530@coursemail.harvard.edu' in event['message']['headers']['to']:
+            if 'canvas-2043-13874@coursemail.harvard.edu' in event['message']['headers']['to']:
                 count += 1
                 self.stdout.write(json.dumps(event, indent=4))
         self.stdout.write("{} events".format(count))
