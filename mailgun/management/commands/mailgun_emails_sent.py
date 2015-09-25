@@ -14,9 +14,12 @@ from mailgun.management.commands._mailgun_api import get_events
 
 
 EVENTS_OF_INTEREST = ('accepted',)
+INPUT_DATETIME_FORMAT = '%Y%m%d%H%M%S'
+OUTPUT_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S  %Z%z'
+TZ = pytz.timezone('US/Eastern') # can't rely on settings, it's usually UTC
+UTC = pytz.timezone('UTC')
 
 logger = logging.getLogger(__name__)
-utc = pytz.timezone('UTC')
 
 
 class Command(BaseCommand):
@@ -24,20 +27,20 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--begin-time', type=int, required=True,
-            help='Beginning of the window to look for emails, as unix timestamp')
+            '--begin-time', type=_datetime, required=True,
+            help='Beginning of the window to look for emails, formatted as '
+                 'YYYYMMDDHHMMSS')
         parser.add_argument(
-            '--end-time', type=int, required=True,
-            help='End of the window to look for emails, as unix timestamp')
+            '--end-time', type=_datetime, required=True,
+            help='End of the window to look for emails, formatted as '
+                 'YYYYMMDDHHMMSS')
         parser.add_argument(
             '--output-file', type=argparse.FileType('w'), default=sys.stdout,
             help='File to output the csv of emails sent to, defaults to stdout')
 
     def handle(self, *args, **options):
-        begin = datetime.datetime.fromtimestamp(options['begin_time'], utc)
-        end = datetime.datetime.fromtimestamp(options['end_time'], utc)
-
-        events = get_events(begin, end, EVENTS_OF_INTEREST)
+        events = get_events(options['begin_time'], options['end_time'],
+                            EVENTS_OF_INTEREST)
         self.process_events(events, options['output_file'])
 
     def process_events(self, events, output_file):
@@ -60,8 +63,10 @@ class Command(BaseCommand):
                         list_address = recipient
                         break
 
+                timestamp = datetime.datetime.fromtimestamp(event['timestamp'], UTC)
+                timestamp = timestamp.astimezone(TZ).strftime(OUTPUT_DATETIME_FORMAT)
                 row = [
-                    float(event['timestamp']),
+                    timestamp,
                     list_address,
                     sender,
                     event['message']['headers']['subject'],
@@ -77,3 +82,8 @@ class Command(BaseCommand):
         writer = csv.writer(output_file)
         writer.writerow(headers)
         writer.writerows(rows)
+
+
+def _datetime(arg):
+    dt = datetime.datetime.strptime(arg, INPUT_DATETIME_FORMAT)
+    return TZ.localize(dt)
