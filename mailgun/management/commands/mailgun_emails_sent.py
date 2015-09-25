@@ -52,6 +52,7 @@ class Command(BaseCommand):
                 logger.exception('event {} missing a sender'.format(event))
                 continue
 
+            # skip events where we're forwarding mail to the list
             if sender.endswith(settings.LISTSERV_DOMAIN):
                 continue
 
