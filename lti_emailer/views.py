@@ -62,7 +62,7 @@ def tool_config(request):
 @csrf_exempt
 def lti_launch(request):
     logger.debug(
-        "lti_emailer launched with params: %s",
+        u"lti_emailer launched with params: %s",
         json.dumps(request.POST.dict(), indent=4)
     )
     return redirect('mailing_list:admin_index')
