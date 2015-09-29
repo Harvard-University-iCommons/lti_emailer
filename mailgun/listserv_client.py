@@ -257,6 +257,8 @@ class MailgunClient(object):
             timer.status_code = response.status_code
 
         if response.status_code != 200:
-            message = "Failed to POST email to Mailgun from %s to %s" % (from_address, to_address)
-            logger.error(message)
+            logger.error(
+                u'Failed to POST email from %s to %s.  Status code was %s, body '
+                u'was %s', from_address, to_address, response.status_code,
+                response.text)
             raise ListservApiError(message)

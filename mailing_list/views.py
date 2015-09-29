@@ -1,9 +1,9 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
 
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @require_http_methods(['GET'])
 def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
-    logger.info("Rendering mailing_list admin_index view for user %s"
+    logger.info(u"Rendering mailing_list admin_index view for user %s"
                 % logged_in_user_id)
     return render(request, 'mailing_list/admin_index.html', {})
 
@@ -41,9 +41,11 @@ def list_members(request, section_id):
     if not canvas_course_id:
         return HttpResponseBadRequest('Unable to determine canvas course id')
 
-    logger.info('Rendering mailing_list section_list_details view for user {}, '
-                'canvas course {}, section {}'.format(
-                    logged_in_user_id, canvas_course_id, section_id))
+    logger.info(
+        u"Rendering mailing_list section_list_details view for user id %s and canvas course %s",
+        logged_in_user_id,
+        canvas_course_id
+    )
 
     mailing_list = get_object_or_404(MailingList, section_id=section_id)
     enrollments = get_enrollments(canvas_course_id, int(section_id))

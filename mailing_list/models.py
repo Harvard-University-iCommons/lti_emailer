@@ -163,8 +163,8 @@ class MailingList(models.Model):
     def send_mail(self, sender_display_name, sender_address, to_address,
                   subject='', text='', html='', original_to_address=None,
                   original_cc_address=None, attachments=None, inlines=None):
-        logger.debug("in send_mail: sender_address=%s, to_address=%s, "
-                     "mailing_list.address=%s ",
+        logger.debug(u"in send_mail: sender_address=%s, to_address=%s, "
+                     u"mailing_list.address=%s ",
                      sender_address, to_address, self.address)
         mailing_list_address = addresslib.address.parse(self.address)
         mailing_list_address.display_name = sender_display_name
