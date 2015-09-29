@@ -45,7 +45,6 @@ def list_members(request, section_id=None):
     logger.info(
         u'Rendering mailing_list section_list_details view for canvas course %s '
         u'section %s', canvas_course_id, section_id)
-    )
 
     if section_id:
         mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id=section_id)
