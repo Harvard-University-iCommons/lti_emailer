@@ -19,6 +19,7 @@ from .decorators import authenticate
 from .route_handlers import handle_mailing_list_email_route
 
 
+@override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
 class RouteHandlerRegressionTests(TestCase):
     longMessage = True
 
