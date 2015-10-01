@@ -44,6 +44,7 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     body_plain = request.POST.get('body-plain', '')
     body_html = request.POST.get('body-html', '')
+    message_id = request.POST.get('Message-Id')
     to_list = address.parse_list(request.POST.get('To'))
     cc_list = address.parse_list(request.POST.get('Cc'))
 
@@ -75,7 +76,8 @@ def handle_mailing_list_email_route(request):
             'message_body': body_plain or body_html,
         }))
         listserv_client.send_mail(recipient, recipient, sender_address,
-                                  subject='Undeliverable mail', html=content)
+                                  subject='Undeliverable mail', html=content,
+                                  message_id=message_id)
         return JsonResponse({'success': True})
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
@@ -106,7 +108,7 @@ def handle_mailing_list_email_route(request):
         }))
         subject = 'Undeliverable mail'
         ml.send_mail('', ml.address, sender_address, subject=subject,
-                     html=content)
+                     html=content, message_id=message_id)
     else:
         # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
         try:
@@ -199,7 +201,7 @@ def handle_mailing_list_email_route(request):
                 sender_display_name, sender_address,
                 member_addresses, subject, text=body_plain, html=body_html,
                 original_to_address=to_list, original_cc_address=cc_list,
-                attachments=attachments, inlines=inlines
+                attachments=attachments, inlines=inlines, message_id=message_id
             )
         except RuntimeError:
             logger.exception(

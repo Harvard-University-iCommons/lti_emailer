@@ -1,10 +1,11 @@
 import logging
 
 import re
-from flanker import addresslib
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
+from flanker import addresslib
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
@@ -228,17 +229,27 @@ class MailingList(models.Model):
 
     def send_mail(self, sender_display_name, sender_address, to_address,
                   subject='', text='', html='', original_to_address=None,
-                  original_cc_address=None, attachments=None, inlines=None):
-        logger.debug(u"in send_mail: sender_address=%s, to_address=%s, "
-                     u"mailing_list.address=%s ",
+                  original_cc_address=None, attachments=None, inlines=None,
+                  message_id=None):
+        logger.debug(u'in send_mail: sender_address=%s, to_address=%s, '
+                     u'mailing_list.address=%s ',
                      sender_address, to_address, self.address)
-        mailing_list_address = addresslib.address.parse(self.address)
-        mailing_list_address.display_name = sender_display_name
-        listserv_client.send_mail(
-            mailing_list_address.full_spec(), sender_address, to_address,
-            subject, text, html, original_to_address, original_cc_address,
-            attachments, inlines
-        )
+        cache_key = settings.CACHE_KEY_MESSAGE_ID_SEEN % message_id
+        if cache.get(cache_key):
+            logger.warning(u'Asked to send mail for message-id %s, but we\'ve '
+                           u'already sent one for it.  Dropping.',
+                           message_id)
+        else:
+            logger.debug(u'Sending mail for message-id %s', message_id)
+            mailing_list_address = addresslib.address.parse(self.address)
+            mailing_list_address.display_name = sender_display_name
+            listserv_client.send_mail(
+                mailing_list_address.full_spec(), sender_address, to_address,
+                subject, text, html, original_to_address, original_cc_address,
+                attachments, inlines, message_id
+            )
+            cache.set(cache_key, True,
+                      timeout=settings.CACHE_KEY_MESSAGE_ID_SEEN_TIMEOUT)
 
 
 class EmailWhitelist(models.Model):
