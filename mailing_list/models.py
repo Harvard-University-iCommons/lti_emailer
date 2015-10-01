@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
+from icommons_common.models import CourseInstance
 
 logger = logging.getLogger(__name__)
 
@@ -79,11 +80,9 @@ class MailingListManager(models.Manager):
         :param kwargs:
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
+        canvas_course = canvas_api_client.get_course(canvas_course_id)
         canvas_sections = canvas_api_client.get_sections(canvas_course_id)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
-
-        # get a list of the primary sections
-        primary_sections = [s['id'] for s in canvas_sections if s['sis_section_id'] is not None]
 
         overrides = kwargs.get('defaults', {})
         result = []
@@ -91,20 +90,19 @@ class MailingListManager(models.Manager):
         # if there is more than one primary section
         # create a primary mailing list.
         course_list = None
-        if len(primary_sections) > 1:
-            try:
-                course_list = mailing_lists_by_section_id.pop(None)
-            except KeyError:
-                course_list = None
+        try:
+            course_list = mailing_lists_by_section_id.pop(None)
+        except KeyError:
+            course_list = None
 
-            if not course_list:
-                create_kwargs = {
-                    'canvas_course_id': canvas_course_id,
-                    'section_id': None
-                }
-                create_kwargs.update(overrides)
-                course_list = MailingList(**create_kwargs)
-                course_list.save()
+        if not course_list:
+            create_kwargs = {
+                'canvas_course_id': canvas_course_id,
+                'section_id': None
+            }
+            create_kwargs.update(overrides)
+            course_list = MailingList(**create_kwargs)
+            course_list.save()
 
         # if there is a course_list, append it to the result list so
         # it can be used by the template.
@@ -117,7 +115,7 @@ class MailingListManager(models.Manager):
                 'address': course_list.address,
                 'access_level': course_list.access_level,
                 'members_count': len(course_list.members),
-                'is_primary_section': True,
+                'is_primary_section': False,
                 'is_course_list': True,
             })
 
@@ -145,7 +143,8 @@ class MailingListManager(models.Manager):
                 'address': mailing_list.address,
                 'access_level': mailing_list.access_level,
                 'members_count': len(mailing_list.members),
-                'is_primary_section': s['sis_section_id'] is not None
+                'is_primary_section': s['sis_section_id'] is not None,
+                'is_course_list': False,
             })
 
         # Delete existing mailing lists who's section no longer exists

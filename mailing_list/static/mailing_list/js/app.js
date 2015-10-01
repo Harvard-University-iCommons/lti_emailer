@@ -21,8 +21,8 @@
 
         ml.isLoading = true;
         ml.isUpdating = false;
-        ml.primarySectionLists = [];
-        ml.otherSectionLists = [];
+        ml.courseList = [];
+        ml.sectionLists = [];
         // temp storage for modal interaction to access level to prevent base
         // page from updating until the requested change has been saved via AJAX
         ml.updatedAccessLevel = '';
@@ -68,32 +68,36 @@
             var length = data.length;
             for (var i = 0; i < length; i++) {
                 var list = data[i];
-                if (list.is_primary_section) {
-                    ml.primarySectionLists.push(list);
-                } else {
-                    ml.otherSectionLists.push(list);
+                if(list.is_course_list) {
+                  ml.courseList.push(list);
+                }
+                else {
+                  ml.sectionLists.push(list);
                 }
             }
+
+            //check how many primary sections
+            var plen = ml.sectionLists.length;
+            var pcount = 0;
+            var index = 0;
+            for( var i = 0; i < plen; i++){
+              var list = ml.sectionLists[i];
+              if(list.is_primary_section){
+                pcount++;
+                index = i;
+              }
+            }
+            // if there is only one primary section
+            // remove it.
+            if(pcount == 1){
+              ml.sectionLists.splice(index, 1);
+            }
+
             ml.loaded = true;
         });
 
-        ml.hasMultiplePrimarySections = function() {
-          return ml.primarySectionLists.length > 1;
-        };
-
-        ml.hasPrimarySections = function() {
-            return ml.primarySectionLists.length > 0;
-        };
-
-        ml.hasOtherSections = function() {
-            return ml.otherSectionLists.length > 0;
-        };
-
-        ml.isCourseList = function(list){
-            if(typeof list.is_course_list !== 'undefined'){
-                return list.is_course_list == true;
-            }
-            return false;
+        ml.hasSections = function() {
+            return ml.sectionLists.length > 0;
         };
 
         ml.updateAccessLevel = function(list) {

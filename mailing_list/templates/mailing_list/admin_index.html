@@ -36,7 +36,7 @@ $(document).ready(function(){
 
     <main class="ng-hide" ng-show="ml.loaded">
 
-        <div ng-show="ml.hasPrimarySections()" class="col-md-12">
+        <div class="col-md-12">
           <h2>Mailing List for {{course_code}}</h2>
             <p class="caption">
                 The mailing list contains staff, students, and guests who have been added to this course.
@@ -49,80 +49,26 @@ $(document).ready(function(){
                    data-original-title="More info about the Course Emailer">
                     <i class="fa fa-question-circle"></i>
                 </a>
-                <div ng-show="ml.hasMultiplePrimarySections()">
-                    This course site includes enrollment from two or more courses.
-                    <a target="_blank"
-                       href="https://wiki.harvard.edu/confluence/pages/viewpage.action?pageId=189597345"
-                       class="lti-tooltip"
-                       rel="tooltip"
-                       data-toggle="tooltip"
-                       title=""
-                       data-original-title="More info about cross listed courses">
-                        <i class="fa fa-question-circle"></i>
-                  </a>
-              </div>
           </p>
         </div>
 
         <div class="col-md-12">
+
             <!--<hr width="98%">-->
             <!-- show combined mailing list or single primary list -->
             <!-- if there is a combined mailing list show it -->
-            <div ng-if="ml.isCourseList(list)" ng-repeat="list in ml.primarySectionLists">
+            <div ng-repeat="list in ml.courseList">
               {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
                 <div class="col-md-12">
                     <hr width="98%">
                 </div>
             </div>
 
-            <!-- otherwise show the primary section -->
-            <div ng-if="ml.primarySectionLists.length == 1" ng-repeat="list in ml.primarySectionLists">
-              {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
-            </div>
-            <!-- end show combined mailing list or single primary list -->
-
-            <div ng-show="!ml.hasPrimarySections()" class="col-md-12">
-              <p>
-                  There was an error retrieving the class mailing list for this course.
-                  Please contact your local academic support staff for assistance.
-              </p>
-            </div>
-
             <div class="btn-group col-md-12">
+
               <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-                  <div class="panel panel-default" ng-show="ml.hasPrimarySections()">
-                      <div class="panel-heading" role="tab" id="headingOne">
-                          <h4 class="panel-title">
 
-                              <a class="collapsed"
-                                 role="button"
-                                 data-toggle="collapse"
-                                 data-parent="#accordion"
-                                 href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                                  Official Course Sections for {{course_code}}
-                              </a>
-
-                          </h4>
-                      </div>
-
-                      <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
-                          <div class="panel-body">
-                              <div class="col-md-12">
-                                  <h2>Official Course Sections</h2>
-                                  <p class="caption">
-                                      These mailing lists contain staff, students, and guests from individual courses.
-                                  </p>
-                              </div>
-
-                              <div  ng-repeat="list in ml.primarySectionLists" ng-if="!ml.isCourseList(list)">
-                                  {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
-                              </div>
-
-                          </div>
-                      </div>
-                  </div>
-
-                  <div class="panel panel-default" ng-show="ml.hasOtherSections()">
+                  <div class="panel panel-default" ng-show="ml.hasSections()">
                       <div class="panel-heading" role="tab" id="headingOne">
                           <h4 class="panel-title">
 
@@ -132,7 +78,7 @@ $(document).ready(function(){
                                  data-parent="#accordion"
                                  href="#collapseTwo"
                                  aria-expanded="false" aria-controls="collapseTwo">
-                                  <ng-pluralize count="ml.otherSectionLists.length"
+                                  <ng-pluralize count="ml.sectionLists.length"
                                                 when="{'0': 'No Sections for ', 'one': '1 Section for ', 'other': '{} Sections for '}">
 
                                   </ng-pluralize>{{course_code}}
@@ -156,7 +102,7 @@ $(document).ready(function(){
                                       not been added to the section.
                                   </p>
                               </div>
-                              <div class="content-section" ng-repeat="list in ml.otherSectionLists">
+                              <div class="content-section" ng-repeat="list in ml.sectionLists">
                                   {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
                               </div>
                           </div>

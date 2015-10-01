@@ -42,10 +42,11 @@ def lists(request):
             }
         )
 
+        logger.debug('%s' % mailing_lists)
+
     except Exception:
-        logger.exception(
-            u"Failed to get_or_create MailingLists with LTI params %s",
-            json.dumps(request.LTI))
+        message = u"Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
+        logger.exception(message)
         return create_json_500_response(message)
 
     return create_json_200_response(mailing_lists)
@@ -81,9 +82,8 @@ def set_access_level(request, mailing_list_id):
             'access_level': access_level
         }
     except Exception:
-        logger.exception(
-            u"Failed to activate MailingList %s with LTI params %s",
-            mailing_list_id, json.dumps(request.LTI))
+        message = u"Failed to activate MailingList %s with LTI params %s" % (mailing_list_id, json.dumps(request.LTI))
+        logger.exception(message)
         return create_json_500_response(message)
 
     return create_json_200_response(result)
