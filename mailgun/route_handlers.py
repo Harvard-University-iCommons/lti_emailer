@@ -48,9 +48,7 @@ def handle_mailing_list_email_route(request):
     to_list = address.parse_list(request.POST.get('To'))
     cc_list = address.parse_list(request.POST.get('Cc'))
 
-    start = time.time()
     attachments, inlines = _get_attachments_inlines(request)
-    logger.info("_get_attachements_inlines took %s", (time.time() - start) * 1000)
 
     logger.info(u'Handling Mailgun mailing list email from %s to %s',
                 sender, recipient)
@@ -67,7 +65,7 @@ def handle_mailing_list_email_route(request):
     try:
         start = time.time()
         ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(recipient)
-        logger.info("get_or_create_or_delete_mailing_list_by_address took %s", (time.time() - start) * 1000)
+        logger.info("get_or_create_or_delete_mailing_list_by_address took %s", (time.time() - start))
     except MailingList.DoesNotExist:
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
@@ -86,10 +84,10 @@ def handle_mailing_list_email_route(request):
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     start = time.time()
     teaching_staff_addresses = ml.teaching_staff_addresses
-    logger.info("teaching_staff_addresses took %s", (time.time() - start) * 1000)
+    logger.info("teaching_staff_addresses took %s", (time.time() - start))
     start = time.time()
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    logger.info("members took %s", (time.time() - start) * 1000)
+    logger.info("members took %s", (time.time() - start))
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
