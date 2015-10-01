@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import time
 
 from django.http import JsonResponse
 from django.template import Context
@@ -63,9 +62,7 @@ def handle_mailing_list_email_route(request):
     # make sure the mailing list exists
     bounce_back_email_template = None
     try:
-        start = time.time()
         ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(recipient)
-        logger.info("get_or_create_or_delete_mailing_list_by_address took %s", (time.time() - start))
     except MailingList.DoesNotExist:
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
@@ -82,12 +79,8 @@ def handle_mailing_list_email_route(request):
         return JsonResponse({'success': True})
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
-    start = time.time()
     teaching_staff_addresses = ml.teaching_staff_addresses
-    logger.info("teaching_staff_addresses took %s", (time.time() - start))
-    start = time.time()
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    logger.info("members took %s", (time.time() - start))
     if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
