@@ -2,6 +2,8 @@ import json
 import logging
 import re
 
+from django.conf import settings
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.template import Context
 from django.template.loader import get_template
