@@ -50,9 +50,19 @@ def handle_mailing_list_email_route(request):
 
     attachments, inlines = _get_attachments_inlines(request)
 
-    logger.info(u'Handling Mailgun mailing list email from %s to %s',
-                sender, recipient)
+    logger.info(u'Handling Mailgun mailing list email from %s to %s, '
+                u'subject %s, message id %s',
+                sender, recipient, subject, message_id)
     logger.debug(u'Full mailgun post: %s', request.POST)
+
+    # shortcut if we've already handled this message
+    if message_id:
+        cache_key = settings.CACHE_KEY_MESSAGE_ID_SEEN % message_id
+        if cache.get(cache_key):
+            logger.warning(u'Message-Id %s was posted to the route handler, '
+                           u'but we\'ve already handled that.  Dropping.',
+                           message_id)
+        return JsonResponse({'success': True})
 
     # if we want to check email addresses against the sender, we need to parse
     # out just the address.
