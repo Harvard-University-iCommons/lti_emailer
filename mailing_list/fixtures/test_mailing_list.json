@@ -8,8 +8,19 @@
       "created_by": "10564158",
       "modified_by": "10564158",
       "date_created": "2015-04-14T15:06:40.35643+00",
-      "date_modified": "2015-04-14T15:06:40.35643+00",
-      "subscriptions_updated": "2015-04-14T15:06:40.35643+00"
+      "date_modified": "2015-04-14T15:06:40.35643+00"
+    }
+  },
+  {
+    "model": "mailing_list.MailingList",
+    "pk": "2",
+    "fields": {
+      "canvas_course_id": 3716,
+      "section_id": 1583,
+      "created_by": "10564158",
+      "modified_by": "10564158",
+      "date_created": "2015-04-14T15:06:40.35643+00",
+      "date_modified": "2015-04-14T15:06:40.35643+00"
     }
   }
 ]

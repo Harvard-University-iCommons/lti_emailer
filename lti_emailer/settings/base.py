@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import re
 import logging
 from django.core.urlresolvers import reverse_lazy
 from .secure import SECURE_SETTINGS
@@ -34,12 +35,12 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_auth_lti',
     'icommons_common',
+    'lti_permissions',
     'icommons_ui',
     'djangular',
     'lti_emailer',
     'mailing_list',
-    'mailgun',
-    'huey.djhuey'
+    'mailgun'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -125,11 +126,20 @@ CACHES = {
         'OPTIONS': {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
-        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for shared cache
+        'KEY_PREFIX': 'lti_emailer',  # Provide a unique value for intra-app cache
         # See following for default timeout (5 minutes as of 1.7):
         # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-CACHES-TIMEOUT
         'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
     },
+    'shared': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': "redis://%s:%s/0" % (REDIS_HOST, REDIS_PORT),
+        'OPTIONS': {
+            'PARSER_CLASS': 'redis.connection.HiredisParser'
+        },
+        'KEY_PREFIX': 'tlt_shared',
+        'TIMEOUT': SECURE_SETTINGS.get('default_cache_timeout_secs', 300),
+    }
 }
 
 # Sessions
@@ -207,12 +217,6 @@ LOGGING = {
             'filename': os.path.join(_LOG_ROOT, 'django-lti_emailer.log'),
             'formatter': 'verbose',
         },
-        'huey_logfile': {
-            'level': _DEFAULT_LOG_LEVEL,
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(_LOG_ROOT, 'huey-lti_emailer.log'),
-            'formatter': 'verbose',
-        },
         'console': {
             'level': logging.DEBUG,
             'class': 'logging.StreamHandler',
@@ -221,9 +225,22 @@ LOGGING = {
         },
     },
     'loggers': {
-        'huey': {
+        # TODO: remove this catch-all handler in favor of app-specific handlers
+        '': {
+            'handlers': ['console', 'app_logfile'],
             'level': _DEFAULT_LOG_LEVEL,
-            'handlers': ['console', 'huey_logfile'],
+        },
+        'django.request': {
+            'handlers': ['console', 'app_logfile'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'py.warnings': {
+            'handlers': ['console'],
             'propagate': False,
         },
         'mailgun': {
@@ -272,20 +289,18 @@ LISTSERV_DOMAIN = SECURE_SETTINGS.get('listserv_domain')
 LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
 LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
-LISTSERV_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
-LISTSERV_PERIODIC_SYNC_CRONTAB = SECURE_SETTINGS.get('listserv_periodic_sync_crontab', {'minute': '0'})
+
+LISTSERV_SECTION_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)-(?P<section_id>\d+)@%s$" % LISTSERV_DOMAIN)
+LISTSERV_COURSE_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)@%s$" % LISTSERV_DOMAIN)
+
+LISTSERV_SECTION_ADDRESS_FORMAT = "canvas-{canvas_course_id}-{section_id}@%s" % LISTSERV_DOMAIN
+LISTSERV_COURSE_ADDRESS_FORMAT = "canvas-{canvas_course_id}@%s" % LISTSERV_DOMAIN
+
+PERMISSION_LTI_EMAILER_VIEW = 'lti_emailer_view'
+PERMISSION_LTI_EMAILER_SEND_ALL = 'lti_emailer_send_all'
 
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
 IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)
 
-CACHE_KEY_CANVAS_SECTIONS_BY_CANVAS_COURSE_ID = "canvas_sections_by_canvas_course_id-%s"
-CACHE_KEY_USERS_BY_CANVAS_COURSE_ID = "users_by_canvas_course_id-%s"
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
-
-HUEY = {
-    'backend': 'huey.backends.redis_backend',
-    'connection': {'host': REDIS_HOST, 'port': int(REDIS_PORT)},  # huey needs port to be an int
-    'consumer_options': {'workers': 4},  # probably needs tweaking
-    'name': 'mailing list management',
-}

@@ -28,31 +28,31 @@
         ml.updatedAccessLevel = '';
         ml.accessLevels = [{
             id: 'staff',
-            name: {class: 'Staff Access', section: 'Staff Access Only'},
+            name: {class: 'Staff Access:', section: 'Staff Access:'},
             description: {
-                class: 'For staff to email members of this course; students and guests <b>cannot</b> send or reply to this mailing list.',
-                section: 'For staff to email members of this course; students and guests <b>cannot</b> send or reply to this mailing list.'
+                class: 'staff can email members of this course; students and guests <strong>cannot</strong> send or reply to this mailing list.',
+                section: 'staff can email members of this course; students and guests <strong>cannot</strong> send or reply to this mailing list.'
             }
         },{
             id: 'members',
-            name: {class: 'Course Access', section: 'Section Access'},
+            name: {class: 'Course Access:', section: 'Section Access:'},
             description: {
-                class: 'For all members of this course to email each other; students and guests <b>can</b> send and reply to this mailing list.',
-                section: 'For members of this section and all staff to email each other; students and guests in this section <b>can</b> send and reply to this mailing list.'
+                class: 'all members of this course can email each other; students and guests <strong>can</strong> send and reply to this mailing list.',
+                section: 'all members of this section and all staff can email each other; students and guests <strong>can</strong> send and reply to this mailing list.'
             }
         },{
             id: 'everyone',
-            name: {class: 'World Access', section: 'World Access'},
+            name: {class: 'World Access:', section: 'World Access:'},
             description: {
-                class: 'Anyone can send and reply to this mailing list.',
-                section: 'Anyone can send and reply to this mailing list.'
+                class: 'anyone can send and reply to this mailing list.',
+                section: 'anyone can send and reply to this mailing list.'
             }
         },{
             id: 'readonly',
-            name: {class: 'Disabled', section: 'Disabled'},
+            name: {class: 'Disabled:', section: 'Disabled:'},
             description: {
-                class: 'This mailing list is disabled.',
-                section: 'This mailing list is disabled.'
+                class: 'this mailing list is disabled.',
+                section: 'this mailing list is disabled.'
             }
         }];
         ml.accessLevelDisplayNameMap = {};
@@ -77,12 +77,23 @@
             ml.loaded = true;
         });
 
+        ml.hasMultiplePrimarySections = function() {
+          return ml.primarySectionLists.length > 1;
+        };
+
         ml.hasPrimarySections = function() {
             return ml.primarySectionLists.length > 0;
         };
 
         ml.hasOtherSections = function() {
             return ml.otherSectionLists.length > 0;
+        };
+
+        ml.isCourseList = function(list){
+            if(typeof list.is_course_list !== 'undefined'){
+                return list.is_course_list == true;
+            }
+            return false;
         };
 
         ml.updateAccessLevel = function(list) {
@@ -110,9 +121,14 @@
         };
 
         ml.listMembersUrl = function(list) {
-            return window.globals.append_resource_link_id(
-                       $djangoUrl.reverse('mailing_list:list_members',
-                                          [list.section_id]));
+            if(list.section_id) {
+                return window.globals.append_resource_link_id(
+                  $djangoUrl.reverse('mailing_list:list_members',
+                    [list.section_id]));
+            }else{
+                return window.globals.append_resource_link_id(
+                  $djangoUrl.reverse('mailing_list:list_members_no_id'));
+            }
         };
     }]);
 })();

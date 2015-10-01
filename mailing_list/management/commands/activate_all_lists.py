@@ -1,9 +1,9 @@
 import argparse
-import csv
 import logging
-import operator
 
 from django.core.management.base import BaseCommand, CommandError
+
+from icommons_common.canvas_utils import UnicodeCSVWriter
 
 from lti_emailer.canvas_api_client import get_courses_for_account_in_term
 from mailing_list.models import MailingList
@@ -28,7 +28,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             courses = get_courses_for_account_in_term(
-                          options['account_id'], options['enrollment_term_id'])
+                options['account_id'], options['enrollment_term_id']
+            )
         except RuntimeError as e:
             raise CommandError(str(e))
 
@@ -37,9 +38,9 @@ class Command(BaseCommand):
         defaults = {'access_level': MailingList.ACCESS_LEVEL_MEMBERS}
         for course in courses:
             try:
-                lists = MailingList.objects.\
-                            get_or_create_mailing_lists_for_canvas_course_id(
-                                    course['id'], defaults=defaults)
+                lists = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(
+                    course['id'], defaults=defaults
+                )
             except RuntimeError as e:
                 failures[course['id']] = str(e)
                 continue
@@ -51,33 +52,34 @@ class Command(BaseCommand):
                     primary.append(ml)
                 else:
                     secondary.append(ml)
-            course_lists[course['id']] = {'primary': primary,
-                                          'secondary': secondary}
+            course_lists[course['id']] = {
+                'primary': primary,
+                'secondary': secondary
+            }
 
         if failures:
             for course_id, error_message in failures.iteritems():
                 logger.error(
-                    'Unable to get/create mailing lists for canvas course id '
-                    '{}: {}'.format(course_id, error_message))
+                    'Unable to get/create mailing lists for canvas course id {}: {}'.format(course_id, error_message)
+                )
             self.stderr.write(
-                'Failed to get/create lists for {} courses'.format(
-                    len(failures)))
+                'Failed to get/create lists for {} courses'.format(len(failures))
+            )
 
-        self.stdout.write('Total of {} list(s) for {} course(s)'.format(
-                              num_lists, len(courses)))
+        self.stdout.write('Total of {} list(s) for {} course(s)'.format(num_lists, len(courses)))
 
         if options.get('output_file'):
             courses_by_id = {c['id']: c for c in courses}
-            writer = csv.writer(options['output_file'])
+            writer = UnicodeCSVWriter(options['output_file'])
             writer.writerow(('canvas_course_id', 'sis_course_id', 'course_name',
                              'course_code', 'primary_section_lists',
                              'secondary_section_lists'))
             for course_id in sorted(course_lists):
                 course = courses_by_id[course_id]
-                primary = ';'.join([l['address'] for l in
-                                        course_lists[course_id]['primary']])
-                secondary = ';'.join([l['address'] for l in
-                                          course_lists[course_id]['secondary']])
-                row = (course_id, course['sis_course_id'], course['name'],
-                       course['course_code'], primary, secondary)
+                primary = u';'.join([l['address'] for l in course_lists[course_id]['primary']])
+                secondary = u';'.join([l['address'] for l in course_lists[course_id]['secondary']])
+                row = (
+                    unicode(course_id), unicode(course['sis_course_id']),
+                    course['name'], course['course_code'], primary, secondary
+                )
                 writer.writerow(row)
