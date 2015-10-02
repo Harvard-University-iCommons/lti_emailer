@@ -98,9 +98,17 @@ def get_sections(canvas_course_id):
 def get_teaching_staff_enrollments(canvas_course_id):
     users = get_users_in_course(canvas_course_id)
     enrollments = []
+    roles_allowed = {}
     for user in users:
         for enrollment in user['enrollments']:
-            if is_allowed([enrollment['role']], settings.PERMISSION_LTI_EMAILER_SEND_ALL, canvas_course_id):
+            role = enrollment['role']
+            if role not in roles_allowed:
+                roles_allowed[enrollment['role']] = is_allowed(
+                    role,
+                    settings.PERMISSION_LTI_EMAILER_SEND_ALL,
+                    canvas_course_id
+                )
+            if roles_allowed[role]:
                 _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
     return enrollments
