@@ -64,4 +64,3 @@ class BasePageObject(object):
             self._driver.switch_to.frame(self._driver.find_element_by_id("tool_content"))
         except NoSuchElementException:
             pass
-

@@ -9,6 +9,3 @@ class LoginPage(PinLoginPageObject):
         """
         super(LoginPage, self).login(username, password)
         print 'Pin Login page returning Index page for user: %s' % username
-       
-
-

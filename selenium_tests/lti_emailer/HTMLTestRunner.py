@@ -31,7 +31,6 @@ HTMLTestRunner is a counterpart to unittest's TextTestRunner. E.g.
     # run the test
     runner.run(my_test_suite)
 
-
 ------------------------------------------------------------------------
 Copyright (c) 2004-2007, Wai Yip Tung
 All rights reserved.

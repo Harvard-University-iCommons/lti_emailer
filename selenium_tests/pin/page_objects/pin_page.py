@@ -1,3 +1,4 @@
+
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium_tests.pin.page_objects.base_page_object import PinBasePageObject
@@ -7,7 +8,7 @@ class PinPageLocators(object):
     # List of WebElements found on Pin Page (Locators)
     USERNAME = (By.ID, "username")
     PASSWORD = (By.ID, "password")
-    SUBMIT_BUTTON = (By.ID, "submitLogin")
+    SUBMIT_BUTTON = (By.ID,"submitLogin")
     LoginType = (By.XPATH, "//div[@id='XID']")
 
 
@@ -28,10 +29,8 @@ class PinLoginPageObject(PinBasePageObject):
 
     def set_login_type_xid(self):
         """ set the login type to XID """
-        driver = self._driver
         comp_auth_source_type_element = self.find_element(*PinPageLocators.LoginType)
         comp_auth_source_type_element.click()
-
 
     def set_username(self, username):
         """ set the username """
@@ -64,5 +63,4 @@ class PinLoginPageObject(PinBasePageObject):
         self.set_username(username)
         self.set_password(password)
         self.click_submit()
-
 

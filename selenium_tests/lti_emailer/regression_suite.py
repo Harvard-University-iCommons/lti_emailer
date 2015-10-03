@@ -14,8 +14,10 @@ In PyCharm, if xvfb is installed already, you can run them through the Python un
 
 import unittest
 import time
-from selenium_tests.ab_tool.ab_tests import test_ab_tool
 import HTMLTestRunner
+
+from selenium_tests.lti_emailer.permission_test import test_permission
+from selenium_tests.lti_emailer.emailer_test import test_is_loaded
 
 
 date_timestamp = time.strftime('%Y%m%d_%H_%M_%S')
@@ -28,14 +30,15 @@ runner = HTMLTestRunner.HTMLTestRunner(
     description='Result of tests'
 )
 
-ab_tests = unittest.TestLoader().loadTestsFromTestCase(test_ab_tool)
-# create a test suite combining search_tests and results_page_tests
+is_tool_loaded = unittest.TestLoader().loadTestsFromTestCase(test_is_loaded)
+permission_testing = unittest.TestLoader().loadTestsFromTestCase(test_permission)
 
-smoke_tests = unittest.TestSuite([ab_tests])
+
+# create a test suite combining the tests above
+smoke_tests = unittest.TestSuite([is_tool_loaded, permission_testing])
 
 # run the suite
 runner.run(smoke_tests)
 # close test report file
 buf.close()
-
 

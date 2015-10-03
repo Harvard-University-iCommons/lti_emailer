@@ -19,7 +19,7 @@ class BaseSeleniumTestCase(unittest.TestCase):
         """
         # todo: tlt-1263 local/remote should be configurable from outside the code
 
-        local = True
+        local = False
 
         # todo: tlt-1263 remote URL should be configurable from outside the code
         selenium_grid_url = settings.SELENIUM_CONFIG.get('selenium_grid_url', None)
@@ -40,6 +40,7 @@ class BaseSeleniumTestCase(unittest.TestCase):
                 command_executor=selenium_grid_url,
                 desired_capabilities=DesiredCapabilities.FIREFOX
             )
+
 
         # shared defaults
         cls.driver.implicitly_wait(10)
@@ -65,5 +66,6 @@ def get_xl_data(file_name, sheet_index=0, header_row=True):
         rows.append(list(sheet.row_values(row_idx, 0, sheet.ncols)))
     return rows
 
-    
+
+
 

@@ -12,7 +12,6 @@ class EmailerBasePage(BasePageObject):
         except NoSuchElementException:
             pass
 
-
     def find_element(self, *loc):
         return self._driver.find_element(*loc)
 
