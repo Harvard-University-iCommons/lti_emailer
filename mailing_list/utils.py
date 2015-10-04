@@ -17,8 +17,7 @@ def is_course_crosslisted(course_instance_id):
     except XlistMap.DoesNotExist:
         course_is_crosslisted = False
 
-    return True
-    #return course_is_crosslisted
+    return course_is_crosslisted
 
 
 def get_section_sis_enrollment_status(sis_section_id):
