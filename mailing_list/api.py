@@ -42,8 +42,6 @@ def lists(request):
             }
         )
 
-        logger.debug('%s' % mailing_lists)
-
     except Exception:
         message = u"Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
         logger.exception(message)

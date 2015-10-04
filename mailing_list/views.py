@@ -13,6 +13,7 @@ from lti_permissions.decorators import lti_permission_required
 from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
 from mailing_list.models import MailingList
 
+from mailing_list.utils import is_course_crosslisted
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +26,15 @@ def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
 
-    course_code = get_course(canvas_course_id)['course_code']
+    course = get_course(canvas_course_id)
+    course_code = course['course_code']
+    course_instance_id = course['sis_course_id']
+
 
     logger.info(u"Rendering mailing_list admin_index view for user %s",
                 logged_in_user_id)
-    return render(request, 'mailing_list/admin_index.html', {'course_code': course_code})
+    return render(request, 'mailing_list/admin_index.html', {'course_code': course_code,
+                                                             'course_is_crosslisted': is_course_crosslisted(course_instance_id)})
 
 
 @login_required

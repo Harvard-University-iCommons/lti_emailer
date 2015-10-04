@@ -16,7 +16,7 @@ class MailingListModelTests(TestCase):
         self.sections = [{
             'id': 1582,
             'name': 'section name 1',
-            'sis_section_id': 334562
+            'sis_section_id': '334562'
         }, {
             'id': 1583,
             'name': 'section name 2',
@@ -60,10 +60,20 @@ class MailingListModelTests(TestCase):
             'is_primary_section': False
         }])
 
+    @patch('mailing_list.models._get_section_enrollment_status')
+    @patch('mailing_list.models.is_course_crosslisted')
+    @patch('mailing_list.models.canvas_api_client.get_course')
     @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
     def test_get_or_create_or_delete_mailing_lists_for_canvas_course_id_with_new_list(self, mock_get_sections,
-                                                                                      mock_get_enrollments):
+                                                                                      mock_get_enrollments,
+                                                                                      mock_get_course,
+                                                                                      mock_xlisted,
+                                                                                      mock_get_enroll_stat):
+
+        mock_get_course.return_value = {'sis_course_id': '786534'}
+        mock_xlisted.return_value = False
+
         sections = list(self.sections)
         sections.append({
             'id': 1584,
@@ -169,7 +179,7 @@ class MailingListModelTests(TestCase):
         sections.append({
             'id': None,
             'name': 'Test Course',
-            'sis_section_id': 123456
+            'sis_section_id': '123456'
         })
 
         mock_get_enrollments.return_value = []
@@ -233,7 +243,7 @@ class MailingListModelTests(TestCase):
         mock_get_section.return_value = {
             'id': 12345,
             'name': 'test',
-            'sis_section_id': 123456,
+            'sis_section_id': '123456',
         }
 
         MailingList.objects.get_or_create_or_delete_mailing_list_by_address(list_address)

@@ -9,6 +9,8 @@
 <!-- column 1 -->
 <div class="col-md-3">
   <p>
+      <span ng-show="ml.isSisList(list)" ><em>SIS</em></span>
+      <span ng-show="ml.isManageSectionsList(list)" ><em>Canvas</em></span>
     <strong>{{ list.name }}</strong><br />(<a class="link-text lti-tooltip"
         rel="tooltip"
         title=""

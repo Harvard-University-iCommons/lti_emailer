@@ -10,6 +10,8 @@ from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
 from icommons_common.models import CourseInstance
 
+from mailing_list.utils import is_course_crosslisted
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,6 +71,30 @@ class MailingListManager(models.Manager):
             
         return mailing_list
 
+    def _get_section_enrollment_status(self, sis_section_id):
+        """
+        Check to see if the section was fed by the SIS. If it was, it will have a field set
+        called cs_class_type with a value of either 'N' (non enrollment) or 'E' (enrollment).
+        If the value is 'N' the section was created by an end user in Campus solutions. We want
+        to be able to differentiat which sections were created by users from ones (enrollment) that were not.
+        :param sis_section_id:
+        :return 'N', 'E', or None:
+        """
+        try:
+            ci = CourseInstance.objects.get(course_instance_id=sis_section_id)
+            # if there is a course instance but there is no cs_class_type
+            # we should assume this is an enrollment type so return 'E'
+            if not ci.cs_class_type or ci.cs_class_type in 'E':
+                return 'E'
+            else:
+                # the only other option is 'N' so just return it
+                return ci.cs_class_type
+
+        except CourseInstance.DoesNotExist:
+            # there was no record for this id, so return None
+            return None
+
+
     def get_or_create_or_delete_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
         """
         Gets the mailing list data for all sections related to the given canvas_course_id.
@@ -80,44 +106,45 @@ class MailingListManager(models.Manager):
         :param kwargs:
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
-        canvas_course = canvas_api_client.get_course(canvas_course_id)
+        sis_course_id = canvas_api_client.get_course(canvas_course_id)['sis_course_id']
+        course_is_crosslisted = is_course_crosslisted(sis_course_id)
+
         canvas_sections = canvas_api_client.get_sections(canvas_course_id)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
         overrides = kwargs.get('defaults', {})
         result = []
 
-        # if there is more than one primary section
-        # create a primary mailing list.
-        course_list = None
-        try:
-            course_list = mailing_lists_by_section_id.pop(None)
-        except KeyError:
-            course_list = None
+        if course_is_crosslisted:
+            try:
+                course_list = mailing_lists_by_section_id.pop(None)
+            except KeyError:
+                course_list = None
 
-        if not course_list:
-            create_kwargs = {
-                'canvas_course_id': canvas_course_id,
-                'section_id': None
-            }
-            create_kwargs.update(overrides)
-            course_list = MailingList(**create_kwargs)
-            course_list.save()
+            if not course_list:
+                create_kwargs = {
+                    'canvas_course_id': canvas_course_id,
+                    'section_id': None
+                }
+                create_kwargs.update(overrides)
+                course_list = MailingList(**create_kwargs)
+                course_list.save()
 
-        # if there is a course_list, append it to the result list so
-        # it can be used by the template.
-        if course_list:
-            result.append({
-                'id': course_list.id,
-                'canvas_course_id': course_list.canvas_course_id,
-                'section_id': course_list.section_id,
-                'name': canvas_api_client.get_course(canvas_course_id)['course_code'],
-                'address': course_list.address,
-                'access_level': course_list.access_level,
-                'members_count': len(course_list.members),
-                'is_primary_section': False,
-                'is_course_list': True,
-            })
+            # if there is a course_list, append it to the result list so
+            # it can be used by the template.
+            if course_list:
+                result.append({
+                    'id': course_list.id,
+                    'canvas_course_id': course_list.canvas_course_id,
+                    'sis_section_id': None,
+                    'section_id': course_list.section_id,
+                    'name': 'Course Mailing List',
+                    'address': course_list.address,
+                    'access_level': course_list.access_level,
+                    'members_count': len(course_list.members),
+                    'is_course_list': True,
+                    'cs_class_type' : None,
+                })
 
         for s in canvas_sections:
             section_id = s['id']
@@ -135,16 +162,22 @@ class MailingListManager(models.Manager):
                 mailing_list = MailingList(**create_kwargs)
                 mailing_list.save()
 
+            cs_class_type = None
+            if s['sis_section_id'] and s['sis_section_id'].isdigit():
+                logger.debug('Looking up section id %s' % s['sis_section_id'])
+                cs_class_type = self._get_section_enrollment_status(s['sis_section_id'])
+
             result.append({
                 'id': mailing_list.id,
                 'canvas_course_id': mailing_list.canvas_course_id,
+                'sis_section_id': s['sis_section_id'] or None,
                 'section_id': mailing_list.section_id,
                 'name': s['name'],
                 'address': mailing_list.address,
                 'access_level': mailing_list.access_level,
                 'members_count': len(mailing_list.members),
-                'is_primary_section': s['sis_section_id'] is not None,
                 'is_course_list': False,
+                'cs_class_type' : cs_class_type,
             })
 
         # Delete existing mailing lists who's section no longer exists

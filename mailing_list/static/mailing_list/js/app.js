@@ -1,138 +1,141 @@
 (function(){
-    var app = angular.module('mailingList', ['ngSanitize', 'ngAnimate', 'ng.django.urls']).config(function($httpProvider){
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        $httpProvider.interceptors.push(function(){
-            return {
-                'request': function(config){
-                    // window.globals.append_resource_link_id function added by
-                    // django_auth_lti/js/resource_link_id.js
-                    config.url = window.globals.append_resource_link_id(config.url);
-                    return config;
-                }
-            };
-        });
+  var app = angular.module('mailingList', ['ngSanitize', 'ngAnimate', 'ng.django.urls']).config(function($httpProvider){
+    $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+    $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    $httpProvider.interceptors.push(function(){
+      return {
+        'request': function(config){
+          // window.globals.append_resource_link_id function added by
+          // django_auth_lti/js/resource_link_id.js
+          config.url = window.globals.append_resource_link_id(config.url);
+          return config;
+        }
+      };
+    });
+  });
+
+  app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
+    var ml = this;
+    var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
+
+    ml.isLoading = true;
+    ml.isUpdating = false;
+    ml.courseList = [];
+    ml.enrollmentSectionLists = [];
+    ml.nonEnrollmentSectionLists = [];
+    // temp storage for modal interaction to access level to prevent base
+    // page from updating until the requested change has been saved via AJAX
+    ml.updatedAccessLevel = '';
+    ml.accessLevels = [{
+      id: 'staff',
+      name: {class: 'Staff Access:', section: 'Staff Access:'},
+      description: {
+        class: 'staff can email members of this course; students and guests <strong>cannot</strong> send or reply to this mailing list.',
+        section: 'staff can email members of this course; students and guests <strong>cannot</strong> send or reply to this mailing list.'
+      }
+    },{
+      id: 'members',
+      name: {class: 'Course Access:', section: 'Section Access:'},
+      description: {
+        class: 'all members of this course can email each other; students and guests <strong>can</strong> send and reply to this mailing list.',
+        section: 'all members of this section and all staff can email each other; students and guests <strong>can</strong> send and reply to this mailing list.'
+      }
+    },{
+      id: 'everyone',
+      name: {class: 'World Access:', section: 'World Access:'},
+      description: {
+        class: 'anyone can send and reply to this mailing list.',
+        section: 'anyone can send and reply to this mailing list.'
+      }
+    },{
+      id: 'readonly',
+      name: {class: 'Disabled:', section: 'Disabled:'},
+      description: {
+        class: 'this mailing list is disabled.',
+        section: 'this mailing list is disabled.'
+      }
+    }];
+    ml.accessLevelDisplayNameMap = {};
+    ml.accessLevelDescriptionMap = {};
+    for (var i = 0; i < ml.accessLevels.length; i++) {
+      var accessLevel = ml.accessLevels[i];
+      ml.accessLevelDisplayNameMap[accessLevel.id] = accessLevel.name;
+      ml.accessLevelDescriptionMap[accessLevel.id] = accessLevel.description;
+    }
+
+    $http.get(URL_LISTS).success(function(data){
+      ml.isLoading = false;
+      var length = data.length;
+      var course_list_member_count = 0;
+      for (var i = 0; i < length; i++) {
+        var list = data[i];
+        if(list.is_course_list) {
+          ml.courseList.push(list);
+          course_list_member_count = list.members_count;
+        } else if(!list.sis_section_id || list.cs_class_type == 'N'){
+          ml.nonEnrollmentSectionLists.push(list);
+        } else if(list.sis_section_id || list.cs_class_type == 'E'){
+          ml.enrollmentSectionLists.push(list);
+        }
+      }
+
+      for(var i = 0; i < ml.nonEnrollmentSectionLists.length; i++){
+        console.log(ml.nonEnrollmentSectionLists[i]);
+      }
+
+      ml.loaded = true;
     });
 
-    app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
-        var ml = this;
-        var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
+    ml.hasEnrollmentSections = function() {
+      return ml.enrollmentSectionLists.length > 0;
+    };
 
-        ml.isLoading = true;
-        ml.isUpdating = false;
-        ml.courseList = [];
-        ml.sectionLists = [];
-        // temp storage for modal interaction to access level to prevent base
-        // page from updating until the requested change has been saved via AJAX
-        ml.updatedAccessLevel = '';
-        ml.accessLevels = [{
-            id: 'staff',
-            name: {class: 'Staff Access:', section: 'Staff Access:'},
-            description: {
-                class: 'staff can email members of this course; students and guests <strong>cannot</strong> send or reply to this mailing list.',
-                section: 'staff can email members of this course; students and guests <strong>cannot</strong> send or reply to this mailing list.'
-            }
-        },{
-            id: 'members',
-            name: {class: 'Course Access:', section: 'Section Access:'},
-            description: {
-                class: 'all members of this course can email each other; students and guests <strong>can</strong> send and reply to this mailing list.',
-                section: 'all members of this section and all staff can email each other; students and guests <strong>can</strong> send and reply to this mailing list.'
-            }
-        },{
-            id: 'everyone',
-            name: {class: 'World Access:', section: 'World Access:'},
-            description: {
-                class: 'anyone can send and reply to this mailing list.',
-                section: 'anyone can send and reply to this mailing list.'
-            }
-        },{
-            id: 'readonly',
-            name: {class: 'Disabled:', section: 'Disabled:'},
-            description: {
-                class: 'this mailing list is disabled.',
-                section: 'this mailing list is disabled.'
-            }
-        }];
-        ml.accessLevelDisplayNameMap = {};
-        ml.accessLevelDescriptionMap = {};
-        for (var i = 0; i < ml.accessLevels.length; i++) {
-            var accessLevel = ml.accessLevels[i];
-            ml.accessLevelDisplayNameMap[accessLevel.id] = accessLevel.name;
-            ml.accessLevelDescriptionMap[accessLevel.id] = accessLevel.description;
-        }
+    ml.hasNonEnrollmentSections = function() {
+      return ml.nonEnrollmentSectionLists.length > 0;
+    };
 
-        $http.get(URL_LISTS).success(function(data){
-            ml.isLoading = false;
-            var length = data.length;
-            for (var i = 0; i < length; i++) {
-                var list = data[i];
-                if(list.is_course_list) {
-                  ml.courseList.push(list);
-                }
-                else {
-                  ml.sectionLists.push(list);
-                }
-            }
+    ml.isSisList = function(list){
+      return (list.cs_class_type == 'N');
+    };
 
-            //check how many primary sections
-            var plen = ml.sectionLists.length;
-            var pcount = 0;
-            var index = 0;
-            for( var i = 0; i < plen; i++){
-              var list = ml.sectionLists[i];
-              if(list.is_primary_section){
-                pcount++;
-                index = i;
-              }
-            }
-            // if there is only one primary section
-            // remove it.
-            if(pcount == 1){
-              ml.sectionLists.splice(index, 1);
-            }
+    ml.isManageSectionsList = function(list){
+      return list.sis_section_id == null;
+    };
 
-            ml.loaded = true;
+    ml.updateAccessLevel = function(list) {
+      $('#permissions-modal-' + list.section_id).modal('hide');
+      list.isUpdating = true;
+      var url = $djangoUrl.reverse(
+        'mailing_list:api_lists_set_access_level',
+        [list.id]
+      );
+      $http.put(url, {access_level: ml.updatedAccessLevel})
+        .success(function(data){
+          list.access_level = ml.updatedAccessLevel;
+          list.isUpdating = false;
+          list.updated = true;
+          $timeout(function(){
+            list.updated = false;
+          }, 2000);
+        }).error(function(data){
+          list.isUpdating = false;
+          list.update_failed = true;
+          $timeout(function(){
+            list.update_failed = false;
+          }, 2000);
         });
+    };
 
-        ml.hasSections = function() {
-            return ml.sectionLists.length > 0;
-        };
-
-        ml.updateAccessLevel = function(list) {
-            $('#permissions-modal-' + list.section_id).modal('hide');
-            list.isUpdating = true;
-            var url = $djangoUrl.reverse(
-                'mailing_list:api_lists_set_access_level',
-                [list.id]
-            );
-            $http.put(url, {access_level: ml.updatedAccessLevel})
-                .success(function(data){
-                    list.access_level = ml.updatedAccessLevel;
-                    list.isUpdating = false;
-                    list.updated = true;
-                    $timeout(function(){
-                        list.updated = false;
-                    }, 2000);
-                }).error(function(data){
-                    list.isUpdating = false;
-                    list.update_failed = true;
-                    $timeout(function(){
-                        list.update_failed = false;
-                    }, 2000);
-                });
-        };
-
-        ml.listMembersUrl = function(list) {
-            if(list.section_id) {
-                return window.globals.append_resource_link_id(
-                  $djangoUrl.reverse('mailing_list:list_members',
-                    [list.section_id]));
-            }else{
-                return window.globals.append_resource_link_id(
-                  $djangoUrl.reverse('mailing_list:list_members_no_id'));
-            }
-        };
-    }]);
+    ml.listMembersUrl = function(list) {
+      if(list.section_id) {
+        return window.globals.append_resource_link_id(
+          $djangoUrl.reverse('mailing_list:list_members',
+          [list.section_id]));
+      }else{
+        return window.globals.append_resource_link_id(
+          $djangoUrl.reverse('mailing_list:list_members_no_id'));
+      }
+    };
+  }]);
 })();
