@@ -10,7 +10,7 @@ from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
 from icommons_common.models import CourseInstance
 
-from mailing_list.utils import is_course_crosslisted
+from mailing_list.utils import is_course_crosslisted, get_section_sis_enrollment_status
 
 logger = logging.getLogger(__name__)
 
@@ -71,30 +71,6 @@ class MailingListManager(models.Manager):
             
         return mailing_list
 
-    def _get_section_enrollment_status(self, sis_section_id):
-        """
-        Check to see if the section was fed by the SIS. If it was, it will have a field set
-        called cs_class_type with a value of either 'N' (non enrollment) or 'E' (enrollment).
-        If the value is 'N' the section was created by an end user in Campus solutions. We want
-        to be able to differentiat which sections were created by users from ones (enrollment) that were not.
-        :param sis_section_id:
-        :return 'N', 'E', or None:
-        """
-        try:
-            ci = CourseInstance.objects.get(course_instance_id=sis_section_id)
-            # if there is a course instance but there is no cs_class_type
-            # we should assume this is an enrollment type so return 'E'
-            if not ci.cs_class_type or ci.cs_class_type in 'E':
-                return 'E'
-            else:
-                # the only other option is 'N' so just return it
-                return ci.cs_class_type
-
-        except CourseInstance.DoesNotExist:
-            # there was no record for this id, so return None
-            return None
-
-
     def get_or_create_or_delete_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
         """
         Gets the mailing list data for all sections related to the given canvas_course_id.
@@ -107,15 +83,13 @@ class MailingListManager(models.Manager):
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
         sis_course_id = canvas_api_client.get_course(canvas_course_id)['sis_course_id']
-        course_is_crosslisted = is_course_crosslisted(sis_course_id)
-
         canvas_sections = canvas_api_client.get_sections(canvas_course_id)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
         overrides = kwargs.get('defaults', {})
         result = []
 
-        if course_is_crosslisted:
+        if is_course_crosslisted(sis_course_id):
             try:
                 course_list = mailing_lists_by_section_id.pop(None)
             except KeyError:
@@ -165,7 +139,7 @@ class MailingListManager(models.Manager):
             cs_class_type = None
             if s['sis_section_id'] and s['sis_section_id'].isdigit():
                 logger.debug('Looking up section id %s' % s['sis_section_id'])
-                cs_class_type = self._get_section_enrollment_status(s['sis_section_id'])
+                cs_class_type = get_section_sis_enrollment_status(s['sis_section_id'])
 
             result.append({
                 'id': mailing_list.id,

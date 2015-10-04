@@ -80,12 +80,12 @@
         }
       }
 
-      for(var i = 0; i < ml.nonEnrollmentSectionLists.length; i++){
-        console.log(ml.nonEnrollmentSectionLists[i]);
-      }
-
       ml.loaded = true;
     });
+
+    ml.hasCourseEmailList = function(){
+      return ml.courseList.length > 0;
+    };
 
     ml.hasEnrollmentSections = function() {
       return ml.enrollmentSectionLists.length > 0;

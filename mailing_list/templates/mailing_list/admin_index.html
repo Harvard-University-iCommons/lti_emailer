@@ -37,21 +37,32 @@ $(document).ready(function(){
   <main class="ng-hide" ng-show="ml.loaded">
 
     <div class="col-md-12">
-      <h2>Mailing List for {{course_code}}</h2>
-      <h3>{{course_is_crosslisted}}</h3>
-      <p class="caption">
-        The mailing list contains staff, students, and guests who have been added to this course.
-        <a target="_blank"
-           href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
-           class="lti-tooltip"
-           rel="tooltip"
-           data-toggle="tooltip"
-           title=""
-           data-original-title="More info about the Course Emailer">
-          <i class="fa fa-question-circle"></i>
-        </a>
-      </p>
-    </div>
+          <h2>Mailing List for {{course_code}}</h2>
+            <p class="caption">
+                The mailing list contains staff, students, and guests who have been added to this course.
+                <a target="_blank"
+                   href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
+                   class="lti-tooltip"
+                   rel="tooltip"
+                   data-toggle="tooltip"
+                   title=""
+                   data-original-title="More info about the Course Emailer">
+                    <i class="fa fa-question-circle"></i>
+                </a>
+                <div ng-show="ml.hasCourseEmailList()">
+                    This course site includes enrollment from two or more courses.
+                    <a target="_blank"
+                       href="https://wiki.harvard.edu/confluence/pages/viewpage.action?pageId=189597345"
+                       class="lti-tooltip"
+                       rel="tooltip"
+                       data-toggle="tooltip"
+                       title=""
+                       data-original-title="More info about cross listed courses">
+                        <i class="fa fa-question-circle"></i>
+                  </a>
+              </div>
+          </p>
+        </div>
 
     <div class="col-md-12">
 
@@ -76,8 +87,8 @@ $(document).ready(function(){
                  data-parent="#accordion"
                  href="#collapseTwo"
                  aria-expanded="false" aria-controls="collapseTwo">
-                  <ng-pluralize count="ml.sectionLists.length"
-                        when="{'0': 'No Sections for ', 'one': '1 Section Mailing List for ', 'other': '{} Sections Mailing List for '}">
+                  <ng-pluralize count="ml.nonEnrollmentSectionLists.length"
+                        when="{'0': 'No Sections for ', 'one': 'Section Mailing List for ', 'other': 'Sections Mailing Lists for '}">
                   </ng-pluralize>{{course_code}}
                 </a>
               </h4>

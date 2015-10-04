@@ -33,8 +33,7 @@ def admin_index(request):
 
     logger.info(u"Rendering mailing_list admin_index view for user %s",
                 logged_in_user_id)
-    return render(request, 'mailing_list/admin_index.html', {'course_code': course_code,
-                                                             'course_is_crosslisted': is_course_crosslisted(course_instance_id)})
+    return render(request, 'mailing_list/admin_index.html', {'course_code': course_code,})
 
 
 @login_required
