@@ -57,15 +57,16 @@ class MailingListUtilsTests(TestCase):
         result = get_section_sis_enrollment_status(self.section['sis_section_id'])
         self.assertEqual(result, 'N')
 
-    @patch('mailing_list.utils.XlistMap.objects.get')
+    @patch('mailing_list.utils.XlistMap.objects.filter')
     def test_is_course_crosslisted_when_there_is_no_xlist_record(self, mock_get_xref):
         """ Test that the method returns False when there is not a xlist record """
-        mock_get_xref.side_effect = XlistMap.DoesNotExist
+        mock_get_xref.return_value.count.return_value = 0
         result = is_course_crosslisted(self.course_instance_id)
         self.assertEqual(result, False)
 
-    @patch('mailing_list.utils.XlistMap.objects.get')
+    @patch('mailing_list.utils.XlistMap.objects.filter')
     def test_is_course_crosslisted_when_there_is_a_xlist_record(self, mock_get_xref):
         """ Test that the method returns True when there is a record is the xlist table """
+        mock_get_xref.return_value.count.return_value = 2
         result = is_course_crosslisted(self.course_instance_id)
         self.assertEqual(result, True)

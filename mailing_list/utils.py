@@ -11,13 +11,11 @@ def is_course_crosslisted(course_instance_id):
     :param course_instance_id:
     :return Bool:
     """
-    try:
-        xlistentry = XlistMap.objects.get(primary_course_instance=course_instance_id)
-        course_is_crosslisted = True
-    except XlistMap.DoesNotExist:
-        course_is_crosslisted = False
+    xlistentrys = XlistMap.objects.filter(primary_course_instance=course_instance_id).count()
+    if xlistentrys > 0:
+        return True
 
-    return course_is_crosslisted
+    return False
 
 
 def get_section_sis_enrollment_status(sis_section_id):
