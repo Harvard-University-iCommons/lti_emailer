@@ -64,7 +64,7 @@ def handle_mailing_list_email_route(request):
             logger.warning(u'Message-Id %s was posted to the route handler, '
                            u'but we\'ve already handled that.  Dropping.',
                            message_id)
-        return JsonResponse({'success': True})
+            return JsonResponse({'success': True})
 
     # if we want to check email addresses against the sender, we need to parse
     # out just the address.
