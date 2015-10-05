@@ -104,7 +104,7 @@ class MailingListManager(models.Manager):
                 course_list = MailingList(**create_kwargs)
                 course_list.save()
 
-            # if there is a course_list, append it to the result list so
+            # if there is a course_list, add it to the result list so
             # it can be used by the template.
             if course_list:
                 result.append({
@@ -136,6 +136,10 @@ class MailingListManager(models.Manager):
                 mailing_list = MailingList(**create_kwargs)
                 mailing_list.save()
 
+            # cs_class_type is used to determine if the section
+            # is an enrollment section or a non-enrollment section.
+            # if it's null for a section with a real sis section id, we
+            # should consider it an enrollment section.
             cs_class_type = None
             if s['sis_section_id'] and s['sis_section_id'].isdigit():
                 logger.debug('Looking up section id %s' % s['sis_section_id'])

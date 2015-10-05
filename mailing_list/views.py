@@ -27,13 +27,11 @@ def admin_index(request):
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
 
     course = get_course(canvas_course_id)
-    course_code = course['course_code']
-    course_instance_id = course['sis_course_id']
-
+    course_name = course['name']
 
     logger.info(u"Rendering mailing_list admin_index view for user %s",
                 logged_in_user_id)
-    return render(request, 'mailing_list/admin_index.html', {'course_code': course_code,})
+    return render(request, 'mailing_list/admin_index.html', {'course_name': course_name,})
 
 
 @login_required

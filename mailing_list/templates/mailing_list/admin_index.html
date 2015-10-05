@@ -34,12 +34,14 @@ $(document).ready(function(){
     <img src="{% static 'images/ajax-loader-large.gif' %}"/>
   </div>
 
-  <main class="ng-hide" ng-show="ml.loaded">
+  <main>
 
     <div class="col-md-12">
-          <h2>Mailing List for {{course_code}}</h2>
+          <h2>Mailing Lists for {{course_name}}</h2>
             <p class="caption">
-                The mailing list contains staff, students, and guests who have been added to this course.
+                This tool provides mailing lists to contact members of your course using an email
+              client (e.g. Outlook, Gmail, etc.). Be sure to use the email address that is set as
+              your default in Canvas.
                 <a target="_blank"
                    href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
                    class="lti-tooltip"
@@ -49,6 +51,8 @@ $(document).ready(function(){
                    data-original-title="More info about the Course Emailer">
                     <i class="fa fa-question-circle"></i>
                 </a>
+            </p>
+            <p>
                 <div ng-show="ml.hasCourseEmailList()">
                     This course site includes enrollment from two or more courses.
                     <a target="_blank"
@@ -62,14 +66,25 @@ $(document).ready(function(){
                   </a>
               </div>
           </p>
+          <p class="caption">
+            If you would like a copy of your email, add your own email address to the CC or BCC field.
+          </p>
         </div>
 
     <div class="col-md-12">
 
-      <!--<hr width="98%">-->
       <!-- show combined mailing list or single primary list -->
       <!-- if there is a combined mailing list show it -->
+      <h2 ng-show="ml.hasCourseEmailList() || ml.enrollmentSectionLists.length == 1">Email Entire Course</h2>
+
       <div ng-repeat="list in ml.courseList">
+        {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
+        <div class="col-md-12">
+          <hr width="98%">
+        </div>
+      </div>
+
+      <div ng-if="ml.enrollmentSectionLists.length == 1" ng-repeat="list in ml.enrollmentSectionLists">
         {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
         <div class="col-md-12">
           <hr width="98%">
@@ -88,8 +103,8 @@ $(document).ready(function(){
                  href="#collapseTwo"
                  aria-expanded="false" aria-controls="collapseTwo">
                   <ng-pluralize count="ml.nonEnrollmentSectionLists.length"
-                        when="{'0': 'No Sections for ', 'one': 'Section Mailing List for ', 'other': 'Sections Mailing Lists for '}">
-                  </ng-pluralize>{{course_code}}
+                        when="{'0': 'No Sections', 'one': 'Email Specific Sections', 'other': 'Email Specific Sections'}">
+                  </ng-pluralize>
                 </a>
               </h4>
             </div>
@@ -97,16 +112,17 @@ $(document).ready(function(){
             <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
               <div class="panel-body">
                 <div class="col-md-12">
-                  <h2>Sections</h2>
-                  <p class="caption">
-                    These sections are created in the Manage Sections tool (if installed in your account) or are being
-                    sent from the Registrar's Office. Any changes made to those sections will be reflected
-                    within these lists.
-                  </p>
                   <p class="caption">
                     If you would like a copy of your email, add your own email address to the CC or BCC field.
-                    Any email sent to a section will be delivered to all staff in the course, even if they have
-                    not been added to the section.
+                    Any email sent to a section will be delivered to all staff in the course, even if they have not
+                    been added to the section.
+                  </p>
+                  <p class="caption">
+                    These sections are created in the Manage Sections tool (if installed in your account) or are
+                    being sent from SIS.
+                  </p>
+                  <p class="caption">
+                    Any changes made to those sections will be reflected within these lists.
                   </p>
                 </div>
                 <div class="content-section" ng-repeat="list in ml.nonEnrollmentSectionLists">
@@ -117,7 +133,7 @@ $(document).ready(function(){
           </div>
           <br />
           <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-            <div class="panel panel-default" ng-show="ml.hasEnrollmentSections()">
+            <div class="panel panel-default" ng-show="ml.hasMultipleEnrollmentSections()">
               <div class="panel-heading" role="tab" id="headingOne">
                 <h4 class="panel-title">
                   <a class="collapsed"
@@ -125,7 +141,7 @@ $(document).ready(function(){
                    data-toggle="collapse"
                    data-parent="#accordion"
                    href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                    Official Course Sections Mailing Lists for {{course_code}}
+                    Email Register Enrollment Sections
                   </a>
                 </h4>
               </div>
@@ -133,9 +149,13 @@ $(document).ready(function(){
               <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
                 <div class="panel-body">
                   <div class="col-md-12">
-                    <h2>Official Course Sections</h2>
                     <p class="caption">
-                      These mailing lists contain staff, students, and guests from individual courses.
+                      If you would like a copy of your email, add your own email address to the CC or BCC field.
+                      Any email sent to a section will be delivered to all staff in the course, even if they have not
+                      been added to the section.
+                    </p>
+                    <p class="caption">
+                      These mailing lists contains staff, students, and guests from individual schools.
                     </p>
                   </div>
                   <div  ng-repeat="list in ml.enrollmentSectionLists">

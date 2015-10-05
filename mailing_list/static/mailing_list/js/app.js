@@ -79,7 +79,6 @@
           ml.enrollmentSectionLists.push(list);
         }
       }
-
       ml.loaded = true;
     });
 
@@ -87,8 +86,8 @@
       return ml.courseList.length > 0;
     };
 
-    ml.hasEnrollmentSections = function() {
-      return ml.enrollmentSectionLists.length > 0;
+    ml.hasMultipleEnrollmentSections = function() {
+      return ml.enrollmentSectionLists.length > 1;
     };
 
     ml.hasNonEnrollmentSections = function() {
@@ -100,7 +99,7 @@
     };
 
     ml.isManageSectionsList = function(list){
-      return list.sis_section_id == null;
+      return list.sis_section_id == null && ! list.is_course_list;
     };
 
     ml.updateAccessLevel = function(list) {
