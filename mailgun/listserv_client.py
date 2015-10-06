@@ -1,6 +1,7 @@
 import logging
 import requests
 import json
+import urllib
 
 from django.conf import settings
 
@@ -246,10 +247,10 @@ class MailgunClient(object):
 
         files = []
         if attachments:
-            files.extend([('attachment', (f.name, f, f.content_type))
+            files.extend([('attachment', (urllib.quote(f.name), f, f.content_type))
                               for f in attachments])
         if inlines:
-            files.extend([('inline', (f.name, f, f.content_type))
+            files.extend([('inline', (urllib.quote(f.name), f, f.content_type))
                               for f in inlines])
 
         logger.info("files is %s", files)
@@ -270,4 +271,4 @@ class MailgunClient(object):
                 u'Failed to POST email from %s to %s.  Status code was %s, body '
                 u'was %s', from_address, to_address, response.status_code,
                 response.text)
-            raise ListservApiError(message)
+            raise ListservApiError(response.text)
