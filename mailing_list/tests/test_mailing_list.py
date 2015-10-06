@@ -16,11 +16,11 @@ class MailingListModelTests(TestCase):
         self.sections = [{
             'id': 1582,
             'name': 'section name 1',
-            'sis_section_id': '334562'
+            'sis_section_id': '334562',
         }, {
             'id': 1583,
             'name': 'section name 2',
-            'sis_section_id': None
+            'sis_section_id': None,
         }]
 
     @patch('mailing_list.models.get_section_sis_enrollment_status')
@@ -57,6 +57,7 @@ class MailingListModelTests(TestCase):
             'canvas_course_id': 3716,
             'id': 1,
             'is_course_list': False,
+            'is_primary': False,
             'section_id': 1582
         },{
             'access_level': u'members',
@@ -67,6 +68,7 @@ class MailingListModelTests(TestCase):
             'address': address_2,
             'canvas_course_id': 3716,
             'id': 2,
+            'is_primary': False,
             'is_course_list': False,
             'section_id': 1583
         }])
@@ -120,6 +122,7 @@ class MailingListModelTests(TestCase):
                 'canvas_course_id': 3716,
                 'id': 1,
                 'is_course_list': False,
+                'is_primary': False,
                 'section_id': 1582
             },{
                 'access_level': u'members',
@@ -131,6 +134,7 @@ class MailingListModelTests(TestCase):
                 'canvas_course_id': 3716,
                 'id': 2,
                 'is_course_list': False,
+                'is_primary': False,
                 'section_id': 1583
             },{
                 'access_level': 'members',
@@ -142,6 +146,7 @@ class MailingListModelTests(TestCase):
                 'canvas_course_id': 3716,
                 'id': 3,
                 'is_course_list': False,
+                'is_primary': False,
                 'section_id': 1584
             }], result)
 
@@ -179,6 +184,7 @@ class MailingListModelTests(TestCase):
             'canvas_course_id': 3716,
             'id': 1,
             'is_course_list': False,
+            'is_primary': False,
             'section_id': 1582}], result)
 
     @patch('mailing_list.models.get_section_sis_enrollment_status')
@@ -235,6 +241,7 @@ class MailingListModelTests(TestCase):
             'canvas_course_id': 3716,
             'id': 3,
             'is_course_list': True,
+            'is_primary': False,
             'section_id': None
         }, result[0])
 

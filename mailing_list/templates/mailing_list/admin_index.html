@@ -84,7 +84,7 @@ $(document).ready(function(){
         </div>
       </div>
 
-      <div ng-if="ml.enrollmentSectionLists.length == 1" ng-repeat="list in ml.enrollmentSectionLists">
+      <div ng-if="list.is_primary && !ml.hasCourseEmailList(list)" ng-repeat="list in ml.enrollmentSectionLists">
         {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
         <div class="col-md-12">
           <hr width="98%">
