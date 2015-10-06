@@ -246,16 +246,23 @@ class MailgunClient(object):
 
         files = []
         if attachments:
-            files.extend([('attachment', (f.name.encode('utf8'), f, f.content_type))
+            files.extend([('attachment', (f.name, f, f.content_type))
                               for f in attachments])
         if inlines:
-            files.extend([('inline', (f.name.encode('utf8'), f, f.content_type))
+            files.extend([('inline', (f.name, f, f.content_type))
                               for f in inlines])
 
         logger.info("files is %s", files)
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
-            response = requests.post(api_url, auth=(self.api_user, self.api_key),
-                                     data=payload, files=files)
+            response = requests.post(
+                api_url,
+                auth=(self.api_user, self.api_key),
+                data=payload,
+                files=files,
+                headers={
+                    "Content-Type": "charset=UTF-8"
+                }
+            )
             timer.status_code = response.status_code
 
         if response.status_code != 200:
