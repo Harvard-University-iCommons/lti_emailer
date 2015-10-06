@@ -41,7 +41,7 @@ $(document).ready(function(){
             <p class="caption">
               This tool provides mailing lists that allow you to contact members of your course using an email
               client (e.g. Outlook, Gmail, etc.) as an alternative to the Canvas Inbox. If you would like a copy of
-              your email, add your own email address to the CC or BCC field. You must  send your message from the email
+              your email, add your own email address to the CC or BCC field. You <b>must</b> send your message from the email
               address that is set as your default in Canvas or your message will not be delivered.
                 <a target="_blank"
                    href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
@@ -53,15 +53,6 @@ $(document).ready(function(){
                     <i class="fa fa-question-circle"></i>
                 </a>
             </p>
-            <p>
-                <div ng-show="ml.hasCourseEmailList()">
-                    This course site includes enrollment from two or more courses.
-
-              </div>
-          </p>
-          <p class="caption">
-            If you would like a copy of your email, add your own email address to the CC or BCC field.
-          </p>
         </div>
 
     <div class="col-md-12">
@@ -113,7 +104,7 @@ $(document).ready(function(){
                     reflected within these lists.
                   </p>
                   <p class="caption">
-                    Any email sent to a section will be delivered to members of that section and to all staff in the course.
+                    Any email sent to a section will be delivered to members of that section <b>and to all staff in the course.</b>
                   </p>
                 </div>
                 <div class="content-section" ng-repeat="list in ml.nonEnrollmentSectionLists">
@@ -132,7 +123,9 @@ $(document).ready(function(){
                    data-toggle="collapse"
                    data-parent="#accordion"
                    href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                    Email Register Enrollment Sections
+                    <ng-pluralize count="ml.enrollmentSectionLists.length"
+                        when="{'0': 'No Sections', '1': 'Email Register Enrollment', 'other': 'Email Register Enrollments'}">
+                  </ng-pluralize>
                   </a>
                 </h4>
               </div>
@@ -154,7 +147,7 @@ $(document).ready(function(){
                     </p>
                     <p class="caption">
                       The lists below reflect enrollments from the Registrar’s office and will be updated automatically.
-                      Any email sent to these lists will be delivered to members of that list <b>and to all staff in the course.</b>
+                      Any email sent to a list will be delivered to members of that list <b>and to all staff in the course.</b>
                     </p>
                   </div>
                   <div  ng-repeat="list in ml.enrollmentSectionLists">
