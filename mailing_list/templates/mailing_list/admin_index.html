@@ -75,7 +75,7 @@ $(document).ready(function(){
 
       <!-- show combined mailing list or single primary list -->
       <!-- if there is a combined mailing list show it -->
-      <h2 ng-show="ml.hasCourseEmailList() || ml.enrollmentSectionLists.length == 1">Email Entire Course</h2>
+      <h2>Email Entire Course</h2>
 
       <div ng-repeat="list in ml.courseList">
         {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
