@@ -222,12 +222,12 @@ def _get_attachments_inlines(request):
         attachment_name = 'attachment-{}'.format(n)
         file_ = request.FILES[attachment_name]
         logger.info("file_ is %s for attachment_name %s", file_, attachment_name)
-        # if attachment_name in attachment_name_to_cid:
-        #     file_.cid = attachment_name_to_cid[attachment_name]
-        #     file_.name = file_.name.replace(' ', '_')
-        #     inlines.append(file_)
-        # else:
-        attachments.append(file_)
+        if attachment_name in attachment_name_to_cid:
+            file_.cid = attachment_name_to_cid[attachment_name]
+            file_.name = file_.name.replace(' ', '_')
+            inlines.append(file_)
+        else:
+            attachments.append(file_)
 
     logger.info("attachments is %s", attachments)
     logger.info("inlines is %s", inlines)
