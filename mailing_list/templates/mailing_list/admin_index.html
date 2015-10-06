@@ -39,9 +39,10 @@ $(document).ready(function(){
     <div class="col-md-12">
           <h2>Mailing Lists for {{course_name}}</h2>
             <p class="caption">
-                This tool provides mailing lists to contact members of your course using an email
-              client (e.g. Outlook, Gmail, etc.). Be sure to use the email address that is set as
-              your default in Canvas.
+              This tool provides mailing lists that allow you to contact members of your course using an email
+              client (e.g. Outlook, Gmail, etc.) as an alternative to the Canvas Inbox. If you would like a copy of
+              your email, add your own email address to the CC or BCC field. You must  send your message from the email
+              address that is set as your default in Canvas or your message will not be delivered.
                 <a target="_blank"
                    href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
                    class="lti-tooltip"
@@ -55,15 +56,7 @@ $(document).ready(function(){
             <p>
                 <div ng-show="ml.hasCourseEmailList()">
                     This course site includes enrollment from two or more courses.
-                    <a target="_blank"
-                       href="https://wiki.harvard.edu/confluence/pages/viewpage.action?pageId=189597345"
-                       class="lti-tooltip"
-                       rel="tooltip"
-                       data-toggle="tooltip"
-                       title=""
-                       data-original-title="More info about cross listed courses">
-                        <i class="fa fa-question-circle"></i>
-                  </a>
+
               </div>
           </p>
           <p class="caption">
@@ -75,8 +68,10 @@ $(document).ready(function(){
 
       <!-- show combined mailing list or single primary list -->
       <!-- if there is a combined mailing list show it -->
-      <h2>Email Entire Course</h2>
-
+      <h2 ng-show="ml.hasCourseEmailList()">Email Entire Course</h2>
+      <p class=""caption ng-show="ml.hasCourseEmailList()">
+        Email all students, teaching staff, and guests enrolled in this course.
+      </p>
       <div ng-repeat="list in ml.courseList">
         {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
         <div class="col-md-12">
@@ -113,16 +108,12 @@ $(document).ready(function(){
               <div class="panel-body">
                 <div class="col-md-12">
                   <p class="caption">
-                    If you would like a copy of your email, add your own email address to the CC or BCC field.
-                    Any email sent to a section will be delivered to all staff in the course, even if they have not
-                    been added to the section.
+                    Sections are created in the Manage Sections tool (if installed in your account) or are sent from
+                    your student information system (e.g. my.harvard). Any changes you make to those sections will be
+                    reflected within these lists.
                   </p>
                   <p class="caption">
-                    These sections are created in the Manage Sections tool (if installed in your account) or are
-                    being sent from SIS.
-                  </p>
-                  <p class="caption">
-                    Any changes made to those sections will be reflected within these lists.
+                    Any email sent to a section will be delivered to members of that section and to all staff in the course.
                   </p>
                 </div>
                 <div class="content-section" ng-repeat="list in ml.nonEnrollmentSectionLists">
@@ -149,13 +140,21 @@ $(document).ready(function(){
               <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
                 <div class="panel-body">
                   <div class="col-md-12">
-                    <p class="caption">
-                      If you would like a copy of your email, add your own email address to the CC or BCC field.
-                      Any email sent to a section will be delivered to all staff in the course, even if they have not
-                      been added to the section.
+                    <p class="caption" ng-show="ml.hasCourseEmailList()">
+                      This course site includes enrollment from two or more courses.
+                      <a target="_blank"
+                       href="https://wiki.harvard.edu/confluence/pages/viewpage.action?pageId=189597345"
+                       class="lti-tooltip"
+                       rel="tooltip"
+                       data-toggle="tooltip"
+                       title=""
+                       data-original-title="More info about cross listed courses">
+                        <i class="fa fa-question-circle"></i>
+                      </a>
                     </p>
                     <p class="caption">
-                      These mailing lists contains staff, students, and guests from individual schools.
+                      The lists below reflect enrollments from the Registrar’s office and will be updated automatically.
+                      Any email sent to these lists will be delivered to members of that list <b>and to all staff in the course.</b>
                     </p>
                   </div>
                   <div  ng-repeat="list in ml.enrollmentSectionLists">
