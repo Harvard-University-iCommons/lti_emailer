@@ -8,6 +8,7 @@ from django.conf import settings
 from icommons_common.utils import grouper, ApiRequestTimer
 
 from lti_emailer.exceptions import ListservApiError
+from mailgun.utils import replace_non_ascii
 
 
 logger = logging.getLogger(__name__)
@@ -247,10 +248,10 @@ class MailgunClient(object):
 
         files = []
         if attachments:
-            files.extend([('attachment', (urllib.quote(f.name), f, f.content_type))
+            files.extend([('attachment', (replace_non_ascii(f.name), f, f.content_type))
                               for f in attachments])
         if inlines:
-            files.extend([('inline', (urllib.quote(f.name), f, f.content_type))
+            files.extend([('inline', (replace_non_ascii(f.name), f, f.content_type))
                               for f in inlines])
 
         logger.info("files is %s", files)
