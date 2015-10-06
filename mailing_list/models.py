@@ -119,6 +119,7 @@ class MailingListManager(models.Manager):
                     'members_count': len(course_list.members),
                     'is_course_list': True,
                     'cs_class_type' : None,
+                    'is_primary': False,
                 })
 
         for s in canvas_sections:
@@ -146,6 +147,7 @@ class MailingListManager(models.Manager):
                 logger.debug('Looking up section id %s' % s['sis_section_id'])
                 cs_class_type = get_section_sis_enrollment_status(s['sis_section_id'])
 
+
             result.append({
                 'id': mailing_list.id,
                 'canvas_course_id': mailing_list.canvas_course_id,
@@ -157,6 +159,7 @@ class MailingListManager(models.Manager):
                 'members_count': len(mailing_list.members),
                 'is_course_list': False,
                 'cs_class_type' : cs_class_type,
+                'is_primary': s['sis_section_id'] == sis_course_id,
             })
 
         # Delete existing mailing lists who's section no longer exists
