@@ -246,10 +246,10 @@ class MailgunClient(object):
 
         files = []
         if attachments:
-            files.extend([('attachment', (f.name.decode('utf8'), f, f.content_type))
+            files.extend([('attachment', (f.name.encode('utf8'), f, f.content_type))
                               for f in attachments])
         if inlines:
-            files.extend([('inline', (f.name.decode('utf8'), f, f.content_type))
+            files.extend([('inline', (f.name.encode('utf8'), f, f.content_type))
                               for f in inlines])
 
         logger.info("files is %s", files)
