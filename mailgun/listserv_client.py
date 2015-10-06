@@ -211,6 +211,7 @@ class MailgunClient(object):
     def send_mail(self, list_address, from_address, to_address, subject='',
                   text='', html='', original_to_address=None,
                   original_cc_address=None, attachments=None, inlines=None):
+        logger.info("inlines is %s at start of listserv_client.send_mail", inlines)
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
                                      settings.LISTSERV_DOMAIN)
         payload = {
@@ -251,6 +252,7 @@ class MailgunClient(object):
             files.extend([('inline', (f.name, f, f.content_type))
                               for f in inlines])
 
+        logger.info("files is %s", files)
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),
                                      data=payload, files=files)
