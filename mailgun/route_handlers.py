@@ -206,6 +206,7 @@ def _get_attachments_inlines(request):
         logger.exception(
             u'Unable to determine if there were attachments to this email')
         attachment_count = 0
+    logger.info("attachment-count is %s", attachment_count)
 
     try:
         content_id_map = json.loads(request.POST.get('content-id-map', '{}'))
@@ -220,6 +221,7 @@ def _get_attachments_inlines(request):
     for n in xrange(1, attachment_count+1):
         attachment_name = 'attachment-{}'.format(n)
         file_ = request.FILES[attachment_name]
+        logger.info("file_ is %s for attachment_name %s", file_, attachment_name)
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
@@ -227,4 +229,6 @@ def _get_attachments_inlines(request):
         else:
             attachments.append(file_)
 
+    logger.info("attachments is %s", attachments)
+    logger.info("inlines is %s", inlines)
     return attachments, inlines
