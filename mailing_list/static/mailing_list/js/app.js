@@ -68,8 +68,10 @@
       ml.isLoading = false;
       var length = data.length;
       var course_list_member_count = 0;
+      var list;
+
       for (var i = 0; i < length; i++) {
-        var list = data[i];
+        list = data[i];
         if(list.is_course_list) {
           ml.courseList.push(list);
           course_list_member_count = list.members_count;
@@ -94,7 +96,7 @@
       return ml.nonEnrollmentSectionLists.length > 0;
     };
 
-    ml.isSisList = function(list){
+    ml.isNonEnrollmentSectionsList = function(list){
       return (list.cs_class_type == 'N');
     };
 
