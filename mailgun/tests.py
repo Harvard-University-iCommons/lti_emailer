@@ -15,8 +15,8 @@ from mock import MagicMock, call, patch
 
 from icommons_common.utils import Bunch
 
-from .decorators import authenticate
-from .route_handlers import handle_mailing_list_email_route
+from mailgun.decorators import authenticate
+from mailgun.route_handlers import handle_mailing_list_email_route
 
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
