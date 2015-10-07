@@ -261,9 +261,6 @@ class MailgunClient(object):
                 auth=(self.api_user, self.api_key),
                 data=payload,
                 files=files,
-                headers={
-                    "Content-Type": "charset=UTF-8"
-                }
             )
             timer.status_code = response.status_code
 
