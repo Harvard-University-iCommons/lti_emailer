@@ -1,13 +1,17 @@
 import logging
 
 import re
-from flanker import addresslib
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
+from flanker import addresslib
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
+from icommons_common.models import CourseInstance
+
+from mailing_list.utils import is_course_crosslisted, get_section_sis_enrollment_status
 
 logger = logging.getLogger(__name__)
 
@@ -79,19 +83,14 @@ class MailingListManager(models.Manager):
         :param kwargs:
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
+        sis_course_id = canvas_api_client.get_course(canvas_course_id)['sis_course_id']
         canvas_sections = canvas_api_client.get_sections(canvas_course_id)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
-
-        # get a list of the primary sections
-        primary_sections = [s['id'] for s in canvas_sections if s['sis_section_id'] is not None]
 
         overrides = kwargs.get('defaults', {})
         result = []
 
-        # if there is more than one primary section
-        # create a primary mailing list.
-        course_list = None
-        if len(primary_sections) > 1:
+        if is_course_crosslisted(sis_course_id):
             try:
                 course_list = mailing_lists_by_section_id.pop(None)
             except KeyError:
@@ -106,20 +105,22 @@ class MailingListManager(models.Manager):
                 course_list = MailingList(**create_kwargs)
                 course_list.save()
 
-        # if there is a course_list, append it to the result list so
-        # it can be used by the template.
-        if course_list:
-            result.append({
-                'id': course_list.id,
-                'canvas_course_id': course_list.canvas_course_id,
-                'section_id': course_list.section_id,
-                'name': canvas_api_client.get_course(canvas_course_id)['course_code'],
-                'address': course_list.address,
-                'access_level': course_list.access_level,
-                'members_count': len(course_list.members),
-                'is_primary_section': True,
-                'is_course_list': True,
-            })
+            # if there is a course_list, add it to the result list so
+            # it can be used by the template.
+            if course_list:
+                result.append({
+                    'id': course_list.id,
+                    'canvas_course_id': course_list.canvas_course_id,
+                    'sis_section_id': None,
+                    'section_id': course_list.section_id,
+                    'name': 'Course Mailing List',
+                    'address': course_list.address,
+                    'access_level': course_list.access_level,
+                    'members_count': len(course_list.members),
+                    'is_course_list': True,
+                    'cs_class_type' : None,
+                    'is_primary': False,
+                })
 
         for s in canvas_sections:
             section_id = s['id']
@@ -137,15 +138,28 @@ class MailingListManager(models.Manager):
                 mailing_list = MailingList(**create_kwargs)
                 mailing_list.save()
 
+            # cs_class_type is used to determine if the section
+            # is an enrollment section or a non-enrollment section.
+            # if it's null for a section with a real sis section id, we
+            # should consider it an enrollment section.
+            cs_class_type = None
+            if s['sis_section_id'] and s['sis_section_id'].isdigit():
+                logger.debug('Looking up section id %s' % s['sis_section_id'])
+                cs_class_type = get_section_sis_enrollment_status(s['sis_section_id'])
+
+
             result.append({
                 'id': mailing_list.id,
                 'canvas_course_id': mailing_list.canvas_course_id,
+                'sis_section_id': s['sis_section_id'] or None,
                 'section_id': mailing_list.section_id,
                 'name': s['name'],
                 'address': mailing_list.address,
                 'access_level': mailing_list.access_level,
                 'members_count': len(mailing_list.members),
-                'is_primary_section': s['sis_section_id'] is not None
+                'is_course_list': False,
+                'cs_class_type' : cs_class_type,
+                'is_primary': s['sis_section_id'] == sis_course_id,
             })
 
         # Delete existing mailing lists who's section no longer exists
@@ -228,17 +242,21 @@ class MailingList(models.Model):
 
     def send_mail(self, sender_display_name, sender_address, to_address,
                   subject='', text='', html='', original_to_address=None,
-                  original_cc_address=None, attachments=None, inlines=None):
-        logger.debug(u"in send_mail: sender_address=%s, to_address=%s, "
-                     u"mailing_list.address=%s ",
+                  original_cc_address=None, attachments=None, inlines=None,
+                  message_id=None):
+        logger.debug(u'in send_mail: sender_address=%s, to_address=%s, '
+                     u'mailing_list.address=%s ',
                      sender_address, to_address, self.address)
         mailing_list_address = addresslib.address.parse(self.address)
         mailing_list_address.display_name = sender_display_name
         listserv_client.send_mail(
             mailing_list_address.full_spec(), sender_address, to_address,
             subject, text, html, original_to_address, original_cc_address,
-            attachments, inlines
+            attachments, inlines, message_id
         )
+        cache_key = settings.CACHE_KEY_MESSAGE_ID_SEEN % message_id
+        cache.set(cache_key, True,
+                  timeout=settings.CACHE_KEY_MESSAGE_ID_SEEN_TIMEOUT)
 
 
 class EmailWhitelist(models.Model):

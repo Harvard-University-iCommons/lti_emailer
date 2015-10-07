@@ -28,7 +28,8 @@ class MailgunClient(object):
 
     def send_mail(self, list_address, from_address, to_address, subject='',
                   text='', html='', original_to_address=None,
-                  original_cc_address=None, attachments=None, inlines=None):
+                  original_cc_address=None, attachments=None, inlines=None,
+                  message_id=None):
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
                                      settings.LISTSERV_DOMAIN)
         payload = {
@@ -40,6 +41,10 @@ class MailgunClient(object):
             'text': text,
             'to': to_address,
         }
+
+        # include the message-id header if we got it
+        if message_id:
+            payload['Message-Id'] = message_id
 
         # we want the to/cc fields as received by list users to be as close
         # as possible to the same as those that were sent by the sender.

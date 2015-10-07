@@ -304,3 +304,6 @@ MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 IGNORE_WHITELIST = SECURE_SETTINGS.get('ignore_whitelist', False)
 
 CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
+
+CACHE_KEY_MESSAGE_ID_SEEN = 'lti_emailer:message-id-seen:%s'
+CACHE_KEY_MESSAGE_ID_SEEN_TIMEOUT = 60 * 60 * 8 # 8 hours
