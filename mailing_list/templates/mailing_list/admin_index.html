@@ -24,7 +24,20 @@ $(document).ready(function(){
 <div class="container">
   <header>
     <div class="row lti-header">
-      <p class="bg-info">What's new!!!</p>
+      <!-- info block to be removed -->
+      <p class="bg-info">
+        We have a new look!<br />
+        The Course Emailer can now better accommodate cross listed courses. ​​Learn more about 
+        our recent improvements. <a target="_blank"
+                   href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer#CourseEmailer-What%27snew"
+                   class="lti-tooltip"
+                   rel="tooltip"
+                   data-toggle="tooltip"
+                   title=""
+                   data-original-title="More info about the Course Emailer">
+                    <i class="fa fa-question-circle"></i>
+                </a>
+      </p>
       <h1>
         {% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}
       </h1>
