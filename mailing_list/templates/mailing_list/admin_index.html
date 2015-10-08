@@ -38,13 +38,10 @@ $(document).ready(function(){
       </h1>
     </div>
   </header>
-
   <div class="loading-indicator" ng-show="ml.isLoading">
     <img src="{% static 'images/ajax-loader-large.gif' %}"/>
   </div>
-
   <main>
-
     <div class="col-md-12">
           <h2>Mailing Lists for {{course_name}}</h2>
             <p class="caption">
@@ -62,8 +59,8 @@ $(document).ready(function(){
                     <i class="fa fa-question-circle"></i>
                 </a>
             </p>
-        </div>
-
+    </div>
+    <!-- main list of meta list-->
     <div class="col-md-12">
 
       <!-- show combined mailing list or single primary list -->
@@ -85,8 +82,8 @@ $(document).ready(function(){
           <hr width="98%">
         </div>
       </div>
-
-      <div class="btn-group col-md-12">
+    </div>
+    <div class="btn-group col-md-12">
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
           <div class="panel panel-default" ng-show="ml.hasNonEnrollmentSections()">
             <div class="panel-heading" role="tab" id="headingOne">
@@ -103,7 +100,6 @@ $(document).ready(function(){
                 </a>
               </h4>
             </div>
-
             <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
               <div class="panel-body">
                 <div class="col-md-12">
@@ -121,7 +117,7 @@ $(document).ready(function(){
                 </div>
               </div>
             </div>
-          </div>
+            </div>
           <br />
           <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
             <div class="panel panel-default" ng-show="ml.hasMultipleEnrollmentSections()">
@@ -167,7 +163,6 @@ $(document).ready(function(){
             </div>
           </div>
         </div>
-      </div>
     </div>
   </main>
 </div>
