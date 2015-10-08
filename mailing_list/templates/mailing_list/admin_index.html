@@ -24,6 +24,20 @@ $(document).ready(function(){
 <div class="container">
   <header>
     <div class="row lti-header">
+      <!-- info block to be removed -->
+      <p class="bg-info">
+        We have a new look!<br />
+        The Course Emailer can now better accommodate cross listed courses. ​​Learn more about 
+        our recent improvements. <a target="_blank"
+                   href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer#CourseEmailer-What%27snew"
+                   class="lti-tooltip"
+                   rel="tooltip"
+                   data-toggle="tooltip"
+                   title=""
+                   data-original-title="More info about the Course Emailer">
+                    <i class="fa fa-question-circle"></i>
+                </a>
+      </p>
       <h1>
         {% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}
       </h1>
@@ -99,8 +113,8 @@ $(document).ready(function(){
               <div class="panel-body">
                 <div class="col-md-12">
                   <p class="caption">
-                    Sections are created in the Manage Sections tool (if installed in your account) or are sent from
-                    your student information system (e.g. my.harvard). Any changes you make to those sections will be
+                    These sections are created in the Manage Sections tool - <span class="label label-primary">&nbsp;&nbsp;</span> (if installed in your account) or are sent from
+                    your student information system (e.g. my.harvard - <span class="label label-success">&nbsp;&nbsp;</span>). Any changes you make to those sections will be
                     reflected within these lists.
                   </p>
                   <p class="caption">
@@ -124,7 +138,7 @@ $(document).ready(function(){
                    data-parent="#accordion"
                    href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                     <ng-pluralize count="ml.enrollmentSectionLists.length"
-                        when="{'0': 'No Sections', '1': 'Email Register Enrollment', 'other': 'Email Register Enrollments'}">
+                        when="{'0': 'No Sections', '1': 'Email Registrar Enrollment', 'other': 'Email Registrar Enrollments'}">
                   </ng-pluralize>
                   </a>
                 </h4>
