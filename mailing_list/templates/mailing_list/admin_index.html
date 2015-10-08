@@ -25,7 +25,8 @@ $(document).ready(function(){
   <header>
     <div class="row lti-header">
       <!-- info block to be removed -->
-      <p class="bg-info">
+      <div class="alert alert-info" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         We have a new look!<br />
         The Course Emailer can now better accommodate cross listed courses. ​​Learn more about 
         our recent improvements. <a target="_blank"
@@ -37,7 +38,7 @@ $(document).ready(function(){
                    data-original-title="More info about the Course Emailer">
                     <i class="fa fa-question-circle"></i>
                 </a>
-      </p>
+      </div>
       <h1>
         {% block breadcrumbs %}Course Emailer{% endblock breadcrumbs %}
       </h1>
