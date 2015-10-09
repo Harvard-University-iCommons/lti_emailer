@@ -7,6 +7,7 @@ from django.conf import settings
 from icommons_common.utils import ApiRequestTimer
 
 from lti_emailer.exceptions import ListservApiError
+from mailgun.utils import replace_non_ascii
 
 
 logger = logging.getLogger(__name__)
@@ -66,15 +67,14 @@ class MailgunClient(object):
             recipient_variables = {e: {} for e in to_address}
             payload['recipient-variables'] = json.dumps(recipient_variables)
 
+        # We need to replace non-ascii characters in attachment filenames
+        # because Mailgun does not support RFC 2231
+        # See http://stackoverflow.com/questions/24397418/python-requests-issues-with-non-ascii-file-names
         files = []
         if attachments:
-            files.extend(
-                [('attachment', (f.name, f, f.content_type)) for f in attachments]
-            )
+            files.extend([('attachment', (replace_non_ascii(f.name), f, f.content_type)) for f in attachments])
         if inlines:
-            files.extend(
-                [('inline', (f.name, f, f.content_type)) for f in inlines]
-            )
+            files.extend([('inline', (replace_non_ascii(f.name), f, f.content_type)) for f in inlines])
 
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),
@@ -86,4 +86,4 @@ class MailgunClient(object):
                 u'Failed to POST email from %s to %s.  Status code was %s, body '
                 u'was %s', from_address, to_address, response.status_code,
                 response.text)
-            raise ListservApiError(message)
+            raise ListservApiError(response.text)
