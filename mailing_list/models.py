@@ -118,7 +118,7 @@ class MailingListManager(models.Manager):
                     'access_level': course_list.access_level,
                     'members_count': len(course_list.members),
                     'is_course_list': True,
-                    'cs_class_type' : None,
+                    'cs_class_type': None,
                     'is_primary': False,
                 })
 
@@ -147,7 +147,6 @@ class MailingListManager(models.Manager):
                 logger.debug('Looking up section id %s' % s['sis_section_id'])
                 cs_class_type = get_section_sis_enrollment_status(s['sis_section_id'])
 
-
             result.append({
                 'id': mailing_list.id,
                 'canvas_course_id': mailing_list.canvas_course_id,
@@ -158,7 +157,7 @@ class MailingListManager(models.Manager):
                 'access_level': mailing_list.access_level,
                 'members_count': len(mailing_list.members),
                 'is_course_list': False,
-                'cs_class_type' : cs_class_type,
+                'cs_class_type': cs_class_type,
                 'is_primary': s['sis_section_id'] == sis_course_id,
             })
 
@@ -254,9 +253,9 @@ class MailingList(models.Model):
             subject, text, html, original_to_address, original_cc_address,
             attachments, inlines, message_id
         )
-        cache_key = settings.CACHE_KEY_MESSAGE_ID_SEEN % message_id
+        cache_key = settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT % (message_id, to_address)
         cache.set(cache_key, True,
-                  timeout=settings.CACHE_KEY_MESSAGE_ID_SEEN_TIMEOUT)
+                  timeout=settings.CACHE_KEY_MESSAGE_HANDLED_TIMEOUT)
 
 
 class EmailWhitelist(models.Model):
