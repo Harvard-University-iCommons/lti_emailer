@@ -4,7 +4,7 @@ import HTMLTestRunner
 from os import path, makedirs
 
 from selenium_tests.lti_emailer.permission_test import test_permission
-from selenium_tests.lti_emailer.emailer_test import test_is_loaded
+from selenium_tests.lti_emailer.Emailer_Test_Flow import test_is_loaded
 
 
 date_timestamp = time.strftime('%Y%m%d_%H_%M_%S')

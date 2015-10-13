@@ -2,10 +2,10 @@ __author__ = 'hic048'
 import unittest
 from ddt import ddt, data, unpack
 
-from selenium_tests.lti_emailer.emailer_base_test_case import EmailerBaseTestCase
+from selenium_tests.lti_emailer.Emailer_Base_Test_Case import EmailerBaseTestCase
 from selenium.webdriver.support.ui import Select
 from selenium_tests.lti_emailer.page_objects.add_user_po import UserAdd, Locator3
-from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ROLES
+from selenium_tests.lti_emailer.Emailer_Base_Test_Case import CANVAS_ROLES
 from selenium_tests.base_test_case import get_xl_data
 
 # BASE_URL = /courses/6389/external_tools/1759

@@ -5,9 +5,9 @@ from ddt import ddt, data, unpack
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_tests.base_test_case import get_xl_data
-from selenium_tests.lti_emailer.emailer_base_test_case import EmailerBaseTestCase
+from selenium_tests.lti_emailer.Emailer_Base_Test_Case import EmailerBaseTestCase
 from selenium_tests.lti_emailer.page_objects.emailer_permission_po import PermissionPage, Locator2
-from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ADD_USERS
+from selenium_tests.lti_emailer.Emailer_Base_Test_Case import CANVAS_ADD_USERS
 
 
 class RoleTest (object):
@@ -27,7 +27,7 @@ class test_permission(EmailerBaseTestCase):
 
     def test_roles_access(self, user_id, given_access):
         driver = self.driver
-        permission = PermissionPage(driver) #instantiate
+        permission = PermissionPage(driver)  # instantiate
         # Loop over the list of roles that should be denied access to the Emailer Tool
         for n in self, int(user_id):
             if given_access == 'no':

@@ -1,6 +1,6 @@
 import unittest
 
-from selenium_tests.lti_emailer.emailer_base_test_case import EmailerBaseTestCase
+from selenium_tests.lti_emailer.Emailer_Base_Test_Case import EmailerBaseTestCase
 from selenium_tests.lti_emailer.page_objects.emailer_mainpage import MainPage
 
 
