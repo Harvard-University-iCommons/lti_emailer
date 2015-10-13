@@ -29,7 +29,7 @@ class RouteHandlerUnitTests(TestCase):
                                              email='unittest@example.edu',
                                              password='unittest')
 
-    @override_settings(CACHE_KEY_MESSAGE_ID_SEEN='%s')
+    @override_settings(CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT='%s:%s')
     @patch('mailgun.route_handlers.cache.get')
     @patch('mailgun.route_handlers.CourseInstance.objects.get')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
@@ -41,6 +41,8 @@ class RouteHandlerUnitTests(TestCase):
         # only the message-id is needed
         post_body = {
             'Message-Id': uuid.uuid4().hex,
+            'sender': 'tlttest52@gmail.com',
+            'recipient': 'tlttest53@gmail.com'
         }
         post_body.update(generate_signature_dict())
 
@@ -57,7 +59,7 @@ class RouteHandlerUnitTests(TestCase):
 
         # verify cache.get we're expecting, and other mocks unused
         self.assertEqual(mock_cache_get.call_args,
-                         call(post_body['Message-Id']))
+                         call("%s:%s" % (post_body['Message-Id'], post_body['recipient'])))
         self.assertEqual(mock_ml_get.call_count, 0)
         self.assertEqual(mock_ci_get.call_count, 0)
 
@@ -87,14 +89,14 @@ class RouteHandlerRegressionTests(TestCase):
         attachment_fp.content_type = 'text/plain'
 
         # prep a MailingList mock
-        members = [{'address': a} for a in
-                       ['unittest@example.edu', 'student@example.edu']]
+        members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
         ml = MagicMock(
-                canvas_course_id=123,
-                section_id=456,
-                teaching_staff_addresses={'teacher@example.edu'},
-                members=members,
-                address='class-list@example.edu')
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher@example.edu'},
+            members=members,
+            address='class-list@example.edu'
+        )
         mock_ml_get.return_value = ml
 
         # prep a CourseInstance mock
