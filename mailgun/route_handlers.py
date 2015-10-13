@@ -47,8 +47,8 @@ def handle_mailing_list_email_route(request):
     body_plain = request.POST.get('body-plain', '')
     body_html = request.POST.get('body-html', '')
     message_id = request.POST.get('Message-Id')
-    to_list = request.POST.get('To')
-    cc_list = request.POST.get('Cc')
+    to_list = [a.full_spec() for a in address.parse_list(request.POST.get('To'))]
+    cc_list = [a.full_spec() for a in address.parse_list(request.POST.get('Cc'))]
 
     attachments, inlines = _get_attachments_inlines(request)
 
