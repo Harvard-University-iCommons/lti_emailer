@@ -1,20 +1,7 @@
-"""
-To run these tests from the command line in a local VM, you'll need to set up the environment:
-> export PYTHONPATH=/home/vagrant/icommons_lti_tools
-> export DJANGO_SETTINGS_MODULE=icommons_lti_tools.settings.local
-> sudo apt-get install xvfb
-> python selenium_tests/regression_tests.py
-
-Or for just one set of tests, for example:
-> python selenium_tests/manage_people/mp_test_search.py
-
-In PyCharm, if xvfb is installed already, you can run them through the Python unit test run config
-(make sure the above environment settings are included)
-"""
-
 import unittest
 import time
 import HTMLTestRunner
+from os import path, makedirs
 
 from selenium_tests.lti_emailer.permission_test import test_permission
 from selenium_tests.lti_emailer.emailer_test import test_is_loaded
@@ -22,12 +9,16 @@ from selenium_tests.lti_emailer.emailer_test import test_is_loaded
 
 date_timestamp = time.strftime('%Y%m%d_%H_%M_%S')
 
-
-buf = file("TestReport" + "_" + date_timestamp + ".html", 'wb')
+# This relative path should point to BASE_DIR/selenium_tests/reports
+report_file_path = path.relpath('../reports')
+if not path.exists(report_file_path):
+    makedirs(report_file_path)
+report_file_name = "lti_emailer_test_report_{}.html".format(date_timestamp)
+report_file_buffer = file(path.join(report_file_path, report_file_name), 'wb')
 runner = HTMLTestRunner.HTMLTestRunner(
-    stream=buf,
-    title='Test the Report',
-    description='Result of tests'
+    stream=report_file_buffer,
+    title='LTI emailer test suite report',
+    description='Result of tests in {}'.format(__file__)
 )
 
 is_tool_loaded = unittest.TestLoader().loadTestsFromTestCase(test_is_loaded)
@@ -40,5 +31,5 @@ smoke_tests = unittest.TestSuite([is_tool_loaded, permission_testing])
 # run the suite
 runner.run(smoke_tests)
 # close test report file
-buf.close()
+report_file_buffer.close()
 
