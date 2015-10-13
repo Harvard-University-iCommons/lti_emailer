@@ -17,12 +17,8 @@ class BaseSeleniumTestCase(unittest.TestCase):
         """
         Sets up the test case, including the selenium browser driver to use
         """
-        # todo: tlt-1263 local/remote should be configurable from outside the code
 
-        local = False
-
-        # todo: tlt-1263 remote URL should be configurable from outside the code
-        selenium_grid_url = settings.SELENIUM_CONFIG.get('selenium_grid_url', None)
+        local = settings.SELENIUM_CONFIG.get('run_locally', False)
 
         if local:
             # Run selenium tests from a headless browser within the VM
@@ -34,13 +30,19 @@ class BaseSeleniumTestCase(unittest.TestCase):
             cls.driver = webdriver.Firefox()
         else:
             # Run selenium tests from the Selenium Grid server
-            # print "\nSetting up selenium testing on selenium grid at %s..." % selenium_grid_url
-            # todo: tlt-1263 the server address and desired_capabilities should be configurable
-            cls.driver = webdriver.Remote(
-                command_executor=selenium_grid_url,
-                desired_capabilities=DesiredCapabilities.FIREFOX
-            )
-
+            selenium_grid_url = settings.SELENIUM_CONFIG.get('selenium_grid_url', None)
+            if selenium_grid_url:
+                cls.driver = webdriver.Remote(
+                    command_executor=selenium_grid_url,
+                    desired_capabilities=DesiredCapabilities.FIREFOX
+                )
+            else:
+                raise ValueError(
+                    "Selenium grid url needs to be specified in the project "
+                    "settings to use remote webdriver, or you can run the "
+                    "selenium tests locally by setting the run_locally "
+                    "project setting instead."
+                )
 
         # shared defaults
         cls.driver.implicitly_wait(10)

@@ -22,4 +22,5 @@ SELENIUM_CONFIG = {
     'selenium_password': SECURE_SETTINGS.get('selenium_password'),
     'selenium_grid_url': SECURE_SETTINGS.get('selenium_grid_url'),
     'base_url': 'https://canvas.icommons.harvard.edu',
+    'run_locally': True
 }
