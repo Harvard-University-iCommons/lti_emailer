@@ -126,6 +126,64 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
 
+    @patch('mailgun.route_handlers.CourseInstance.objects.get')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_multi_mailing_list_recipients(self, mock_ml_get, mock_ci_get):
+        '''
+        TLT-2066
+        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+        request param
+        '''
+        # prep a MailingList mock
+        members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher@example.edu'},
+            members=members,
+            address='class-list@example.edu'
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners')
+        mock_ci_get.return_value = ci
+
+        # prep the post body
+        recipients = ', '.join([ml.address, 'bogus@example.edu'])
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'recipient': recipients,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': recipients
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+        send_mail_call = call(
+            'Unit Test via Canvas',
+            'unittest@example.edu',
+            ['teacher@example.edu', 'student@example.edu', 'unittest@example.edu'],
+            '[Lorem For Beginners] blah',
+            attachments=[],
+            html='',
+            inlines=[],
+            message_id=None,
+            original_cc_address=[],
+            original_to_address=['class-list@example.edu', 'bogus@example.edu'],
+            text='blah blah'
+        )
+        ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
+
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
 class DecoratorTests(TestCase):

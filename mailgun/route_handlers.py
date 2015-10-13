@@ -61,10 +61,11 @@ def handle_mailing_list_email_route(request):
     # out just the address.
     parsed_sender = address.parse(sender)
     sender_address = parsed_sender.address.lower()
-    sender_display_name = parsed_sender.display_name
 
     for recipient_address in recipients:
         recipient = recipient_address.address
+        sender_display_name = parsed_sender.display_name
+
         # shortcut if we've already handled this message
         if message_id:
             cache_key = settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT % (message_id, recipient)
