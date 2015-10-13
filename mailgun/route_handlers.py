@@ -99,7 +99,7 @@ def handle_mailing_list_email_route(request):
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
             u'because the sender was not a member', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
+        bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
     elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
