@@ -3,7 +3,7 @@ import time
 import HTMLTestRunner
 from os import path, makedirs
 
-from selenium_tests.lti_emailer.permission_test import test_permission
+from selenium_tests.lti_emailer.Emailer_Permission_Test import EmailerPermissionTest
 from selenium_tests.lti_emailer.Emailer_Test_Flow import test_is_loaded
 
 
@@ -22,7 +22,7 @@ runner = HTMLTestRunner.HTMLTestRunner(
 )
 
 is_tool_loaded = unittest.TestLoader().loadTestsFromTestCase(test_is_loaded)
-permission_testing = unittest.TestLoader().loadTestsFromTestCase(test_permission)
+permission_testing = unittest.TestLoader().loadTestsFromTestCase(EmailerPermissionTest)
 
 
 # create a test suite combining the tests above

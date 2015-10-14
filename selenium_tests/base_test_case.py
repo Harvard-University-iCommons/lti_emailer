@@ -7,7 +7,6 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
-# Enabling stdout logging only for high `-v`
 class BaseSeleniumTestCase(unittest.TestCase):
     driver = None  # make selenium driver available to any part of the test case
     display = None  # a reference to the virtual display (for running tests locally)
@@ -26,7 +25,6 @@ class BaseSeleniumTestCase(unittest.TestCase):
             # set up virtual display
             cls.display = Display(visible=0, size=(1480, 1024)).start()
             # create a new local browser session
-            # todo: browser should be configurable (i.e. not always FF)
             cls.driver = webdriver.Firefox()
         else:
             # Run selenium tests from the Selenium Grid server
@@ -67,7 +65,3 @@ def get_xl_data(file_name, sheet_index=0, header_row=True):
     for row_idx in range(start_row_index, sheet.nrows):
         rows.append(list(sheet.row_values(row_idx, 0, sheet.ncols)))
     return rows
-
-
-
-
