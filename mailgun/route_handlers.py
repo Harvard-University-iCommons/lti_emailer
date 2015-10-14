@@ -147,31 +147,8 @@ def handle_mailing_list_email_route(request):
                     if title_prefix not in subject:
                         subject = title_prefix + ' ' + subject
 
-            # anyone in the to/cc field will already have gotten a copy of this
-            # email directly from the sender.  let's not send them a duplicate.
-            # let's also not send a copy to the sender.
-            logger.debug(u'Full list of recipients: %s', member_addresses)
-            try:
-                logger.debug(u'Removing sender %s from the list of recipients',
-                             sender_address)
-                member_addresses.remove(sender_address)
-            except KeyError:
-                logger.info(
-                    u'Email sent to mailing list %s from non-member address %s',
-                    ml.address, sender)
-            to_cc_list = {a.address for a in (to_list + cc_list)}
-            logger.debug(
-                u'Removing anyone in the to/cc list %s from the list of recipients',
-                list(to_cc_list))
-            member_addresses.difference_update(to_cc_list)
             member_addresses = list(member_addresses)
-            logger.info(u'Final list of recipients: %s', member_addresses)
-
-            # double check to make sure the list is in the to/cc field somewhere,
-            # add it to cc if not.  do this to ensure that, even if someone decided
-            # to bcc the list, it will be possible to reply-all to the list.
-            if ml.address not in to_cc_list:
-                cc_list.append(address.parse(ml.address))
+            logger.debug(u'Full list of recipients: %s', member_addresses)
 
             # we want to add 'via Canvas' to the sender's name.  so first make
             # sure we know their name.
