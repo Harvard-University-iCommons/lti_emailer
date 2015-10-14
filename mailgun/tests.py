@@ -172,7 +172,7 @@ class RouteHandlerRegressionTests(TestCase):
         send_mail_call = call(
             'Unit Test via Canvas',
             'unittest@example.edu',
-            ['teacher@example.edu', 'student@example.edu'],
+            ['teacher@example.edu', 'student@example.edu', 'unittest@example.edu'],
             '[Lorem For Beginners] blah',
             attachments=[],
             html='',
