@@ -1,5 +1,5 @@
 from selenium_tests.base_test_case import BaseSeleniumTestCase
-from selenium_tests.lti_emailer.page_objects.pin_page import LoginPage
+from selenium_tests.lti_emailer.page_objects.pin_login import PinLogin
 
 from os.path import abspath, dirname, join
 from django.conf import settings
@@ -24,6 +24,6 @@ class EmailerBaseTestCase(BaseSeleniumTestCase):
         cls.BASE_URL = '%s/courses/6389/external_tools/1759' % settings.SELENIUM_CONFIG.get('base_url')
 
         # instantiate, then login to URL with username and password from settings, if running locally.
-        base_login = LoginPage(driver)
+        base_login = PinLogin(driver)
         base_login.get(cls.BASE_URL)
         base_login.login(cls.USERNAME, cls.PASSWORD)

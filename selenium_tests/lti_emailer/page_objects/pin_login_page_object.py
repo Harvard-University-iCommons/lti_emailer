@@ -1,11 +1,13 @@
+import abc
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium_tests.pin.page_objects.base_page_object import PinBasePageObject
-import abc
+
+from selenium_tests.lti_emailer.page_objects.pin_base_page_object import PinBasePageObject
+
 
 class PinPageLocators(object):
-    # List of WebElements found on Pin Page (Locators)
+    # List of WebElements found on PIN Login Page
     USERNAME = (By.ID, "username")
     PASSWORD = (By.ID, "password")
     SUBMIT_BUTTON = (By.ID,"submitLogin")
@@ -15,6 +17,7 @@ class PinPageLocators(object):
 class PinLoginPageObject(PinBasePageObject):
     """
     Page Object of the Pin Login Page
+
     """
     __metaclass__ = abc.ABCMeta
 
@@ -25,7 +28,6 @@ class PinLoginPageObject(PinBasePageObject):
         except NoSuchElementException:
             return False
         return True
-
 
     def set_login_type_xid(self):
         """ set the login type to XID """
@@ -49,18 +51,14 @@ class PinLoginPageObject(PinBasePageObject):
         submit_button = self.find_element(*PinPageLocators.SUBMIT_BUTTON)
         submit_button.click()
 
-
-
     @abc.abstractmethod
     def login(self, username, password):
         """
         the abstract method can be overridden for individual projects to allow
         the login to return the appropriate page object for the test. If you do override
         you will need to call super to invoke the login
-         """
-        print 'base class logging in user: %s' % username
+        """
         self.set_login_type_xid()
         self.set_username(username)
         self.set_password(password)
         self.click_submit()
-
