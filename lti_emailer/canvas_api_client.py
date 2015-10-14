@@ -104,7 +104,7 @@ def get_teaching_staff_enrollments(canvas_course_id):
             role = enrollment['role']
             if role not in roles_allowed:
                 roles_allowed[enrollment['role']] = is_allowed(
-                    role,
+                    [role],
                     settings.PERMISSION_LTI_EMAILER_SEND_ALL,
                     canvas_course_id
                 )
