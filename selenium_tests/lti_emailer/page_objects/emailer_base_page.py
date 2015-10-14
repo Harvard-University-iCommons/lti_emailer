@@ -2,9 +2,9 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium_tests.base_page_object import BasePageObject
 
 # This is the base class that all page models can inherit from
-
 class EmailerBasePage(BasePageObject):
- 
+
+
     def __init__(self, driver):
         self._driver = driver
         try:
@@ -22,6 +22,3 @@ class EmailerBasePage(BasePageObject):
 class InvalidPageException(Exception):
     """ Throw this exception when you don't find the correct page """
     pass
-
-
-

@@ -5,7 +5,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_tests.base_test_case import get_xl_data
 from selenium_tests.lti_emailer.Emailer_Base_Test_Case import EmailerBaseTestCase
-from selenium_tests.lti_emailer.page_objects.emailer_permission_service import PermissionServiceLocators, EmailerPermissionService
+from selenium_tests.lti_emailer.page_objects.permission_service import PermissionServiceLocators, EmailerPermissionService
 from selenium_tests.lti_emailer.Emailer_Base_Test_Case import CANVAS_ADD_USERS
 
 
@@ -23,9 +23,9 @@ class EmailerPermissionTest(EmailerBaseTestCase):
             # Get masquerade URL for Canvas user and masquerade as user
             url = PermissionServiceLocators._masquerade_url_base + str(user_id) + "/masquerade"
             self.driver.get(url)
-            permission.masquerade_confirm()
+            permission.confirm_masquerade()
             # Go to email tool as masqueraded user and verify denied access
-            permission.get_emailer_URL()
+            permission.get_emailer_url()
             permission.switch_frame()
             print PermissionServiceLocators._validate_denied_msg + str(user_id)
             self.assertEqual("Unauthorized", permission.unauth_message(),
@@ -36,9 +36,9 @@ class EmailerPermissionTest(EmailerBaseTestCase):
             # Get masqueraded URL for Canvas user and masquerade as user
             url = PermissionServiceLocators._masquerade_url_base + str(user_id) + "/masquerade"
             self.driver.get(url)
-            permission.masquerade_confirm()
+            permission.confirm_masquerade()
             # Go to email tool as masqueraded user and verify access
-            permission.get_emailer_URL()
+            permission.get_emailer_url()
             print PermissionServiceLocators._validate_access_msg + str(user_id)
             permission.switch_frame()
             # Wait for element to be found; else test will fail
