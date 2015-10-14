@@ -1,54 +1,44 @@
 import unittest
 from ddt import ddt, data, unpack
 
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium_tests.base_test_case import get_xl_data
-from selenium_tests.lti_emailer.Emailer_Base_Test_Case import EmailerBaseTestCase
-from selenium_tests.lti_emailer.page_objects.permission_service import PermissionServiceLocators, PermissionService
-from selenium_tests.lti_emailer.Emailer_Base_Test_Case import CANVAS_ADD_USERS
+from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ADD_USERS
+from selenium_tests.canvas.page_objects.canvas_masquerade_page_object import \
+    CanvasMasqueradePageObject
+from selenium_tests.lti_emailer.emailer_base_test_case import \
+    EmailerBaseTestCase
 
 
 @ddt
 class EmailerPermissionTest(EmailerBaseTestCase):
-
     @data(*get_xl_data(CANVAS_ADD_USERS))
     @unpack
     def test_roles_access(self, user_id, given_access):
-        """This test masquerades as users in roles in /test_data file defined by variable CANVAS_ADD_USERS"""
+        # This test masquerades as users in roles specified defined in
+        # CANVAS_ADD_USERS (Excel spreadsheet) then validates if the users
+        # are granted/denied access based on their role.
 
-        permission = PermissionService(self.driver)  # instantiate
-        # Loop over the list of roles that should be denied access to the Emailer Tool
+        emailer_main_page = self.emailer_main_page
+        masquerade_page = CanvasMasqueradePageObject(self.driver, self.CANVAS_BASE_URL)
+        masquerade_page.masquerade_as(user_id)
+        emailer_main_page.get(self.TOOL_URL)
         if given_access == 'no':
-            # Get masquerade URL for Canvas user and masquerade as user
-            url = PermissionServiceLocators._masquerade_url_base + str(user_id) + "/masquerade"
-            self.driver.get(url)
-            permission.confirm_masquerade()
-            # Go to email tool as masqueraded user and verify denied access
-            permission.get_emailer_url()
-            permission.switch_frame()
-            print PermissionServiceLocators._validate_denied_msg + str(user_id)
-            self.assertEqual("Unauthorized", permission.check_for_denied_access(),
-                             "Error: Did not get unauth error for" + str(user_id))
+            self.assertFalse(
+                emailer_main_page.is_authorized(),
+                'User {} unexpectedly authorized'.format(user_id)
+            )
 
         elif given_access == 'yes':
-            permission = PermissionService(self.driver)  # instantiate
-            # Get masqueraded URL for Canvas user and masquerade as user
-            url = PermissionServiceLocators._masquerade_url_base + str(user_id) + "/masquerade"
-            self.driver.get(url)
-            permission.confirm_masquerade()
-            # Go to email tool as masqueraded user and verify access
-            permission.get_emailer_url()
-            print PermissionServiceLocators._validate_access_msg + str(user_id)
-            permission.switch_frame()
-            # Wait for element to be found; else test will fail
-            try:
-                WebDriverWait(self.driver, 10).until(lambda s: s.find_element(*PermissionServiceLocators._pageload)
-                                                     .is_displayed())
-            except TimeoutException:
-                return False
-            self.assertEqual(PermissionServiceLocators._mailing_list_name, permission.check_for_granted_access(),
-                             "Error: Cannot verify Emailer Tool for: " + str(user_id))
+            self.assertTrue(
+                emailer_main_page.is_authorized(),
+                'User {} not authorized as expected'.format(user_id)
+            )
+
+        else:
+            raise ValueError(
+                'given_access column for user {} must be either \'yes\' or '
+                '\'no\''.format(user_id)
+            )
 
 if __name__ == "__main__":
     unittest.main()
