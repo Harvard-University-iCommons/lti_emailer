@@ -51,7 +51,6 @@ class PinLoginPageObject(PinBasePageObject):
         submit_button = self.find_element(*PinPageLocators.SUBMIT_BUTTON)
         submit_button.click()
 
-    @abc.abstractmethod
     def login(self, username, password):
         """
         the abstract method can be overridden for individual projects to allow
@@ -62,3 +61,6 @@ class PinLoginPageObject(PinBasePageObject):
         self.set_username(username)
         self.set_password(password)
         self.click_submit()
+        print 'Pin Login page returning Index page for user: %s' % username
+
+
