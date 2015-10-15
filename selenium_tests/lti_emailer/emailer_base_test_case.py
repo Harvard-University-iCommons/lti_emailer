@@ -1,9 +1,9 @@
 from urlparse import urljoin
-from selenium_tests.base_test_case import BaseSeleniumTestCase
-from selenium_tests.lti_emailer.page_objects.pin_login import PinLogin
-from selenium_tests.lti_emailer.page_objects.emailer_mainpage import EmailerMainPage
-
 from os.path import abspath, dirname, join
+
+from selenium_tests.base_test_case import BaseSeleniumTestCase
+from selenium_tests.lti_emailer.page_objects.pin_login_page_object import PinLoginPageObject
+from selenium_tests.lti_emailer.page_objects.emailer_mainpage_page_object import EmailerMainPage
 from django.conf import settings
 
 
@@ -29,7 +29,7 @@ class EmailerBaseTestCase(BaseSeleniumTestCase):
 
         cls.emailer_main_page = EmailerMainPage(driver)
         cls.emailer_main_page.get(cls.TOOL_URL)
-        login_page = PinLogin(driver)
+        login_page = PinLoginPageObject(driver)
         if login_page.is_loaded():
             login_page.login(cls.USERNAME, cls.PASSWORD)
         else:

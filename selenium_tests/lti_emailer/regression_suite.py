@@ -3,8 +3,8 @@ import time
 import HTMLTestRunner
 from os import path, makedirs
 
-from selenium_tests.lti_emailer.Emailer_Permission_Test import EmailerPermissionTest
-from selenium_tests.lti_emailer.Emailer_Test_Flow import EmailerTestFlow
+from selenium_tests.lti_emailer.emailer_permission_tests import EmailerPermissionTests
+from selenium_tests.lti_emailer.emailer_is_loaded_tests import EmailerIsLoadedTests
 
 
 date_timestamp = time.strftime('%Y%m%d_%H_%M_%S')
@@ -21,8 +21,8 @@ runner = HTMLTestRunner.HTMLTestRunner(
     description='Result of tests in {}'.format(__file__)
 )
 
-is_tool_loaded = unittest.TestLoader().loadTestsFromTestCase(EmailerTestFlow)
-permission_testing = unittest.TestLoader().loadTestsFromTestCase(EmailerPermissionTest)
+is_tool_loaded = unittest.TestLoader().loadTestsFromTestCase(EmailerIsLoadedTests)
+permission_testing = unittest.TestLoader().loadTestsFromTestCase(EmailerPermissionTests)
 
 # create a test suite combining the tests above
 smoke_tests = unittest.TestSuite([is_tool_loaded, permission_testing])
