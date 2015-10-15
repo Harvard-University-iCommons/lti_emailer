@@ -15,3 +15,13 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 dictConfig(LOGGING)
+
+
+SELENIUM_CONFIG = {
+    'selenium_username': SECURE_SETTINGS.get('selenium_user'),
+    'selenium_password': SECURE_SETTINGS.get('selenium_password'),
+    'selenium_grid_url': SECURE_SETTINGS.get('selenium_grid_url'),
+    'canvas_base_url': CANVAS_URL,
+    'run_locally': True,
+    'emailer_tool_relative_url': 'courses/6389/external_tools/1759'
+}
