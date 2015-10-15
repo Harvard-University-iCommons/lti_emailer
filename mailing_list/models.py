@@ -118,7 +118,7 @@ class MailingListManager(models.Manager):
                     'access_level': course_list.access_level,
                     'members_count': len(course_list.members),
                     'is_course_list': True,
-                    'cs_class_type' : None,
+                    'cs_class_type': None,
                     'is_primary': False,
                 })
 
@@ -147,7 +147,6 @@ class MailingListManager(models.Manager):
                 logger.debug('Looking up section id %s' % s['sis_section_id'])
                 cs_class_type = get_section_sis_enrollment_status(s['sis_section_id'])
 
-
             result.append({
                 'id': mailing_list.id,
                 'canvas_course_id': mailing_list.canvas_course_id,
@@ -158,7 +157,7 @@ class MailingListManager(models.Manager):
                 'access_level': mailing_list.access_level,
                 'members_count': len(mailing_list.members),
                 'is_course_list': False,
-                'cs_class_type' : cs_class_type,
+                'cs_class_type': cs_class_type,
                 'is_primary': s['sis_section_id'] == sis_course_id,
             })
 
@@ -272,4 +271,22 @@ class EmailWhitelist(models.Model):
     def __unicode__(self):
         return u'email: {}'.format(
             self.email
+        )
+
+
+class SuperSender(models.Model):
+    """
+    This model stores email addresses that can send mail to any mailing list
+    in the specified school
+    """
+    email = models.EmailField()
+    school_id = models.CharField(max_length=16)
+
+    class Meta:
+        db_table = 'ml_super_sender'
+
+    def __unicode__(self):
+        return u'email: {}, school: {}'.format(
+            self.email,
+            self.school_id
         )

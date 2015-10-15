@@ -87,20 +87,21 @@ class RouteHandlerRegressionTests(TestCase):
         attachment_fp.content_type = 'text/plain'
 
         # prep a MailingList mock
-        members = [{'address': a} for a in
-                       ['unittest@example.edu', 'student@example.edu']]
+        members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
         ml = MagicMock(
-                canvas_course_id=123,
-                section_id=456,
-                teaching_staff_addresses={'teacher@example.edu'},
-                members=members,
-                address='class-list@example.edu')
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher@example.edu'},
+            members=members,
+            address='class-list@example.edu'
+        )
         mock_ml_get.return_value = ml
 
         # prep a CourseInstance mock
         ci = MagicMock(course_instance_id=789,
                        canvas_course_id=ml.canvas_course_id,
-                       short_title='Lorem For Beginners')
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
         mock_ci_get.return_value = ci
 
         # prep the post body
