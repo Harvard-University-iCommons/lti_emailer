@@ -1,9 +1,10 @@
 import unittest
+
 from ddt import ddt, data, unpack
 
 from selenium_tests.base_test_case import get_xl_data
 from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ADD_USERS
-from selenium_tests.lti_emailer.page_objects.canvas_masquerade_page_object import \
+from selenium_tests.masquerade.canvas_masquerade_page_object import \
     CanvasMasqueradePageObject
 from selenium_tests.lti_emailer.emailer_base_test_case import \
     EmailerBaseTestCase
@@ -21,7 +22,6 @@ class EmailerPermissionTests(EmailerBaseTestCase):
         emailer_main_page = self.emailer_main_page
         masquerade_page = CanvasMasqueradePageObject(self.driver, self.CANVAS_BASE_URL)
         masquerade_page.masquerade_as(user_id)
-        masquerade_page.confirm_masquerade()
         emailer_main_page.get(self.TOOL_URL)
         if given_access == 'no':
             self.assertFalse(

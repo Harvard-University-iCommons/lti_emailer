@@ -16,7 +16,8 @@ class CanvasMasqueradePageObject(EmailerBasePageObject):
         else:
             raise RuntimeError(
                 'CanvasMasqueradePageObject must be initialized with the '
-                'Selenium webdriver and the Canvas base URL; missing Canvas '
+                'Selenium '
+                'webdriver and the Canvas base URL; missing Canvas '
                 'base URL'
             )
         super(CanvasMasqueradePageObject, self).__init__(driver)
@@ -25,9 +26,6 @@ class CanvasMasqueradePageObject(EmailerBasePageObject):
         relative_url = CanvasMasqueradePageLocators.MASQUERADE_URL.format(canvas_user_id)
         full_url = urljoin(self.canvas_base_url, relative_url)
         self._driver.get(full_url)
-        return self
-
-    def confirm_masquerade(self):
         confirm_button = self.find_element(
             *CanvasMasqueradePageLocators.CONFIRM_BUTTON
         )

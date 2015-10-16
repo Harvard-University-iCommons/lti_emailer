@@ -3,14 +3,14 @@ import abc
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from selenium_tests.lti_emailer.page_objects.pin_base_page_object import PinBasePageObject
+from selenium_tests.lti_emailer.pin.pin_base_page_object import PinBasePageObject
 
 
 class PinPageLocators(object):
     # List of WebElements found on PIN Login Page
     USERNAME = (By.ID, "username")
     PASSWORD = (By.ID, "password")
-    SUBMIT_BUTTON = (By.ID,"submitLogin")
+    SUBMIT_BUTTON = (By.ID, "submitLogin")
     LoginType = (By.XPATH, "//div[@id='XID']")
 
 
@@ -61,6 +61,6 @@ class PinLoginPageObject(PinBasePageObject):
         self.set_username(username)
         self.set_password(password)
         self.click_submit()
-        print 'Pin Login page returning Index page for user: %s' % username
+        print 'Logging in as %s' % username
 
 

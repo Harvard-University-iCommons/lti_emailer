@@ -55,7 +55,3 @@ class EmailerMainPage(EmailerBasePageObject):
                 'Could not determine if Emailer main page loaded as expected;'
                 'title element was found but did not contain expected text'
             )
-
-    def get_title(self):
-        element = self.find_element(*EmailerMainPageLocators.PAGE_TITLE)
-        return element

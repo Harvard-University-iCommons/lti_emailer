@@ -15,9 +15,3 @@ class EmailerBasePageObject(BasePageObject):
     def open(self, url):
         self._driver.get(url)
         return self
-
-    def find_element(self, *loc):
-        return self._driver.find_element(*loc)
-
-    def find_elements(self, *loc):
-        return self._driver.find_elements(*loc)
