@@ -4,7 +4,7 @@ from ddt import ddt, data, unpack
 
 from selenium_tests.base_test_case import get_xl_data
 from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ADD_USERS
-from selenium_tests.lti_emailer.masquerade.canvas_masquerade_page_object import \
+from selenium_tests.masquerade.canvas_masquerade_page_object import \
     CanvasMasqueradePageObject
 from selenium_tests.lti_emailer.emailer_base_test_case import \
     EmailerBaseTestCase

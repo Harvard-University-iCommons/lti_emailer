@@ -2,7 +2,7 @@ from urlparse import urljoin
 from os.path import abspath, dirname, join
 
 from selenium_tests.base_test_case import BaseSeleniumTestCase
-from selenium_tests.lti_emailer.pin.pin_login_page_object import PinLoginPageObject
+from selenium_tests.pin.pin_login_page_object import PinLoginPageObject
 from selenium_tests.lti_emailer.page_objects.emailer_mainpage_page_object import EmailerMainPage
 from django.conf import settings
 
