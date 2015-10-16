@@ -120,24 +120,23 @@ def handle_mailing_list_email_route(request):
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    super_senders = {a for a in SuperSender.objects.filter(school_id=school_id)}
-    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the sender was not a member', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
-    elif (ml.access_level == MailingList.ACCESS_LEVEL_STAFF and
-            sender_address not in teaching_staff_addresses and
-            sender_address not in super_senders):
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the sender was not a staff member', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the list is readonly', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
+    super_senders = SuperSender.objects.filter(school_id=school_id).values_list('email')
+    if sender_address not in super_senders:
+        if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the sender was not a member', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
+        elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the sender was not a staff member', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
+        elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the list is readonly', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
 
     if bounce_back_email_template:
         content = bounce_back_email_template.render(Context({
