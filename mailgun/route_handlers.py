@@ -17,7 +17,7 @@ from icommons_common.models import CourseInstance
 from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
 from mailgun.listserv_client import MailgunClient as ListservClient
-from mailing_list.models import MailingList
+from mailing_list.models import MailingList, SuperSender
 
 
 logger = logging.getLogger(__name__)
@@ -92,24 +92,51 @@ def handle_mailing_list_email_route(request):
                                   message_id=message_id)
         return JsonResponse({'success': True})
 
+    # try to prepend [SHORT TITLE] to subject and get school for course, keep going if lookup fails
+    school_id = None
+    try:
+        ci = CourseInstance.objects.get(canvas_course_id=ml.canvas_course_id)
+    except CourseInstance.DoesNotExist:
+        logger.warning(
+            u'Unable to find the course instance for Canvas course id %s, '
+            u'so we cannot prepend a short title to the email subject.',
+            ml.canvas_course_id)
+    except CourseInstance.MultipleObjectsReturned:
+        logger.warning(
+            u'Found multiple course instances for Canvas course id %s, '
+            u'so we cannot prepend a short title to the email subject.',
+            ml.canvas_course_id)
+    except RuntimeError:
+        logger.exception(
+            u'Received unexpected error trying to look up course instance '
+            u'for Canvas course id %s', ml.canvas_course_id)
+    else:
+        school_id = ci.course.school_id
+        if ci.short_title:
+            title_prefix = '[{}]'.format(ci.short_title)
+            if title_prefix not in subject:
+                subject = title_prefix + ' ' + subject
+
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
     member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the sender was not a member', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the sender was not a staff member', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-    elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the list is readonly', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
+    super_senders = SuperSender.objects.filter(school_id=school_id).values_list('email')
+    if sender_address not in super_senders:
+        if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the sender was not a member', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
+        elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the sender was not a staff member', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
+        elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the list is readonly', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
 
     if bounce_back_email_template:
         content = bounce_back_email_template.render(Context({
@@ -121,29 +148,6 @@ def handle_mailing_list_email_route(request):
         subject = 'Undeliverable mail'
         ml.send_mail('', ml.address, sender_address, subject=subject,
                      html=content, message_id=message_id)
-    else:
-        # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
-        try:
-            ci = CourseInstance.objects.get(canvas_course_id=ml.canvas_course_id)
-        except CourseInstance.DoesNotExist:
-            logger.warning(
-                u'Unable to find the course instance for Canvas course id %s, '
-                u'so we cannot prepend a short title to the email subject.',
-                ml.canvas_course_id)
-        except CourseInstance.MultipleObjectsReturned:
-            logger.warning(
-                u'Found multiple course instances for Canvas course id %s, '
-                u'so we cannot prepend a short title to the email subject.',
-                ml.canvas_course_id)
-        except RuntimeError:
-            logger.exception(
-                u'Received unexpected error trying to look up course instance '
-                u'for Canvas course id %s', ml.canvas_course_id)
-        else:
-            if ci.short_title:
-                title_prefix = '[{}]'.format(ci.short_title)
-                if title_prefix not in subject:
-                    subject = title_prefix + ' ' + subject
 
         member_addresses = list(member_addresses)
         logger.debug(u'Full list of recipients: %s', member_addresses)
@@ -219,8 +223,7 @@ def _get_attachments_inlines(request):
         logger.exception(u'Unable to find content-id map in this email, '
                          u'forwarding all files as attachments.')
         content_id_map = {}
-    attachment_name_to_cid = {v: k.strip('<>')
-                                  for k, v in content_id_map.iteritems()}
+    attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.iteritems()}
     logger.debug(u'Attachment name to cid: %s', attachment_name_to_cid)
 
     for n in xrange(1, attachment_count + 1):
