@@ -9,6 +9,8 @@
 <!-- column 1 -->
 <div class="col-md-3">
   <p>
+      <span ng-show="ml.isNonEnrollmentSectionsList(list)" class="label label-success">&nbsp;&nbsp;</span>
+      <span ng-show="ml.isManageSectionsList(list)" class="label label-primary">&nbsp;&nbsp;</span>
     <strong>{{ list.name }}</strong><br />(<a class="link-text lti-tooltip"
         rel="tooltip"
         title=""
@@ -55,8 +57,8 @@
        data-toggle="modal"
        data-target="#permissions-modal-{{ list.section_id }}"
        ng-click="ml.updatedAccessLevel = list.access_level"
-       title="Edit {{ list.name }}"
-       data-original-title="Edit {{ list.name }}">
+       title="Edit mailing list permission"
+       data-original-title="Edit mailing list permission">
         <i class="fa fa-gear"></i>
     </a>
     {% endverbatim %}
@@ -90,13 +92,7 @@
 
           </div>
           <div class="modal-body">
-              <p class="caption">
-                If you would like a copy of your email, add your own email address to the CC or BCC field.
-              </p>
-              <p ng-show="!list.is_primary_section" class="caption">
-                Any email sent to a section will be delivered to all staff in the course, even if they
-                  have not been added to the section.
-              </p>
+
               <div id="permissions-input-{{ list.section_id }}">
                   <div class="indented-radio-block"
                        ng-repeat="access_level in ml.accessLevels">

@@ -11,7 +11,7 @@ EVENTS_MAX_PAGE_SIZE = 300
 logger = logging.getLogger(__name__)
 
 
-def get_events(begin, end, event_types):
+def get_events(begin, end, event_types, **filter_kwargs):
     # prime the pump
     url = '{}{}/events'.format(settings.LISTSERV_API_URL,
                                settings.LISTSERV_DOMAIN)
@@ -22,6 +22,7 @@ def get_events(begin, end, event_types):
         'limit': EVENTS_MAX_PAGE_SIZE,
         'event': ' OR '.join(event_types),
     }
+    params.update(filter_kwargs)
     resp = requests.get(url, auth=auth, params=params)
     resp.raise_for_status()
     events = resp.json()['items']
