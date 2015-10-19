@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from mock import patch
 
@@ -25,13 +25,15 @@ class MailingListModelTests(TestCase):
 
     @patch('mailing_list.models.get_section_sis_enrollment_status')
     @patch('mailing_list.models.is_course_crosslisted')
+    @patch('mailing_list.models.canvas_api_client.get_course')
     @patch('mailing_list.models.canvas_api_client.get_enrollments')
     @patch('mailing_list.models.canvas_api_client.get_sections')
-    @override_settings(CANVAS_SDK_SETTINGS={'auth_token': 'abcdef'})
     def test_get_or_create_or_delete_mailing_lists_for_canvas_course_id_with_existing_list(self, mock_get_sections,
                                                                                            mock_get_enrollments,
+                                                                                           mock_get_course,
                                                                                            mock_xlisted,
                                                                                            mock_get_sis_enroll_stat):
+        mock_get_course.return_value = {'sis_course_id': '786534'}
         mock_xlisted.return_value = False
         mock_get_sis_enroll_stat.return_value = None
 
