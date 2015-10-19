@@ -1,10 +1,9 @@
 import unittest
 import time
-import HTMLTestRunner
 from os import path, makedirs
 
+import HTMLTestRunner
 from selenium_tests.lti_emailer.emailer_permission_tests import EmailerPermissionTests
-from selenium_tests.lti_emailer.emailer_main_page_tests import EmailerMainPageTests
 
 
 date_timestamp = time.strftime('%Y%m%d_%H_%M_%S')
@@ -21,11 +20,10 @@ runner = HTMLTestRunner.HTMLTestRunner(
     description='Result of tests in {}'.format(__file__)
 )
 
-main_page_tests = unittest.TestLoader().loadTestsFromTestCase(EmailerMainPageTests)
 permission_testing = unittest.TestLoader().loadTestsFromTestCase(EmailerPermissionTests)
 
 # create a test suite combining the tests above
-smoke_tests = unittest.TestSuite([main_page_tests, permission_testing])
+smoke_tests = unittest.TestSuite([permission_testing])
 
 # run the suite
 runner.run(smoke_tests)

@@ -1,5 +1,5 @@
 from selenium.webdriver.common.by import By
-from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import EmailerBasePageObject
+from selenium_tests.base_page_object import BasePageObject
 from urlparse import urljoin
 
 
@@ -8,7 +8,7 @@ class CanvasMasqueradePageLocators(object):
     MASQUERADE_URL = 'users/{}/masquerade'
 
 
-class CanvasMasqueradePageObject(EmailerBasePageObject):
+class CanvasMasqueradePageObject(BasePageObject):
 
     def __init__(self, driver, canvas_base_url=None):
         if canvas_base_url:
