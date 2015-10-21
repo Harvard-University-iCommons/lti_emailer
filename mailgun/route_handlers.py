@@ -12,9 +12,8 @@ from django.views.decorators.http import require_http_methods
 
 from flanker.addresslib import address
 
-from icommons_common.models import CourseInstance
-
 from lti_emailer.canvas_api_client import get_name_for_email
+from icommons_common.model_utils import get_course_instance_by_canvas_course_id
 from mailgun.decorators import authenticate
 from mailgun.listserv_client import MailgunClient as ListservClient
 from mailing_list.models import MailingList, SuperSender
@@ -92,30 +91,21 @@ def handle_mailing_list_email_route(request):
                                   message_id=message_id)
         return JsonResponse({'success': True})
 
-    # try to prepend [SHORT TITLE] to subject and get school for course, keep going if lookup fails
+    # try to prepend [SHORT TITLE] to subject and get school for course,
+    # keep going if lookup fails
     school_id = None
-    try:
-        ci = CourseInstance.objects.get(canvas_course_id=ml.canvas_course_id)
-    except CourseInstance.DoesNotExist:
-        logger.warning(
-            u'Unable to find the course instance for Canvas course id %s, '
-            u'so we cannot prepend a short title to the email subject.',
-            ml.canvas_course_id)
-    except CourseInstance.MultipleObjectsReturned:
-        logger.warning(
-            u'Found multiple course instances for Canvas course id %s, '
-            u'so we cannot prepend a short title to the email subject.',
-            ml.canvas_course_id)
-    except RuntimeError:
-        logger.exception(
-            u'Received unexpected error trying to look up course instance '
-            u'for Canvas course id %s', ml.canvas_course_id)
-    else:
+    ci = get_course_instance_by_canvas_course_id(ml.canvas_course_id)
+    if ci:
         school_id = ci.course.school_id
         if ci.short_title:
             title_prefix = '[{}]'.format(ci.short_title)
             if title_prefix not in subject:
                 subject = title_prefix + ' ' + subject
+    else:
+        logger.warning(
+            u'Could not determine the primary course instance for Canvas '
+            u'course id %s, so we cannot prepend a short title to the '
+            u'email subject.', ml.canvas_course_id)
 
     # Always include teaching staff addresses with members addresses, so that they can email any list in the course
     teaching_staff_addresses = ml.teaching_staff_addresses
