@@ -31,7 +31,7 @@ class RouteHandlerUnitTests(TestCase):
 
     @override_settings(CACHE_KEY_MESSAGE_ID_SEEN='%s')
     @patch('mailgun.route_handlers.cache.get')
-    @patch('mailgun.route_handlers.get_course_instance_by_canvas_course_id')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_duplicate_router_post(self, mock_ml_get, mock_ci_get, mock_cache_get):
         ''' TLT-2039
@@ -72,7 +72,7 @@ class RouteHandlerRegressionTests(TestCase):
                                              email='unittest@example.edu',
                                              password='unittest')
 
-    @patch('mailgun.route_handlers.get_course_instance_by_canvas_course_id')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_empty_body_html(self, mock_ml_get, mock_ci_get):
         ''' TLT-2006

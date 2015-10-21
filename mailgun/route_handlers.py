@@ -12,8 +12,8 @@ from django.views.decorators.http import require_http_methods
 
 from flanker.addresslib import address
 
+from icommons_common.models import CourseInstance
 from lti_emailer.canvas_api_client import get_name_for_email
-from icommons_common.model_utils import get_course_instance_by_canvas_course_id
 from mailgun.decorators import authenticate
 from mailgun.listserv_client import MailgunClient as ListservClient
 from mailing_list.models import MailingList, SuperSender
@@ -94,7 +94,7 @@ def handle_mailing_list_email_route(request):
     # try to prepend [SHORT TITLE] to subject and get school for course,
     # keep going if lookup fails
     school_id = None
-    ci = get_course_instance_by_canvas_course_id(ml.canvas_course_id)
+    ci = CourseInstance.objects.get_primary_course_by_canvas_course_id(ml.canvas_course_id)
     if ci:
         school_id = ci.course.school_id
         if ci.short_title:
