@@ -112,7 +112,11 @@ def handle_mailing_list_email_route(request):
         # If we can, grab the list of super senders
         super_senders = []
         if school_id:
-            super_senders = SuperSender.objects.filter(school_id=school_id).values_list('email', flat=True)
+            # use iexact here to be able to match on COLGSAS or colgsas
+            super_senders = SuperSender.objects.filter(school_id__iexact=school_id).values_list('email', flat=True)
+
+        # lowercase all addresses in the supersenders list
+        super_senders = [addr.lower() for addr in super_senders]
 
         # If not a super sender, check the list permissions
         if sender_address not in super_senders:
