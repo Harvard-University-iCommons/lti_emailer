@@ -112,7 +112,7 @@ def handle_mailing_list_email_route(request):
         # If we can, grab the list of super senders
         super_senders = []
         if school_id:
-            super_senders = SuperSender.objects.filter(school_id=school_id).values_list('email', flat=True)
+            super_senders = list(SuperSender.objects.filter(school_id=school_id).values_list('email', flat=True))
 
         # If not a super sender, check the list permissions
         if sender_address not in super_senders:
@@ -149,7 +149,7 @@ def handle_mailing_list_email_route(request):
             logger.debug(u'Full list of recipients: %s', member_addresses)
 
             # if we found the course instance, insert [SHORT TITLE] into the subject
-            if ci.short_title:
+            if ci and ci.short_title:
                 title_prefix = '[{}]'.format(ci.short_title)
                 if title_prefix not in subject:
                     subject = title_prefix + ' ' + subject
