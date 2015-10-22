@@ -115,8 +115,8 @@ def handle_mailing_list_email_route(request):
             # use iexact here to be able to match on COLGSAS or colgsas
             super_senders = SuperSender.objects.filter(school_id__iexact=school_id).values_list('email', flat=True)
 
-        # lowercase all addresses in the supersenders list
-        super_senders = [addr.lower() for addr in super_senders]
+            # lowercase all addresses in the supersenders list
+            super_senders = [addr.lower() for addr in super_senders]
 
         # If not a super sender, check the list permissions
         if sender_address not in super_senders:
@@ -153,7 +153,7 @@ def handle_mailing_list_email_route(request):
             logger.debug(u'Full list of recipients: %s', member_addresses)
 
             # if we found the course instance, insert [SHORT TITLE] into the subject
-            if ci.short_title:
+            if ci and ci.short_title:
                 title_prefix = '[{}]'.format(ci.short_title)
                 if title_prefix not in subject:
                     subject = title_prefix + ' ' + subject
