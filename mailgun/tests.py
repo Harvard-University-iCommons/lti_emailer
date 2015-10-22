@@ -127,7 +127,7 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
 
-    @patch('mailgun.route_handlers.CourseInstance.objects.get')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_multi_mailing_list_recipients(self, mock_ml_get, mock_ci_get):
         '''
@@ -149,7 +149,8 @@ class RouteHandlerRegressionTests(TestCase):
         # prep a CourseInstance mock
         ci = MagicMock(course_instance_id=789,
                        canvas_course_id=ml.canvas_course_id,
-                       short_title='Lorem For Beginners')
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
         mock_ci_get.return_value = ci
 
         # prep the post body
