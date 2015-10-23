@@ -58,8 +58,10 @@ class RouteHandlerUnitTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # verify cache.get we're expecting, and other mocks unused
-        self.assertEqual(mock_cache_get.call_args,
-                         call("%s:%s" % (post_body['Message-Id'], post_body['recipient'])))
+        expected_cache_key = (
+            settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT
+            % (post_body['Message-Id'], post_body['recipient']))
+        self.assertEqual(mock_cache_get.call_args, call(expected_cache_key))
         self.assertEqual(mock_ml_get.call_count, 0)
         self.assertEqual(mock_ci_get.call_count, 0)
 
