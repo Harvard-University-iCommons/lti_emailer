@@ -13,7 +13,6 @@ from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
-
 from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
 from mailgun.listserv_client import MailgunClient as ListservClient
@@ -42,7 +41,7 @@ def handle_mailing_list_email_route(request):
     :return:
     '''
     sender = request.POST.get('sender')
-    recipient = request.POST.get('recipient')
+    recipients = set(address.parse_list(request.POST.get('recipient')))
     subject = request.POST.get('subject')
     body_plain = request.POST.get('body-plain', '')
     body_html = request.POST.get('body-html', '')
@@ -54,154 +53,161 @@ def handle_mailing_list_email_route(request):
 
     logger.info(u'Handling Mailgun mailing list email from %s to %s, '
                 u'subject %s, message id %s',
-                sender, recipient, subject, message_id)
+                sender, recipients, subject, message_id)
     logger.debug(u'Full mailgun post: %s', request.POST)
-
-    # shortcut if we've already handled this message
-    if message_id:
-        cache_key = settings.CACHE_KEY_MESSAGE_ID_SEEN % message_id
-        if cache.get(cache_key):
-            logger.warning(u'Message-Id %s was posted to the route handler, '
-                           u'but we\'ve already handled that.  Dropping.',
-                           message_id)
-            return JsonResponse({'success': True})
 
     # if we want to check email addresses against the sender, we need to parse
     # out just the address.
     parsed_sender = address.parse(sender)
     sender_address = parsed_sender.address.lower()
-    sender_display_name = parsed_sender.display_name
 
-    # make sure the mailing list exists
-    bounce_back_email_template = None
-    try:
-        ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(recipient)
-    except MailingList.DoesNotExist:
-        logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the mailing list does not exist', sender, recipient)
-        bounce_back_email_template = get_template('mailgun/email/bounce_back_does_not_exist.html')
-        content = bounce_back_email_template.render(Context({
-            'sender': sender,
-            'recipient': recipient,
-            'subject': subject,
-            'message_body': body_plain or body_html,
-        }))
-        listserv_client.send_mail(recipient, recipient, sender_address,
-                                  subject='Undeliverable mail', html=content,
-                                  message_id=message_id)
-        return JsonResponse({'success': True})
+    for recipient_address in recipients:
+        recipient = recipient_address.address
+        sender_display_name = parsed_sender.display_name
 
-    # try to prepend [SHORT TITLE] to subject and get school for course, keep going if lookup fails
-    school_id = None
-    try:
-        ci = CourseInstance.objects.get(canvas_course_id=ml.canvas_course_id)
-    except CourseInstance.DoesNotExist:
-        logger.warning(
-            u'Unable to find the course instance for Canvas course id %s, '
-            u'so we cannot prepend a short title to the email subject.',
-            ml.canvas_course_id)
-    except CourseInstance.MultipleObjectsReturned:
-        logger.warning(
-            u'Found multiple course instances for Canvas course id %s, '
-            u'so we cannot prepend a short title to the email subject.',
-            ml.canvas_course_id)
-    except RuntimeError:
-        logger.exception(
-            u'Received unexpected error trying to look up course instance '
-            u'for Canvas course id %s', ml.canvas_course_id)
-    else:
-        school_id = ci.course.school_id
-        if ci.short_title:
-            title_prefix = '[{}]'.format(ci.short_title)
-            if title_prefix not in subject:
-                subject = title_prefix + ' ' + subject
+        # shortcut if we've already handled this message for this recipient
+        if message_id:
+            cache_key = settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT % (message_id, recipient)
+            if cache.get(cache_key):
+                logger.warning(u'Message-Id %s was posted to the route handler '
+                               u'for %s, but we\'ve already handled that.  Dropping.',
+                               recipient, message_id)
+                continue
 
-    # Always include teaching staff addresses with members addresses, so that they can email any list in the course
-    teaching_staff_addresses = ml.teaching_staff_addresses
-    member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
-    super_senders = SuperSender.objects.filter(school_id=school_id).values_list('email')
-    if sender_address not in super_senders:
-        if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
-            logger.info(
-                u'Sending mailing list bounce back email to %s for mailing list %s '
-                u'because the sender was not a member', sender, recipient)
-            bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
-        elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
-            logger.info(
-                u'Sending mailing list bounce back email to %s for mailing list %s '
-                u'because the sender was not a staff member', sender, recipient)
-            bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
-        elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
-            logger.info(
-                u'Sending mailing list bounce back email to %s for mailing list %s '
-                u'because the list is readonly', sender, recipient)
-            bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
-
-    if bounce_back_email_template:
-        content = bounce_back_email_template.render(Context({
-            'sender': sender,
-            'recipient': recipient,
-            'subject': subject,
-            'message_body': body_plain or body_html,
-        }))
-        subject = 'Undeliverable mail'
-        ml.send_mail('', ml.address, sender_address, subject=subject,
-                     html=content, message_id=message_id)
-
-        member_addresses = list(member_addresses)
-        logger.debug(u'Full list of recipients: %s', member_addresses)
-
-        # we want to add 'via Canvas' to the sender's name.  so first make
-        # sure we know their name.
-        logger.debug(u'Original sender name: %s, address: %s',
-                     sender_display_name, sender_address)
-        if not sender_display_name:
-            name = get_name_for_email(ml.canvas_course_id, sender_address)
-            if name:
-                sender_display_name = name
-                logger.debug(u'Looked up sender name: %s, address: %s',
-                             sender_display_name, sender_address)
-
-        # now add in 'via Canvas'
-        if sender_display_name:
-            sender_display_name += ' via Canvas'
-        logger.debug(u'Final sender name: %s, address: %s',
-                     sender_display_name, sender_address)
-
-        # make sure inline images actually show up inline, since fscking
-        # mailgun won't let us specify the cid on post.  see their docs at
-        #   https://documentation.mailgun.com/user_manual.html#sending-via-api
-        # where they explain that they use the inlined file's name attribute
-        # as the content-id.
-        if inlines:
-            for f in inlines:
-                logger.debug(u'Replacing "%s" with "%s" in body', f.cid, f.name)
-                body_plain = re.sub(f.cid, f.name, body_plain)
-                body_html = re.sub(f.cid, f.name, body_html)
-
-        # convert the original to/cc fields back to strings so we can send
-        # them along through the listserv
-        to_list = [a.full_spec() for a in to_list]
-        cc_list = [a.full_spec() for a in cc_list]
-
-        # and send it off
-        logger.debug(
-            u'Mailgun router handler sending email to %s from %s, subject %s',
-            member_addresses, parsed_sender.full_spec(), subject)
+        # make sure the mailing list exists
+        bounce_back_email_template = None
         try:
-            ml.send_mail(
-                sender_display_name, sender_address,
-                member_addresses, subject, text=body_plain, html=body_html,
-                original_to_address=to_list, original_cc_address=cc_list,
-                attachments=attachments, inlines=inlines, message_id=message_id
-            )
-        except RuntimeError:
-            logger.exception(
-                u'Error attempting to send message from %s to %s, originally '
-                u'sent to list %s, with subject %s', parsed_sender.full_spec(),
-                member_addresses, ml.address, subject)
-            return JsonResponse({'success': False}, status=500)
+            ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(recipient)
+        except MailingList.DoesNotExist:
+            logger.info(
+                u'Sending mailing list bounce back email to %s for mailing list %s '
+                u'because the mailing list does not exist', sender, recipient)
+            bounce_back_email_template = get_template('mailgun/email/bounce_back_does_not_exist.html')
+            content = bounce_back_email_template.render(Context({
+                'sender': sender,
+                'recipient': recipient,
+                'subject': subject,
+                'message_body': body_plain or body_html,
+            }))
+            listserv_client.send_mail(recipient, recipient, sender_address,
+                                      subject='Undeliverable mail', html=content,
+                                      message_id=message_id)
+            continue
+
+        # try to determine the course instance, and from there the school
+        school_id = None
+        ci = CourseInstance.objects.get_primary_course_by_canvas_course_id(ml.canvas_course_id)
+        if ci:
+            school_id = ci.course.school_id
+        else:
+            logger.warning(
+                u'Could not determine the primary course instance for Canvas '
+                u'course id %s, so we cannot prepend a short title to the '
+                u'email subject, or check the super senders.', ml.canvas_course_id)
+
+        # Always include teaching staff addresses with members addresses, so that they can email any list in the course
+        teaching_staff_addresses = ml.teaching_staff_addresses
+        member_addresses = teaching_staff_addresses.union([m['address'] for m in ml.members])
+
+        # If we can, grab the list of super senders
+        super_senders = []
+        if school_id:
+            # use iexact here to be able to match on COLGSAS or colgsas
+            super_senders = SuperSender.objects.filter(school_id__iexact=school_id).values_list('email', flat=True)
+
+            # lowercase all addresses in the supersenders list
+            super_senders = [addr.lower() for addr in super_senders]
+
+        # If not a super sender, check the list permissions
+        if sender_address not in super_senders:
+            if ml.access_level == MailingList.ACCESS_LEVEL_MEMBERS and sender_address not in member_addresses:
+                logger.info(
+                    u'Sending mailing list bounce back email to %s for mailing list %s '
+                    u'because the sender was not a member', sender, recipient)
+                bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
+            elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
+                logger.info(
+                    u'Sending mailing list bounce back email to %s for mailing list %s '
+                    u'because the sender was not a staff member', sender, recipient)
+                bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
+            elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
+                logger.info(
+                    u'Sending mailing list bounce back email to %s for mailing list %s '
+                    u'because the list is readonly', sender, recipient)
+                bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
+
+        if bounce_back_email_template:
+            # Send a bounce if necessary
+            content = bounce_back_email_template.render(Context({
+                'sender': sender,
+                'recipient': recipient,
+                'subject': subject,
+                'message_body': body_plain or body_html,
+            }))
+            subject = 'Undeliverable mail'
+            ml.send_mail('', ml.address, sender_address, subject=subject,
+                         html=content, message_id=message_id)
+        else:
+            # otherwise, send the email to the list
+            member_addresses = list(member_addresses)
+            logger.debug(u'Full list of recipients: %s', member_addresses)
+
+            # if we found the course instance, insert [SHORT TITLE] into the subject
+            if ci and ci.short_title:
+                title_prefix = '[{}]'.format(ci.short_title)
+                if title_prefix not in subject:
+                    subject = title_prefix + ' ' + subject
+
+            # we want to add 'via Canvas' to the sender's name.  so first make
+            # sure we know their name.
+            logger.debug(u'Original sender name: %s, address: %s',
+                         sender_display_name, sender_address)
+            if not sender_display_name:
+                name = get_name_for_email(ml.canvas_course_id, sender_address)
+                if name:
+                    sender_display_name = name
+                    logger.debug(u'Looked up sender name: %s, address: %s',
+                                 sender_display_name, sender_address)
+
+            # now add in 'via Canvas'
+            if sender_display_name:
+                sender_display_name += ' via Canvas'
+            logger.debug(u'Final sender name: %s, address: %s',
+                         sender_display_name, sender_address)
+
+            # make sure inline images actually show up inline, since fscking
+            # mailgun won't let us specify the cid on post.  see their docs at
+            #   https://documentation.mailgun.com/user_manual.html#sending-via-api
+            # where they explain that they use the inlined file's name attribute
+            # as the content-id.
+            if inlines:
+                for f in inlines:
+                    logger.debug(u'Replacing "%s" with "%s" in body', f.cid, f.name)
+                    body_plain = re.sub(f.cid, f.name, body_plain)
+                    body_html = re.sub(f.cid, f.name, body_html)
+
+            # convert the original to/cc fields back to strings so we can send
+            # them along through the listserv
+            original_to_list = [a.full_spec() for a in to_list]
+            original_cc_list = [a.full_spec() for a in cc_list]
+
+            # and send it off
+            logger.debug(
+                u'Mailgun router handler sending email to %s from %s, subject %s',
+                member_addresses, parsed_sender.full_spec(), subject)
+            try:
+                ml.send_mail(
+                    sender_display_name, sender_address,
+                    member_addresses, subject, text=body_plain, html=body_html,
+                    original_to_address=original_to_list, original_cc_address=original_cc_list,
+                    attachments=attachments, inlines=inlines, message_id=message_id
+                )
+            except RuntimeError:
+                logger.exception(
+                    u'Error attempting to send message from %s to %s, originally '
+                    u'sent to list %s, with subject %s', parsed_sender.full_spec(),
+                    member_addresses, ml.address, subject)
+                return JsonResponse({'success': False}, status=500)
 
     return JsonResponse({'success': True})
 

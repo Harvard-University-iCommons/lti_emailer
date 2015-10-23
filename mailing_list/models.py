@@ -253,9 +253,9 @@ class MailingList(models.Model):
             subject, text, html, original_to_address, original_cc_address,
             attachments, inlines, message_id
         )
-        cache_key = settings.CACHE_KEY_MESSAGE_ID_SEEN % message_id
+        cache_key = settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT % (message_id, to_address)
         cache.set(cache_key, True,
-                  timeout=settings.CACHE_KEY_MESSAGE_ID_SEEN_TIMEOUT)
+                  timeout=settings.CACHE_KEY_MESSAGE_HANDLED_TIMEOUT)
 
 
 class EmailWhitelist(models.Model):
