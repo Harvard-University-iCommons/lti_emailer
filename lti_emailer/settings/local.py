@@ -20,7 +20,7 @@ SELENIUM_CONFIG = {
     'selenium_username': SECURE_SETTINGS.get('selenium_user'),
     'selenium_password': SECURE_SETTINGS.get('selenium_password'),
     'selenium_grid_url': SECURE_SETTINGS.get('selenium_grid_url'),
-    'canvas_base_url': SECURE_SETTINGS.get('CANVAS_URL'),
+    'canvas_base_url': SECURE_SETTINGS.get('canvas_url'),
     'run_locally': False,
     'emailer_tool_relative_url': 'courses/6389/external_tools/1759'
 }
