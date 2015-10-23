@@ -23,7 +23,7 @@ class EmailerBaseTestCase(BaseSeleniumTestCase):
         driver = cls.driver
         cls.USERNAME = settings.SELENIUM_CONFIG.get('selenium_username')
         cls.PASSWORD = settings.SELENIUM_CONFIG.get('selenium_password')
-        cls.CANVAS_BASE_URL = settings.SELENIUM_CONFIG.get('canvas_base_url')
+        cls.CANVAS_BASE_URL = settings.SELENIUM_CONFIG.get('canvas_url')
         cls.TOOL_RELATIVE_URL = settings.SELENIUM_CONFIG.get('emailer_tool_relative_url')
         cls.TOOL_URL = urljoin(cls.CANVAS_BASE_URL, cls.TOOL_RELATIVE_URL)
 
