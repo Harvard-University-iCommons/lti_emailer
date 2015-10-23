@@ -95,7 +95,8 @@ def _handle_recipient(request, recipient):
 
     # short circuit if the mailing list doesn't exist
     try:
-        ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(recipient)
+        ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(
+                 recipient.address)
     except MailingList.DoesNotExist:
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
@@ -103,7 +104,7 @@ def _handle_recipient(request, recipient):
         template = get_template('mailgun/email/bounce_back_does_not_exist.html')
         content = template.render(Context({
             'sender': sender,
-            'recipient': recipient,
+            'recipient': recipient.full_spec(),
             'subject': subject,
             'message_body': body_plain or body_html,
         }))
@@ -176,7 +177,7 @@ def _handle_recipient(request, recipient):
         # Send a bounce if necessary
         content = bounce_back_email_template.render(Context({
             'sender': sender,
-            'recipient': recipient,
+            'recipient': recipient.full_spec(),
             'subject': subject,
             'message_body': body_plain or body_html,
         }))
