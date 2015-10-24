@@ -62,6 +62,9 @@ def handle_mailing_list_email_route(request):
     parsed_sender = address.parse(sender)
     sender_address = parsed_sender.address.lower()
 
+    # send errors from a no-reply address so we don't get into bounceback loops
+    no_reply_address = settings.get('NO_REPLY_ADDRESS') | 'no-reply@coursemail.harvard.edu'
+
     for recipient_address in recipients:
         recipient = recipient_address.address
         sender_display_name = parsed_sender.display_name
@@ -89,7 +92,7 @@ def handle_mailing_list_email_route(request):
                 'subject': subject,
                 'message_body': body_plain or body_html,
             }))
-            listserv_client.send_mail(recipient, recipient, sender_address,
+            listserv_client.send_mail(recipient, no_reply_address, sender_address,
                                       subject='Undeliverable mail', html=content,
                                       message_id=message_id)
             continue
@@ -121,7 +124,7 @@ def handle_mailing_list_email_route(request):
                 'message_body': body_plain or body_html,
             }))
             subject = 'Undeliverable mail'
-            ml.send_mail('', ml.address, sender_address, subject=subject,
+            ml.send_mail('', no_reply_address, sender_address, subject=subject,
                          html=content, message_id=message_id)
         else:
             # try to prepend [SHORT TITLE] to subject, keep going if lookup fails
