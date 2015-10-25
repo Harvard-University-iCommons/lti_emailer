@@ -61,6 +61,11 @@ def handle_mailing_list_email_route(request):
     parsed_sender = address.parse(sender)
     sender_address = parsed_sender.address.lower()
 
+    # temporary hack to stop looping with an HKS alias
+    if sender_address == 'dpi-801b@hks.harvard.edu':
+        logger.warning('Received email from dpi-801b@hks.harvard.edu - skipping without sending a bounce.')
+        return JsonResponse({'success': True})
+
     # send errors from a no-reply address so we don't get into bounceback loops
     no_reply_address = settings.NO_REPLY_ADDRESS
 
