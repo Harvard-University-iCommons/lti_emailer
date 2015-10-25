@@ -92,7 +92,7 @@ def handle_mailing_list_email_route(request):
                 'subject': subject,
                 'message_body': body_plain or body_html,
             }))
-            listserv_client.send_mail(recipient, no_reply_address, sender_address,
+            listserv_client.send_mail(no_reply_address, no_reply_address, sender_address,
                                       subject='Undeliverable mail', html=content,
                                       message_id=message_id)
             continue
@@ -148,8 +148,9 @@ def handle_mailing_list_email_route(request):
                 'message_body': body_plain or body_html,
             }))
             subject = 'Undeliverable mail'
-            ml.send_mail('', no_reply_address, sender_address, subject=subject,
-                         html=content, message_id=message_id)
+            listserv_client.send_mail(no_reply_address, no_reply_address, sender_address,
+                                      subject=subject, html=content,
+                                      message_id=message_id)
         else:
             # otherwise, send the email to the list
             member_addresses = list(member_addresses)
