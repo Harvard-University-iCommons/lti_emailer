@@ -63,7 +63,7 @@ def handle_mailing_list_email_route(request):
     sender_address = parsed_sender.address.lower()
 
     # send errors from a no-reply address so we don't get into bounceback loops
-    no_reply_address = settings.get('NO_REPLY_ADDRESS') | 'no-reply@coursemail.harvard.edu'
+    no_reply_address = settings.NO_REPLY_ADDRESS
 
     for recipient_address in recipients:
         recipient = recipient_address.address

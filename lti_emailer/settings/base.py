@@ -307,3 +307,5 @@ CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID = "mailing_lists_by_canvas_course_id-%s"
 
 CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT = "lti_emailer:message-handled:%s:%s"
 CACHE_KEY_MESSAGE_HANDLED_TIMEOUT = 60 * 60 * 8  # 8 hours
+
+NO_REPLY_ADDRESS = SECURE_SETTINGS.get('no_reply_address', 'no-reply@coursemail.harvard.edu')
