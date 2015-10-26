@@ -90,9 +90,6 @@ def _handle_recipient(request, recipient):
     logger.debug(u'Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
 
-    # send errors from a no-reply address so we don't get into bounceback loops
-    no_reply_address = settings.NO_REPLY_ADDRESS
-
     # short circuit if the mailing list doesn't exist
     try:
         ml = MailingList.objects.get_or_create_or_delete_mailing_list_by_address(
@@ -101,16 +98,9 @@ def _handle_recipient(request, recipient):
         logger.info(
             u'Sending mailing list bounce back email to %s for mailing list %s '
             u'because the mailing list does not exist', sender, recipient)
-        template = get_template('mailgun/email/bounce_back_does_not_exist.html')
-        content = template.render(Context({
-            'sender': sender,
-            'recipient': recipient.full_spec(),
-            'subject': subject,
-            'message_body': body_plain or body_html,
-        }))
-        listserv_client.send_mail(no_reply_address, no_reply_address, sender,
-                                  subject='Undeliverable mail', html=content,
-                                  message_id=message_id)
+        _send_bounce('mailgun/email/bounce_back_does_not_exist.html',
+                     sender, recipient.full_spec(), body_plain or body_html,
+                     message_id)
         return
 
     # try to determine the course instance, and from there the school
@@ -161,30 +151,21 @@ def _handle_recipient(request, recipient):
             logger.info(
                 u'Sending mailing list bounce back email to %s for mailing list %s '
                 u'because the sender was not a member', sender, recipient)
-            bounce_back_email_template = get_template('mailgun/email/bounce_back_not_subscribed.html')
+            bounce_back_email_template = 'mailgun/email/bounce_back_not_subscribed.html'
         elif ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
             logger.info(
                 u'Sending mailing list bounce back email to %s for mailing list %s '
                 u'because the list is readonly', sender, recipient)
-            bounce_back_email_template = get_template('mailgun/email/bounce_back_readonly_list.html')
+            bounce_back_email_template = 'mailgun/email/bounce_back_readonly_list.html'
         elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF and sender_address not in teaching_staff_addresses:
             logger.info(
                 u'Sending mailing list bounce back email to %s for mailing list %s '
                 u'because the sender was not a staff member', sender, recipient)
-            bounce_back_email_template = get_template('mailgun/email/bounce_back_access_denied.html')
+            bounce_back_email_template = 'mailgun/email/bounce_back_access_denied.html'
 
     if bounce_back_email_template:
-        # Send a bounce if necessary
-        content = bounce_back_email_template.render(Context({
-            'sender': sender,
-            'recipient': recipient.full_spec(),
-            'subject': subject,
-            'message_body': body_plain or body_html,
-        }))
-        subject = 'Undeliverable mail'
-        listserv_client.send_mail(no_reply_address, no_reply_address, sender,
-                                  subject='Undeliverable mail', html=content,
-                                  message_id=message_id)
+        _send_bounce(bounce_back_email_template, sender, recipient.full_spec(),
+                     body_plain or body_html, message_id)
     else:
         # otherwise, send the email to the list
         member_addresses = list(member_addresses)
@@ -281,3 +262,19 @@ def _get_attachments_inlines(request):
             attachments.append(file_)
 
     return attachments, inlines
+
+
+def _send_bounce(template_path, sender, recipient, body, message_id):
+    # send errors from a no-reply address so we don't get into bounceback loops
+    no_reply_address = settings.NO_REPLY_ADDRESS
+
+    template = get_template(template_path)
+    content = template.render(Context({
+        'sender': sender,
+        'recipient': recipient,
+        'subject': subject,
+        'message_body': body,
+    }))
+    listserv_client.send_mail(no_reply_address, no_reply_address, sender,
+                              subject='Undeliverable mail', html=content,
+                              message_id=message_id)
