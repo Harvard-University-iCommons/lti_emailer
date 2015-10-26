@@ -163,70 +163,72 @@ def _handle_recipient(request, recipient):
                 u'because the sender was not a staff member', sender, recipient)
             bounce_back_email_template = 'mailgun/email/bounce_back_access_denied.html'
 
+    # bounce and return if they don't have the correct permissions
     if bounce_back_email_template:
         _send_bounce(bounce_back_email_template, sender, recipient.full_spec(),
                      subject, body_plain or body_html, message_id)
-    else:
-        # otherwise, send the email to the list
-        member_addresses = list(member_addresses)
-        logger.debug(u'Full list of recipients: %s', member_addresses)
+        return
 
-        # if we found the course instance, insert [SHORT TITLE] into the subject
-        if ci and ci.short_title:
-            title_prefix = '[{}]'.format(ci.short_title)
-            if title_prefix not in subject:
-                subject = title_prefix + ' ' + subject
+    # finally, we can send the email to the list
+    member_addresses = list(member_addresses)
+    logger.debug(u'Full list of recipients: %s', member_addresses)
 
-        # we want to add 'via Canvas' to the sender's name.  so first make
-        # sure we know their name.
-        logger.debug(u'Original sender name: %s, address: %s',
-                     sender_display_name, sender_address)
-        if not sender_display_name:
-            name = get_name_for_email(ml.canvas_course_id, sender_address)
-            if name:
-                sender_display_name = name
-                logger.debug(u'Looked up sender name: %s, address: %s',
-                             sender_display_name, sender_address)
+    # if we found the course instance, insert [SHORT TITLE] into the subject
+    if ci and ci.short_title:
+        title_prefix = '[{}]'.format(ci.short_title)
+        if title_prefix not in subject:
+            subject = title_prefix + ' ' + subject
 
-        # now add in 'via Canvas'
-        if sender_display_name:
-            sender_display_name += ' via Canvas'
-        logger.debug(u'Final sender name: %s, address: %s',
-                     sender_display_name, sender_address)
+    # we want to add 'via Canvas' to the sender's name.  so first make
+    # sure we know their name.
+    logger.debug(u'Original sender name: %s, address: %s',
+                 sender_display_name, sender_address)
+    if not sender_display_name:
+        name = get_name_for_email(ml.canvas_course_id, sender_address)
+        if name:
+            sender_display_name = name
+            logger.debug(u'Looked up sender name: %s, address: %s',
+                         sender_display_name, sender_address)
 
-        # make sure inline images actually show up inline, since fscking
-        # mailgun won't let us specify the cid on post.  see their docs at
-        #   https://documentation.mailgun.com/user_manual.html#sending-via-api
-        # where they explain that they use the inlined file's name attribute
-        # as the content-id.
-        if inlines:
-            for f in inlines:
-                logger.debug(u'Replacing "%s" with "%s" in body', f.cid, f.name)
-                body_plain = re.sub(f.cid, f.name, body_plain)
-                body_html = re.sub(f.cid, f.name, body_html)
+    # now add in 'via Canvas'
+    if sender_display_name:
+        sender_display_name += ' via Canvas'
+    logger.debug(u'Final sender name: %s, address: %s',
+                 sender_display_name, sender_address)
 
-        # convert the original to/cc fields back to strings so we can send
-        # them along through the listserv
-        original_to_list = [a.full_spec() for a in to_list]
-        original_cc_list = [a.full_spec() for a in cc_list]
+    # make sure inline images actually show up inline, since fscking
+    # mailgun won't let us specify the cid on post.  see their docs at
+    #   https://documentation.mailgun.com/user_manual.html#sending-via-api
+    # where they explain that they use the inlined file's name attribute
+    # as the content-id.
+    if inlines:
+        for f in inlines:
+            logger.debug(u'Replacing "%s" with "%s" in body', f.cid, f.name)
+            body_plain = re.sub(f.cid, f.name, body_plain)
+            body_html = re.sub(f.cid, f.name, body_html)
 
-        # and send it off
-        logger.debug(
-            u'Mailgun router handler sending email to %s from %s, subject %s',
-            member_addresses, parsed_sender.full_spec(), subject)
-        try:
-            ml.send_mail(
-                sender_display_name, sender_address,
-                member_addresses, subject, text=body_plain, html=body_html,
-                original_to_address=original_to_list, original_cc_address=original_cc_list,
-                attachments=attachments, inlines=inlines, message_id=message_id
-            )
-        except RuntimeError:
-            logger.exception(
-                u'Error attempting to send message from %s to %s, originally '
-                u'sent to list %s, with subject %s', parsed_sender.full_spec(),
-                member_addresses, ml.address, subject)
-            raise JsonResponse({'success': False}, status=500)
+    # convert the original to/cc fields back to strings so we can send
+    # them along through the listserv
+    original_to_list = [a.full_spec() for a in to_list]
+    original_cc_list = [a.full_spec() for a in cc_list]
+
+    # and send it off
+    logger.debug(
+        u'Mailgun router handler sending email to %s from %s, subject %s',
+        member_addresses, parsed_sender.full_spec(), subject)
+    try:
+        ml.send_mail(
+            sender_display_name, sender_address,
+            member_addresses, subject, text=body_plain, html=body_html,
+            original_to_address=original_to_list, original_cc_address=original_cc_list,
+            attachments=attachments, inlines=inlines, message_id=message_id
+        )
+    except RuntimeError:
+        logger.exception(
+            u'Error attempting to send message from %s to %s, originally '
+            u'sent to list %s, with subject %s', parsed_sender.full_spec(),
+            member_addresses, ml.address, subject)
+        raise JsonResponse({'success': False}, status=500)
 
     return JsonResponse({'success': True})
 
