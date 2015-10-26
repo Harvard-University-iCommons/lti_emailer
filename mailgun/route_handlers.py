@@ -99,8 +99,8 @@ def _handle_recipient(request, recipient):
             u'Sending mailing list bounce back email to %s for mailing list %s '
             u'because the mailing list does not exist', sender, recipient)
         _send_bounce('mailgun/email/bounce_back_does_not_exist.html',
-                     sender, recipient.full_spec(), body_plain or body_html,
-                     message_id)
+                     sender, recipient.full_spec(), subject,
+                     body_plain or body_html, message_id)
         return
 
     # try to determine the course instance, and from there the school
@@ -165,7 +165,7 @@ def _handle_recipient(request, recipient):
 
     if bounce_back_email_template:
         _send_bounce(bounce_back_email_template, sender, recipient.full_spec(),
-                     body_plain or body_html, message_id)
+                     subject, body_plain or body_html, message_id)
     else:
         # otherwise, send the email to the list
         member_addresses = list(member_addresses)
@@ -264,7 +264,7 @@ def _get_attachments_inlines(request):
     return attachments, inlines
 
 
-def _send_bounce(template_path, sender, recipient, body, message_id):
+def _send_bounce(template_path, sender, recipient, subject, body, message_id):
     # send errors from a no-reply address so we don't get into bounceback loops
     no_reply_address = settings.NO_REPLY_ADDRESS
 
