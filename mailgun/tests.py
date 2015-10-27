@@ -196,6 +196,41 @@ class RouteHandlerRegressionTests(TestCase):
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
 
+    @patch('mailgun.route_handlers._send_bounce')
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_bounce_loop_detection(self, mock_ml_get, mock_ci_get, mock_ss_filter, mock_send_bounce):
+        '''
+        TLT-2114
+        Verifies that we're dropping emails when they seem to be in a bounce loop.
+        '''
+        list_address = 'list.address@example.edu'
+
+        # prep the post body
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'from': list_address,
+            'recipient': list_address,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': list_address,
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+
+        # verify we didn't send any mail
+        self.assertEqual(mock_ml_get.return_value.send_mail.call_count, 0)
+        self.assertEqual(mock_send_bounce.call_count, 0)
+
+
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
 class DecoratorTests(TestCase):

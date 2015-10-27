@@ -44,13 +44,6 @@ def handle_mailing_list_email_route(request):
                 u'subject %s, message id %s',
                 sender, recipients, subject, message_id)
 
-    # temporary hack to stop looping with an HKS alias
-    parsed_sender = address.parse(sender)
-    sender_address = parsed_sender.address.lower()
-    if sender_address == 'dpi-801b@hks.harvard.edu':
-        logger.warning('Received email from dpi-801b@hks.harvard.edu - skipping without sending a bounce.')
-        return JsonResponse({'success': True})
-
     for recipient in recipients:
         # shortcut if we've already handled this message for this recipient
         if message_id:
@@ -82,6 +75,7 @@ def _handle_recipient(request, recipient):
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = address.parse_list(request.POST.get('Cc'))
+    from_ = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     sender = request.POST.get('sender')
     subject = request.POST.get('subject')
@@ -89,6 +83,12 @@ def _handle_recipient(request, recipient):
 
     logger.debug(u'Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
+
+    # short circuit if we detect a bounce loop
+    if from_ and (from_.address == recipient.address):
+        logger.error(u'Caught a bounce loop, dropping it.  POST data:\n%s\n',
+                     json.dumps(request.POST))
+        return
 
     # short circuit if the mailing list doesn't exist
     try:
