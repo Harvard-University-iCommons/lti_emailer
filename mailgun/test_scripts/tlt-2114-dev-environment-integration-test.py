@@ -9,6 +9,14 @@ import uuid
 import requests
 from django.conf import settings
 
+try:
+    settings.NO_REPLY_ADDRESS
+except ImportError:
+    # make sure the project root is in sys.path
+    import os, sys
+    sys.path.insert(0, os.path.normpath(
+                           os.path.join(os.path.abspath(__file__), '..', '..', '..')))
+
 def generate_signature_dict():
     timestamp = str(time.time())
     token = str(uuid.uuid4())
