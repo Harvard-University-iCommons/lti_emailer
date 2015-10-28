@@ -27,7 +27,7 @@ def generate_signature_dict():
 list_address = 'canvas-6760-2069@mg.dev.tlt.harvard.edu'
 post_body = {
     'sender': 'Integration Test <integrationtest@example.edu>',
-    'from': list_address,
+    'from': settings.NO_REPLY_ADDRESS,
     'recipient': list_address,
     'subject': 'blah',
     'body-plain': 'blah blah',

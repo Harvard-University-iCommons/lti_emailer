@@ -35,14 +35,23 @@ def handle_mailing_list_email_route(request):
     '''
     logger.debug(u'Full mailgun post: %s', request.POST)
 
+    from_ = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     recipients = set(address.parse_list(request.POST.get('recipient')))
-    sender = request.POST.get('sender')
+    sender = address.parse(request.POST.get('sender'))
     subject = request.POST.get('subject')
 
-    logger.info(u'Handling Mailgun mailing list email from %s to %s, '
-                u'subject %s, message id %s',
-                sender, recipients, subject, message_id)
+    logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
+                u'%s, subject %s, message id %s',
+                from_, sender, recipients, subject, message_id)
+
+    # short circuit if we detect a bounce loop
+    sender_address = sender.address.lower() if sender else ''
+    from_address = from_.address.lower() if from_ else ''
+    if settings.NO_REPLY_ADDRESS.lower() in (sender_address, from_address):
+        logger.error(u'Caught a bounce loop, dropping it.  POST data:\n%s\n',
+                     json.dumps(request.POST))
+        return JsonResponse({'success': True})
 
     for recipient in recipients:
         # shortcut if we've already handled this message for this recipient
@@ -75,7 +84,6 @@ def _handle_recipient(request, recipient):
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = address.parse_list(request.POST.get('Cc'))
-    from_ = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     sender = request.POST.get('sender')
     subject = request.POST.get('subject')
@@ -83,12 +91,6 @@ def _handle_recipient(request, recipient):
 
     logger.debug(u'Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
-
-    # short circuit if we detect a bounce loop
-    if from_ and (from_.address == recipient.address):
-        logger.error(u'Caught a bounce loop, dropping it.  POST data:\n%s\n',
-                     json.dumps(request.POST))
-        return
 
     # short circuit if the mailing list doesn't exist
     try:

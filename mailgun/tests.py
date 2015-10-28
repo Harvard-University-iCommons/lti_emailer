@@ -210,7 +210,7 @@ class RouteHandlerRegressionTests(TestCase):
         # prep the post body
         post_body = {
             'sender': 'Unit Test <unittest@example.edu>',
-            'from': list_address,
+            'from': settings.NO_REPLY_ADDRESS,
             'recipient': list_address,
             'subject': 'blah',
             'body-plain': 'blah blah',
