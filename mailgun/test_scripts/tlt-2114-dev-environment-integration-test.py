@@ -43,7 +43,12 @@ post_body = {
 }
 post_body.update(generate_signature_dict())
 
+# figure out which server to post to
+env_name = settings.ENV_NAME
+if env_name not in ('dev', 'qa', 'stage'):
+    env_name = 'dev'
+
 # post it
-url = 'https://lti-emailer.dev.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/'
+url = 'https://lti-emailer.%s.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/' % env _name
 resp = requests.post(url, data=post_body)
 resp.raise_for_status()
