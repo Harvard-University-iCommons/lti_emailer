@@ -115,6 +115,8 @@ INSERT INTO ml_super_sender (email, school_id) VALUES
 ('jcampbell@law.harvard.edu','hls'),
 ('kdavies@law.harvard.edu','hls'),
 ('sfitzgerald@law.harvard.edu','hls'),
+('danny_brooke@harvard.edu','hls'),
+('jill_ehrenzweig@harvard.edu','hls'),
 ('sfoote@law.harvard.edu','hls'),
 ('ehansen@law.harvard.edu','hls'),
 ('eholloway@law.harvard.edu','hls'),
