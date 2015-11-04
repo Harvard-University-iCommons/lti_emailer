@@ -35,20 +35,22 @@ def handle_mailing_list_email_route(request):
     '''
     logger.debug(u'Full mailgun post: %s', request.POST)
 
+    from_ = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     recipients = set(address.parse_list(request.POST.get('recipient')))
-    sender = request.POST.get('sender')
+    sender = address.parse(request.POST.get('sender'))
     subject = request.POST.get('subject')
 
-    logger.info(u'Handling Mailgun mailing list email from %s to %s, '
-                u'subject %s, message id %s',
-                sender, recipients, subject, message_id)
+    logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
+                u'%s, subject %s, message id %s',
+                from_, sender, recipients, subject, message_id)
 
-    # temporary hack to stop looping with an HKS alias
-    parsed_sender = address.parse(sender)
-    sender_address = parsed_sender.address.lower()
-    if sender_address == 'dpi-801b@hks.harvard.edu':
-        logger.warning('Received email from dpi-801b@hks.harvard.edu - skipping without sending a bounce.')
+    # short circuit if we detect a bounce loop
+    sender_address = sender.address.lower() if sender else ''
+    from_address = from_.address.lower() if from_ else ''
+    if settings.NO_REPLY_ADDRESS.lower() in (sender_address, from_address):
+        logger.error(u'Caught a bounce loop, dropping it.  POST data:\n%s\n',
+                     json.dumps(request.POST))
         return JsonResponse({'success': True})
 
     for recipient in recipients:
