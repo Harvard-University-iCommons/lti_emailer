@@ -31,7 +31,7 @@ class RouteHandlerUnitTests(TestCase):
 
     @override_settings(CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT='%s:%s')
     @patch('mailgun.route_handlers.cache.get')
-    @patch('mailgun.route_handlers.CourseInstance.objects.get')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_duplicate_router_post(self, mock_ml_get, mock_ci_get, mock_cache_get):
         ''' TLT-2039
@@ -58,8 +58,10 @@ class RouteHandlerUnitTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # verify cache.get we're expecting, and other mocks unused
-        self.assertEqual(mock_cache_get.call_args,
-                         call("%s:%s" % (post_body['Message-Id'], post_body['recipient'])))
+        expected_cache_key = (
+            settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT
+            % (post_body['Message-Id'], post_body['recipient']))
+        self.assertEqual(mock_cache_get.call_args, call(expected_cache_key))
         self.assertEqual(mock_ml_get.call_count, 0)
         self.assertEqual(mock_ci_get.call_count, 0)
 
@@ -74,9 +76,10 @@ class RouteHandlerRegressionTests(TestCase):
                                              email='unittest@example.edu',
                                              password='unittest')
 
-    @patch('mailgun.route_handlers.CourseInstance.objects.get')
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
-    def test_empty_body_html(self, mock_ml_get, mock_ci_get):
+    def test_empty_body_html(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         ''' TLT-2006
         Verifies that we can handle emails that
         * have at least one inlined attachment
@@ -102,8 +105,12 @@ class RouteHandlerRegressionTests(TestCase):
         # prep a CourseInstance mock
         ci = MagicMock(course_instance_id=789,
                        canvas_course_id=ml.canvas_course_id,
-                       short_title='Lorem For Beginners')
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
         mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
 
         # prep the post body
         post_body = {
@@ -126,9 +133,10 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
 
-    @patch('mailgun.route_handlers.CourseInstance.objects.get')
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
-    def test_multi_mailing_list_recipients(self, mock_ml_get, mock_ci_get):
+    def test_multi_mailing_list_recipients(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         '''
         TLT-2066
         Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
@@ -148,8 +156,12 @@ class RouteHandlerRegressionTests(TestCase):
         # prep a CourseInstance mock
         ci = MagicMock(course_instance_id=789,
                        canvas_course_id=ml.canvas_course_id,
-                       short_title='Lorem For Beginners')
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
         mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
 
         # prep the post body
         recipients = ', '.join([ml.address, 'bogus@example.edu'])

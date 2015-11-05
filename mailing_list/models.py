@@ -272,3 +272,21 @@ class EmailWhitelist(models.Model):
         return u'email: {}'.format(
             self.email
         )
+
+
+class SuperSender(models.Model):
+    """
+    This model stores email addresses that can send mail to any mailing list
+    in the specified school
+    """
+    email = models.EmailField()
+    school_id = models.CharField(max_length=16)
+
+    class Meta:
+        db_table = 'ml_super_sender'
+
+    def __unicode__(self):
+        return u'email: {}, school: {}'.format(
+            self.email,
+            self.school_id
+        )
