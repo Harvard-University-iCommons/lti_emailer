@@ -1,5 +1,6 @@
 import argparse
 import logging
+from operator import itemgetter
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -45,10 +46,18 @@ class Command(BaseCommand):
                 failures[course['id']] = str(e)
                 continue
 
+            # the "is it the primary list" logic varies depending on whether or
+            # not the list is crosslisted.  figure out which logic to use
+            # before bucketing the lists.
+            if any([l['is_course_list'] for l in lists]):
+                is_primary = itemgetter('is_course_list')
+            else:
+                is_primary = itemgetter('is_primary')
+
             primary, secondary = [], []
             for ml in lists:
                 num_lists += 1
-                if ml['is_primary_section']:
+                if is_primary(ml):
                     primary.append(ml)
                 else:
                     secondary.append(ml)
@@ -72,8 +81,8 @@ class Command(BaseCommand):
             courses_by_id = {c['id']: c for c in courses}
             writer = UnicodeCSVWriter(options['output_file'])
             writer.writerow(('canvas_course_id', 'sis_course_id', 'course_name',
-                             'course_code', 'primary_section_lists',
-                             'secondary_section_lists'))
+                             'course_code', 'primary_list',
+                             'secondary_lists'))
             for course_id in sorted(course_lists):
                 course = courses_by_id[course_id]
                 primary = u';'.join([l['address'] for l in course_lists[course_id]['primary']])
