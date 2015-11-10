@@ -65,6 +65,38 @@ class RouteHandlerUnitTests(TestCase):
         self.assertEqual(mock_ml_get.call_count, 0)
         self.assertEqual(mock_ci_get.call_count, 0)
 
+    @patch('mailgun.route_handlers.logger.exception')
+    @patch('mailgun.route_handlers._handle_recipient')
+    def test_unhandled_exception(self, mock_handle_recipient, mock_log_exc):
+        '''
+        TLT-2130: Should log mailgun POST on unhandled exception
+        and request mailgun stop processing message
+        '''
+
+        # mock an unhandled error in the method that sends mail to a recipient
+        mock_handle_recipient.side_effect = RuntimeError()
+
+        post_body = {
+            'recipient': 'class-list@example.edu',
+            'sender': 'Unit Test <unittest@example.edu>',
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        response = handle_mailing_list_email_route(request)
+
+        # expecting 406 failure (per mailgun's requirements)
+        self.assertEqual(response.status_code, 406)
+
+        # verify we logged post data
+        self.assertEqual(mock_log_exc.call_count, 1)
+        logger_post_info = mock_log_exc.call_args[0][1]  # second positional arg
+        self.assertEqual(json.dumps(post_body), logger_post_info, 1)
+        # self.assertDictContainsSubset(post_body, logger_post_info, 1)
+
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
 class RouteHandlerRegressionTests(TestCase):
