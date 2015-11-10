@@ -95,7 +95,6 @@ class RouteHandlerUnitTests(TestCase):
         self.assertEqual(mock_log_exc.call_count, 1)
         logger_post_info = mock_log_exc.call_args[0][1]  # second positional arg
         self.assertEqual(json.dumps(post_body), logger_post_info, 1)
-        # self.assertDictContainsSubset(post_body, logger_post_info, 1)
 
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
