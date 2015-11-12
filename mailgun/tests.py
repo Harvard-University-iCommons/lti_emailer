@@ -70,7 +70,6 @@ class RouteHandlerUnitTests(TestCase):
     def test_unhandled_exception(self, mock_handle_recipient, mock_log_exc):
         '''
         TLT-2130: Should log mailgun POST on unhandled exception
-        and request mailgun stop processing message
         '''
 
         # mock an unhandled error in the method that sends mail to a recipient
@@ -88,8 +87,9 @@ class RouteHandlerUnitTests(TestCase):
 
         response = handle_mailing_list_email_route(request)
 
-        # expecting 406 failure (per mailgun's requirements)
-        self.assertEqual(response.status_code, 406)
+        # expecting server error
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.content, json.dumps({'success': False}))
 
         # verify we logged post data
         self.assertEqual(mock_log_exc.call_count, 1)
