@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 listserv_client = ListservClient()
 
 
-def log_and_report_errors():
+def handle_uncaught_exceptions():
     def decorator(view_func):
         @wraps(view_func, assigned=available_attrs(view_func))
         def inner(request, *args, **kwargs):
@@ -46,7 +46,7 @@ def log_and_report_errors():
 @csrf_exempt
 @authenticate()
 @require_http_methods(['POST'])
-@log_and_report_errors()
+@handle_uncaught_exceptions()
 def handle_mailing_list_email_route(request):
     '''
     Handles the Mailgun route action when email is sent to a Mailgun mailing list.
