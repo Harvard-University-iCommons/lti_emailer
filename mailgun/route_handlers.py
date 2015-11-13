@@ -2,11 +2,14 @@ import json
 import logging
 import re
 
+from functools import wraps
+
 from django.conf import settings
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.template import Context
 from django.template.loader import get_template
+from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -24,9 +27,26 @@ logger = logging.getLogger(__name__)
 listserv_client = ListservClient()
 
 
+def handle_uncaught_exceptions():
+    def decorator(view_func):
+        @wraps(view_func, assigned=available_attrs(view_func))
+        def inner(request, *args, **kwargs):
+            try:
+                return view_func(request, *args, **kwargs)
+            except:
+                logger.exception(
+                    u'Unhandled exception; aborting. POST data:\n%s\n',
+                    json.dumps(request.POST))
+                # tell Mailgun we're unhappy with message and to retry later
+                return JsonResponse({'success': False}, status=500)
+        return inner
+    return decorator
+
+
 @csrf_exempt
 @authenticate()
 @require_http_methods(['POST'])
+@handle_uncaught_exceptions()
 def handle_mailing_list_email_route(request):
     '''
     Handles the Mailgun route action when email is sent to a Mailgun mailing list.
@@ -49,7 +69,7 @@ def handle_mailing_list_email_route(request):
     sender_address = sender.address.lower() if sender else ''
     from_address = from_.address.lower() if from_ else ''
     if settings.NO_REPLY_ADDRESS.lower() in (sender_address, from_address):
-        logger.error(u'Caught a bounce loop, dropping it.  POST data:\n%s\n',
+        logger.error(u'Caught a bounce loop, dropping it. POST data:\n%s\n',
                      json.dumps(request.POST))
         return JsonResponse({'success': True})
 
@@ -64,11 +84,7 @@ def handle_mailing_list_email_route(request):
                                u"for %s, but we've already handled that.  "
                                u'Skipping.', recipient, message_id)
                 continue
-
-        try:
-            _handle_recipient(request, recipient)
-        except JsonResponse as error_response:
-            return error_response
+        _handle_recipient(request, recipient)
 
     return JsonResponse({'success': True})
 
@@ -230,7 +246,7 @@ def _handle_recipient(request, recipient):
             u'Error attempting to send message from %s to %s, originally '
             u'sent to list %s, with subject %s', parsed_sender.full_spec(),
             member_addresses, ml.address, subject)
-        raise JsonResponse({'success': False}, status=500)
+        raise
 
     return JsonResponse({'success': True})
 
