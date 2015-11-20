@@ -1,4 +1,5 @@
 import logging
+import json
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -15,26 +16,15 @@ def auth_error(request):
 
 
 @csrf_exempt
-# @authenticate()
+@authenticate()
 @require_http_methods(['POST'])
 def log_post_data(request):
     """
     This method will help in logging the POST information. This method is provided as an endpoint for the
-    Mailgun Webhooks to log an event, so that we can track the various configured  events that are available
+    Mailgun Webhooks to log an event, so that we can monitor the various configured  events that are available
     (such as Delivered, Dropped, Bounces, etc)
     :param request:
     :return HttpResponse:
     """
-    logger.info(" Logging Webhook Post data")
-
-    # Log the event type , time and description
-    for key, value in request.POST.iteritems():
-        logger.info(" Key= %s, Value =%s", key, value)
-
-    logger.info("[MAILGUN EVENT] Type:%s, Recipient:%s, Error:%s, Reason:%s, Message-header:%s",
-                request.POST.get('event'),
-                request.POST.get('recipient'),
-                request.POST.get('error'),
-                request.POST.get('reason'),
-                request.POST.get('message-headers'))
+    logger.info("[MAILGUN EVENT] %s", json.dumps(request.POST))
     return HttpResponse("Successfully logged post data", status=200)
