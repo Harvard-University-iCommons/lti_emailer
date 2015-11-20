@@ -25,13 +25,16 @@ def log_post_data(request):
     :param request:
     :return HttpResponse:
     """
-    # logger.info(" Full mailgun post: %s", request.POST)
     logger.info(" Logging Webhook Post data")
 
     # Log the event type , time and description
     for key, value in request.POST.iteritems():
         logger.info(" Key= %s, Value =%s", key, value)
 
-    logger.info(" Webhook event type:%s, Recipient:%s, Message-header:%s", request.POST.get('event'),
-                request.POST.get('recipient'), request.POST.get('message-headers'))
+    logger.info("[MAILGUN EVENT] Type:%s, Recipient:%s, Error:%s, Reason:%s, Message-header:%s",
+                request.POST.get('event'),
+                request.POST.get('recipient'),
+                request.POST.get('error'),
+                request.POST.get('reason'),
+                request.POST.get('message-headers'))
     return HttpResponse("Successfully logged post data", status=200)
