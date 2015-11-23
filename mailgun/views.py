@@ -26,5 +26,5 @@ def log_post_data(request):
     :param request:
     :return HttpResponse:
     """
-    logger.info(u'[MAILGUN EVENT] %s', json.dumps(request.POST))
+    logger.info(u'[MAILGUN EVENT] %s', json.dumps(request.POST, indent=4, sort_keys=True))
     return HttpResponse("Successfully logged post data", status=200)
