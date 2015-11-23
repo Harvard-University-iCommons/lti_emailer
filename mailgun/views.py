@@ -20,11 +20,11 @@ def auth_error(request):
 @require_http_methods(['POST'])
 def log_post_data(request):
     """
-    This method will help in logging the POST information. This method is provided as an endpoint for the
+    This method will help in logging POST data. This method is provided as an endpoint for the
     Mailgun Webhooks to log an event, so that we can monitor the various configured  events that are available
     (such as Delivered, Dropped, Bounces, etc)
     :param request:
     :return HttpResponse:
     """
-    logger.info(u'[MAILGUN EVENT] %s ', json.dumps(request.POST))
+    logger.info('(MAILGUN EVENT) %s', json.dumps(request.POST))
     return HttpResponse("Successfully logged post data", status=200)
