@@ -100,6 +100,7 @@ def _handle_recipient(request, recipient):
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = address.parse_list(request.POST.get('Cc'))
+    parsed_from = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     sender = request.POST.get('sender')
     subject = request.POST.get('subject')
@@ -153,7 +154,6 @@ def _handle_recipient(request, recipient):
     # out the address from the display name.
     parsed_sender = address.parse(sender)
     sender_address = parsed_sender.address.lower()
-    sender_display_name = parsed_sender.display_name
 
     # any validation that fails will set the bounce template
     bounce_back_email_template = None
@@ -197,21 +197,13 @@ def _handle_recipient(request, recipient):
         if title_prefix not in subject:
             subject = title_prefix + ' ' + subject
 
-    # we want to add 'via Canvas' to the sender's name.  so first make
-    # sure we know their name.
-    logger.debug(u'Original sender name: %s, address: %s',
-                 sender_display_name, sender_address)
-    if not sender_display_name:
-        name = get_name_for_email(ml.canvas_course_id, sender_address)
-        if name:
-            sender_display_name = name
-            logger.debug(u'Looked up sender name: %s, address: %s',
-                         sender_display_name, sender_address)
-
-    # now add in 'via Canvas'
+    # we want to add 'via Canvas' to the sender's name.  do our best to figure
+    # it out, then add 'via Canvas' as long as we could.
+    logger.debug(u'Original sender: %s, original from: %s', sender, parsed_from)
+    sender_display_name = _get_sender_display_name(parsed_sender, parsed_from, ml)
     if sender_display_name:
         sender_display_name += ' via Canvas'
-    logger.debug(u'Final sender name: %s, address: %s',
+    logger.debug(u'Final sender name: %s, sender address: %s',
                  sender_display_name, sender_address)
 
     # make sure inline images actually show up inline, since fscking
@@ -282,6 +274,26 @@ def _get_attachments_inlines(request):
             attachments.append(file_)
 
     return attachments, inlines
+
+
+def _get_sender_display_name(parsed_sender, parsed_from, ml):
+    sender_display_name = parsed_sender.display_name
+
+    # first, try getting it from the "From" field
+    if not sender_display_name:
+        if parsed_sender.address == parsed_from.address:
+            sender_display_name = parsed_from.display_name
+
+    # fall back on looking up the enrollment, won't work for anyone not
+    # enrolled in the course (ie. supersenders, globally sendable lists).
+    if not sender_display_name:
+        name = get_name_for_email(ml.canvas_course_id, parsed_sender.address)
+        if name:
+            sender_display_name = name
+            logger.debug(u'Looked up display name for sender: %s, found: %s',
+                         parsed_sender.address, sender_display_name)
+
+    return sender_display_name
 
 
 def _send_bounce(template_path, sender, recipient, subject, body, message_id):
