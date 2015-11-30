@@ -25,9 +25,11 @@ class RouteHandlerUnitTests(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='unittest',
-                                             email='unittest@example.edu',
-                                             password='unittest')
+        self.user = User.objects.create_user(email='unittest@example.edu',
+                                             password='insecure',
+                                             username='unittest')
+        self.user.first_name = 'Unit'
+        self.user.last_name = 'Test'
 
     @override_settings(CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT='%s:%s')
     @patch('mailgun.route_handlers.cache.get')
@@ -103,9 +105,11 @@ class RouteHandlerRegressionTests(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='unittest',
-                                             email='unittest@example.edu',
-                                             password='unittest')
+        self.user = User.objects.create_user(email='unittest@example.edu',
+                                             password='insecure',
+                                             username='unittest')
+        self.user.first_name = 'Unit'
+        self.user.last_name = 'Test'
 
     @patch('mailgun.route_handlers.SuperSender.objects.filter')
     @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
@@ -261,6 +265,133 @@ class RouteHandlerRegressionTests(TestCase):
         self.assertEqual(mock_ml_get.return_value.send_mail.call_count, 0)
         self.assertEqual(mock_send_bounce.call_count, 0)
 
+    @patch('mailgun.route_handlers.get_name_for_email')
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_sender_display_name_from_field(self, mock_ml_get, mock_ci_get, mock_ss_filter,
+                                            mock_get_name_for_email):
+        '''
+        TLT-2160
+        Verifies that if the mailgun `sender` field lacks a display name, we'll
+        use the one in the mailfun `from` field before resorting to enrollee
+        lookup.
+        '''
+        list_address = 'class-list@example.edu'
+
+        # prep a MailingList mock
+        members = [{'address': a} for a in [self.user.email, 'student@example.edu']]
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher@example.edu'},
+            members=members,
+            address=list_address
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        post_body = {
+            'To': list_address,
+            'body-plain': 'blah blah',
+            'from': '{} <{}>'.format(self.user.get_full_name(), self.user.email),
+            'recipient': list_address,
+            'sender': self.user.email,
+            'subject': 'display name test',
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+
+        # verify we didn't fall back to get_name_for_email()
+        self.assertEqual(mock_get_name_for_email.call_count, 0)
+
+        # verify we sent mail with the correct sender display name
+        self.assertEqual(ml.send_mail.call_count, 1)
+        self.assertEqual(ml.send_mail.call_args[0][0],
+                         self.user.get_full_name() + ' via Canvas')
+
+    @patch('mailgun.route_handlers.get_name_for_email')
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_sender_display_name_from_enrollment(self, mock_ml_get, mock_ci_get,
+                                                 mock_ss_filter, mock_get_name_for_email):
+        '''
+        TLT-2160
+        Verifies that if the mailgun `sender` and `from` fields lack display
+        names, we fall back to enrollee lookup.
+        '''
+        list_address = 'class-list@example.edu'
+
+        # prep a MailingList mock
+        members = [{'address': a} for a in [self.user.email, 'student@example.edu']]
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher@example.edu'},
+            members=members,
+            address=list_address
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the mock_get_name_for_email result
+        mock_get_name_for_email.return_value = self.user.get_full_name()
+
+        # prep the post body
+        post_body = {
+            'To': list_address,
+            'body-plain': 'blah blah',
+            'from': self.user.email,
+            'recipient': list_address,
+            'sender': self.user.email,
+            'subject': 'display name test',
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+
+        # verify we made the correct call to get_name_for_email()
+        self.assertEqual(mock_get_name_for_email.call_count, 1)
+        self.assertEqual(mock_get_name_for_email.call_args,
+                         call(ml.canvas_course_id, self.user.email))
+
+        # verify we tried to send email with the correct sender display name
+        self.assertEqual(ml.send_mail.call_count, 1)
+        self.assertEqual(ml.send_mail.call_args[0][0],
+                         self.user.get_full_name() + ' via Canvas')
 
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
