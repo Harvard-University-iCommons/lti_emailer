@@ -1,10 +1,12 @@
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import EmailerBasePageObject
+from selenium_tests.lti_emailer.page_objects.emailer_member_list_page_object import CourseEmailerListPage
 
 class EmailerMainPageLocators(object):
     PAGE_TITLE = (By.CSS_SELECTOR, "h1")
     UNAUTHORIZED_MESSAGE = (By.ID, "unauthorized_message")
+    MEMBER_LINK = (By.CSS_SELECTOR,".link-text[data-original-title=='Members emails']")
 
 
 class EmailerMainPage(EmailerBasePageObject):
@@ -55,3 +57,16 @@ class EmailerMainPage(EmailerBasePageObject):
                 'Could not determine if Emailer main page loaded as expected;'
                 'title element was found but did not contain expected text'
             )
+
+    def get_member_link(self):
+        element = self.find_element(*EmailerMainPageLocators.MEMBER_LINK)
+        return element
+
+    def select_member_link(self):
+        """
+        select the course info link element and click it
+        :returns CourseSearchPageObject
+        """
+        self.focus_on_tool_frame()
+        self.find_element(*EmailerMainPageLocators.MEMBER_LINK).click()
+        return CourseEmailerListPage(self._driver)
