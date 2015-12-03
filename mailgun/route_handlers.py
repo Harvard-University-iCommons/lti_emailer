@@ -6,18 +6,18 @@ from functools import wraps
 
 from django.conf import settings
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
 from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
+from mailgun.exceptions import HttpResponseException
 from mailgun.listserv_client import MailgunClient as ListservClient
 from mailing_list.models import MailingList, SuperSender
 
@@ -27,16 +27,24 @@ logger = logging.getLogger(__name__)
 listserv_client = ListservClient()
 
 
-def handle_uncaught_exceptions():
+def handle_exceptions():
     def decorator(view_func):
         @wraps(view_func, assigned=available_attrs(view_func))
         def inner(request, *args, **kwargs):
             try:
                 return view_func(request, *args, **kwargs)
+            except HttpResponseException as e:
+                # sometimes we need to return an error response from deep down
+                # the call stack.
+                logger.exception(
+                    u'HttpResponseException thrown by route handler, returning '
+                    u'its encapsulated response %s.  POST data: %s',
+                    e.response, json.dumps(request.POST, sort_keys=True))
+                return e.response
             except:
                 logger.exception(
                     u'Unhandled exception; aborting. POST data:\n%s\n',
-                    json.dumps(request.POST))
+                    json.dumps(request.POST, sort_keys=True))
                 # tell Mailgun we're unhappy with message and to retry later
                 return JsonResponse({'success': False}, status=500)
         return inner
@@ -46,7 +54,7 @@ def handle_uncaught_exceptions():
 @csrf_exempt
 @authenticate()
 @require_http_methods(['POST'])
-@handle_uncaught_exceptions()
+@handle_exceptions()
 def handle_mailing_list_email_route(request):
     '''
     Handles the Mailgun route action when email is sent to a Mailgun mailing list.
@@ -265,7 +273,19 @@ def _get_attachments_inlines(request):
 
     for n in xrange(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
-        file_ = request.FILES[attachment_name]
+        try:
+            file_ = request.FILES[attachment_name]
+        except KeyError:
+            logger.exception(u'Mailgun POST claimed to have %s attachments, '
+                             u'but %s is missing',
+                             attachment_count, attachment_name)
+            raise HttpResponseException(JsonResponse(
+                      {
+                          'message': 'Attachment {} missing from POST'.format(
+                                         attachment_name),
+                          'success': False,
+                      },
+                      status=400))
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
