@@ -8,14 +8,15 @@ from StringIO import StringIO
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse_lazy
+from django.http import HttpResponse, JsonResponse
 from django.test import TestCase, RequestFactory
 from django.test.utils import override_settings
-
 from mock import MagicMock, call, patch
 
 from icommons_common.utils import Bunch
 
 from mailgun.decorators import authenticate
+from mailgun.exceptions import HttpResponseException
 from mailgun.route_handlers import handle_mailing_list_email_route
 
 
@@ -96,7 +97,104 @@ class RouteHandlerUnitTests(TestCase):
         # verify we logged post data
         self.assertEqual(mock_log_exc.call_count, 1)
         logger_post_info = mock_log_exc.call_args[0][1]  # second positional arg
-        self.assertEqual(json.dumps(post_body), logger_post_info, 1)
+        self.assertEqual(json.dumps(post_body, sort_keys=True), logger_post_info)
+
+    @patch('mailgun.route_handlers.logger.exception')
+    @patch('mailgun.route_handlers._handle_recipient')
+    def test_response_exception(self, mock_handle_recipient, mock_log_exc):
+        '''
+        TLT-2108: We sometimes need to return a non-200 response, and we don't
+        always want to return a 500.  Raising a JsonExceptionResponse from
+        somewhere in the stack should result in that response being returned to
+        Mailgun.
+        '''
+        raised_response = JsonResponse(
+                              {'message': "I'm a teapot!"}, status=418)
+        mock_handle_recipient.side_effect = HttpResponseException(raised_response)
+
+        post_body = {
+            'recipient': 'class-list@example.edu',
+            'sender': 'Unit Test <unittest@example.edu>',
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        response = handle_mailing_list_email_route(request)
+
+        # expecting the response we raised
+        self.assertEqual(response.status_code, raised_response.status_code)
+        self.assertEqual(response.content, raised_response.content)
+
+        # verify we logged post data
+        self.assertEqual(mock_log_exc.call_count, 1)
+        logger_post_info = mock_log_exc.call_args[0][2]  # third positional arg
+        self.assertEqual(json.dumps(post_body, sort_keys=True), logger_post_info)
+
+    @patch('mailgun.route_handlers.logger.exception')
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_missing_attachment(self, mock_ml_get, mock_ci_get, mock_ss_filter, mock_log_exc):
+        '''
+        TLT-2108: If an attachment is missing from a POST, we should return a
+        400 and log it.
+        '''
+        # prep a MailingList mock
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses=set(),
+            members=[],
+            address='class-list@example.edu'
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        post_body = {
+            'sender': self.user.email,
+            'recipient': ml.address,
+            'subject': 'test missing attachment',
+            'body-plain': 'blah blah',
+            'To': ml.address,
+            'attachment-count': '1',
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        response = handle_mailing_list_email_route(request)
+
+        # make sure we got a 400 response
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content),
+                         {
+                             'message': 'Attachment attachment-1 missing from POST',
+                             'success': False,
+                         })
+
+        # verify we logged post data and a reason
+        self.assertEqual(mock_log_exc.call_count, 2)
+        missing_attachment_call = mock_log_exc.call_args_list[0]
+        self.assertEqual(missing_attachment_call[0][0], # positional arg
+                         u'Mailgun POST claimed to have %s attachments, but %s '
+                         u'is missing')
+        log_the_post_call = mock_log_exc.call_args_list[1]
+        self.assertEqual(json.loads(log_the_post_call[0][-1]), post_body)
 
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
