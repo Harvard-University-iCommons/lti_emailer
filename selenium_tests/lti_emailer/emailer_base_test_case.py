@@ -31,6 +31,6 @@ class EmailerBaseTestCase(BaseSeleniumTestCase):
         cls.emailer_main_page.get(cls.TOOL_URL)
         login_page = PinLoginPageObject(driver)
         if login_page.is_loaded():
-            login_page.login(cls.USERNAME, cls.PASSWORD)
+            login_page.login_xid(cls.USERNAME, cls.PASSWORD)
         else:
             print '(User {} already logged in to PIN)'.format(cls.USERNAME)
