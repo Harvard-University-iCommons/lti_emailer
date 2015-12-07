@@ -34,11 +34,12 @@ def generate_signature_dict():
 # prep the post body
 list_address = 'canvas-6760-2069@mg.dev.tlt.harvard.edu'
 post_body = {
-    'sender': 'Integration Test <integrationtest@example.edu>',
-    'from': settings.NO_REPLY_ADDRESS,
+    'sender': 'integrationtest@example.edu',
     'recipient': list_address,
+    'from': 'Integration Test <integrationtest@example.edu>',
     'subject': 'blah',
     'body-plain': 'blah blah',
+    'attachment-count': 1,
     'To': list_address,
 }
 post_body.update(generate_signature_dict())
@@ -49,6 +50,7 @@ if env_name not in ('dev', 'qa', 'stage'):
     env_name = 'dev'
 
 # post it
-url = 'https://lti-emailer.%s.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/' % env _name
+url = 'https://lti-emailer.%s.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/' % env_name
 resp = requests.post(url, data=post_body)
-resp.raise_for_status()
+if not resp.status_code == 400:
+    resp.raise_for_status()
