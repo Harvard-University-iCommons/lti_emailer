@@ -52,5 +52,10 @@ if env_name not in ('dev', 'qa', 'stage'):
 # post it
 url = 'https://lti-emailer.%s.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/' % env_name
 resp = requests.post(url, data=post_body)
-if not resp.status_code == 400:
+
+# we're expecting a 400 client error, since we sent a malformed POST.  if we
+# didn't get that, squawk about it.
+if resp.status_code != 400:
     resp.raise_for_status()
+
+# at this point, check splunk for 'Attachment "missing from POST"'

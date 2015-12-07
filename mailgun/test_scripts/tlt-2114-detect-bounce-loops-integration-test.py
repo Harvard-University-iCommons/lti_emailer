@@ -51,4 +51,8 @@ if env_name not in ('dev', 'qa', 'stage'):
 # post it
 url = 'https://lti-emailer.%s.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/' % env_name
 resp = requests.post(url, data=post_body)
+
+# we should get a 200 back indicating the mail has been accepted
 resp.raise_for_status()
+
+# at this point, check splunk for '"MAILGUN EVENT" dropped'
