@@ -1,12 +1,12 @@
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import EmailerBasePageObject
-from selenium_tests.lti_emailer.page_objects.emailer_member_list_page_object import CourseEmailerListPage
+# from selenium_tests.lti_emailer.page_objects.emailer_member_list_page_object import CourseEmailerListPage
 
 class EmailerMainPageLocators(object):
     PAGE_TITLE = (By.CSS_SELECTOR, "h1")
     UNAUTHORIZED_MESSAGE = (By.ID, "unauthorized_message")
-    MEMBER_LINK = (By.CSS_SELECTOR,".link-text[data-original-title=='Members emails']")
+    MEMBER_LINK = (By.PARTIAL_LINK_TEXT, "members")
 
 
 class EmailerMainPage(EmailerBasePageObject):
@@ -50,7 +50,7 @@ class EmailerMainPage(EmailerBasePageObject):
         except NoSuchElementException:
             return False
 
-        if title and 'Course Emailer' in title.get_attribute('textContent'):
+        if title and 'Course Emailer' in self.get_title():
             return True
         else:
             raise RuntimeError(
@@ -65,8 +65,8 @@ class EmailerMainPage(EmailerBasePageObject):
     def select_member_link(self):
         """
         select the course info link element and click it
-        :returns CourseSearchPageObject
+        # :returns CourseSearchPageObject
         """
         self.focus_on_tool_frame()
         self.find_element(*EmailerMainPageLocators.MEMBER_LINK).click()
-        return CourseEmailerListPage(self._driver)
+        # return CourseEmailerListPage

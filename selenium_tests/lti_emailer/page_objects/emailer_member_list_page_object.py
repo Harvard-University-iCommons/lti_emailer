@@ -4,6 +4,7 @@ from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import Ema
 
 class EmailerMainPageLocators(object):
     PAGE_TITLE = (By.CSS_SELECTOR, "h1")
+    PAGE_TITLE_TAG = (By.TAG_NAME, "title")
 
 
 class CourseEmailerListPage(EmailerBasePageObject):
@@ -17,13 +18,12 @@ class CourseEmailerListPage(EmailerBasePageObject):
         # it doesn't guaranteed that everything we expect is rendered on the
         # page, because angular fetches the data asynchronously
 
-        title = None
         try:
-            title = self.get_page_title()
+            title = self.get_title()
         except NoSuchElementException:
             return False
 
-        if title and 'Course Emailer' in title.get_attribute('textContent'):
+        if title and 'Course Emailer' in self.get_title():
             return True
         else:
             raise RuntimeError(
