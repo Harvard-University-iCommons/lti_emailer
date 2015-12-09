@@ -10,10 +10,12 @@ django-sslserver==0.15
 mock==1.3.0
 pep8==1.6.2
 flake8==2.4.1
-xlrd 
-selenium 
-ddt 
-pyvirtualdisplay 
+# selenium
+PyVirtualDisplay==0.1.5
+ddt==1.0.1
+selenium==2.48.0
+xlrd==0.9.4
+git+ssh://git@github.com/Harvard-University-iCommons/selenium_common.git@v1.0#egg=selenium-common==1.0
 
 
 # icommons_common unit tests depend on ccsw, and ccsw depends on icommons_common.
@@ -21,4 +23,4 @@ pyvirtualdisplay
 # icommons_common and into ccsw, work around the circular dependency by calling
 # out the ccsw dependency here.
 git+ssh://git@github.com/Harvard-University-iCommons/django-canvas-course-site-wizard.git@v1.3.8#egg=django-canvas-course-site-wizard==1.3.8
-git+ssh://git@github.com/Harvard-University-iCommons/selenium_common.git@v1.0#egg=selenium-common==1.0
+
