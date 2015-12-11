@@ -22,6 +22,8 @@ SELENIUM_CONFIG = {
     'selenium_grid_url': SECURE_SETTINGS.get('selenium_grid_url'),
     'canvas_base_url': SECURE_SETTINGS.get('canvas_url'),
     'run_locally': True,
-    'emailer_tool_relative_url': 'courses/6389/external_tools/1759',
+    'emailer_tool_relative_url': 'courses/6389/external_tools/',
+    'emailer_tool_id': '1759',
+    'emailer_course_id':'6389',
     'use_htmlrunner': SECURE_SETTINGS.get('selenium_use_htmlrunner', True),
 }

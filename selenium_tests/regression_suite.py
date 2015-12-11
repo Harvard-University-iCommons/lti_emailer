@@ -1,6 +1,7 @@
 import unittest
 import time
 import os
+import sys
 
 from selenium_common import HTMLTestRunner
 
@@ -9,7 +10,7 @@ def main():
     date_timestamp = time.strftime('%Y%m%d_%H_%M_%S')
 
     # set up PYTHONPATH and DJANGO_SETTINGS_MODULE.  icky, but necessary
-    os.sys.path.insert(0, os.path.abspath(
+    sys.path.insert(0, os.path.abspath(
         os.path.join(os.path.dirname(__file__), '..')))
     if not os.getenv('DJANGO_SETTINGS_MODULE'):
         os.putenv('DJANGO_SETTINGS_MODULE', 'lti_emailer.settings.local')
