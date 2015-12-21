@@ -91,6 +91,7 @@ class MailingListManager(models.Manager):
         result = []
 
         try:
+            # Check if there is a  Course list(Meta mailing list)
             course_list = mailing_lists_by_section_id.pop(None)
 
         except KeyError:
