@@ -292,7 +292,7 @@ class MailingListModelTests(TestCase):
             'is_primary': False,
             'section_id': None
         }, result[0])
-    #
+
     @patch('mailing_list.models.get_section_sis_enrollment_status')
     @patch('mailing_list.models.is_course_crosslisted')
     @patch('mailing_list.models.MailingList.objects.get')
@@ -307,8 +307,8 @@ class MailingListModelTests(TestCase):
                                                                                                        mock_xlisted,
                                                                                                        mock_get_sis_enroll_stat):
         """
-        Test that a new meta  mailing list is created even for a regular, non cross listed course.
-        The address of this new list should contain only the course id and the newly created list should have a section id of 'None'.
+        Test that a  meta  mailing list is created even for a regular, non cross listed course. The address of this new
+        list should contain only the course id and the newly created list should have a section id of 'None'.
         """
         mock_xlisted.return_value = False
         mock_get_sis_enroll_stat.return_value = 'E'
@@ -316,18 +316,11 @@ class MailingListModelTests(TestCase):
 
         sections = list(self.sections)
         mock_get_course.return_value = {
-            'course_code' : 'Test Course',
-            'sis_course_id': '786534',
+            'course_code': 'Test Course',
+            'sis_course_id': '334562',
         }
 
         mock_get_sections.return_value = sections
-
-        # append a second primary section
-        sections.append({
-            'id': None,
-            'name': 'Test Course',
-            'sis_section_id': '123456'
-        })
 
         mock_get_enrollments.return_value = []
         result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
@@ -349,6 +342,8 @@ class MailingListModelTests(TestCase):
             'is_primary': False,
             'section_id': None
         }, result[0])
+        # Assert that a course with 2 sections has a total of 3 mailing lists incuding the meta mailing list
+        self.assertEqual(3, len(result))
 
     def test_parse_address_with_course_list(self):
         """ test that _parse_address return the correct data for the course list address """
