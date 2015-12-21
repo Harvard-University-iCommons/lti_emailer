@@ -49,8 +49,23 @@ class MailingListModelTests(TestCase):
             canvas_course_id=3716,
             section_id=1583
         )
+        address_0 = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
+            canvas_course_id=3716
+        )
 
         self.assertEqual(result, [{
+             'access_level': u'members',
+            'members_count': 0,
+            'name': 'Course Mailing List',
+            'cs_class_type': None,
+            'sis_section_id': None,
+            'address': address_0,
+            'canvas_course_id': 3716,
+            'id': 3,
+            'is_course_list': True,
+            'is_primary': False,
+            'section_id': None
+            },{
             'access_level': u'members',
             'members_count': 0,
             'name': 'section name 1',
@@ -102,6 +117,9 @@ class MailingListModelTests(TestCase):
         mock_get_enrollments.return_value = []
 
         result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
+        address_0 = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
+            canvas_course_id=3716
+        )
         address_1 = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
             section_id=1582
@@ -116,6 +134,18 @@ class MailingListModelTests(TestCase):
         )
 
         self.assertEqual([{
+                'access_level': u'members',
+                'members_count': 0,
+                'name': 'Course Mailing List',
+                'cs_class_type': None,
+                'sis_section_id': None,
+                'address': address_0,
+                'canvas_course_id': 3716,
+                'id': 3,
+                'is_course_list': True,
+                'is_primary': False,
+                'section_id': None
+            },{
                 'access_level': u'members',
                 'members_count': 0,
                 'name': 'section name 1',
@@ -147,7 +177,7 @@ class MailingListModelTests(TestCase):
                 'sis_section_id': None,
                 'address': address_3,
                 'canvas_course_id': 3716,
-                'id': 3,
+                'id': 4,
                 'is_course_list': False,
                 'is_primary': False,
                 'section_id': 1584
@@ -172,12 +202,27 @@ class MailingListModelTests(TestCase):
         mock_get_enrollments.return_value = []
 
         result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
+        address_0 = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
+            canvas_course_id=3716
+        )
         address_1 = settings.LISTSERV_SECTION_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
             section_id=1582
         )
 
         self.assertEqual([{
+            'access_level': u'members',
+            'members_count': 0,
+            'name': 'Course Mailing List',
+            'cs_class_type': None,
+            'sis_section_id': None,
+            'address': address_0,
+            'canvas_course_id': 3716,
+            'id': 3,
+            'is_course_list': True,
+            'is_primary': False,
+            'section_id': None
+            },{
             'access_level': u'members',
             'members_count': 0,
             'name': 'section name 1',
@@ -229,6 +274,63 @@ class MailingListModelTests(TestCase):
         mock_get_enrollments.return_value = []
         result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
 
+        # address of the course list should be set in new mailing list
+        list_address = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
+            canvas_course_id=3716,
+        )
+
+        self.assertEqual({
+            'access_level': 'members',
+            'members_count': 0,
+            'name': 'Course Mailing List',
+            'cs_class_type': None,
+            'sis_section_id': None,
+            'address': list_address,
+            'canvas_course_id': 3716,
+            'id': 3,
+            'is_course_list': True,
+            'is_primary': False,
+            'section_id': None
+        }, result[0])
+    #
+    @patch('mailing_list.models.get_section_sis_enrollment_status')
+    @patch('mailing_list.models.is_course_crosslisted')
+    @patch('mailing_list.models.MailingList.objects.get')
+    @patch('mailing_list.models.canvas_api_client.get_course')
+    @patch('mailing_list.models.canvas_api_client.get_enrollments')
+    @patch('mailing_list.models.canvas_api_client.get_sections')
+    def test_get_or_create_or_delete_mailing_lists_for_canvas_course_id_with_non_crosslisted_course(self,
+                                                                                                       mock_get_sections,
+                                                                                                       mock_get_enrollments,
+                                                                                                       mock_get_course,
+                                                                                                       mock_get_mailinglist,
+                                                                                                       mock_xlisted,
+                                                                                                       mock_get_sis_enroll_stat):
+        """
+        Test that a new meta  mailing list is created even for a regular, non cross listed course.
+        The address of this new list should contain only the course id and the newly created list should have a section id of 'None'.
+        """
+        mock_xlisted.return_value = False
+        mock_get_sis_enroll_stat.return_value = 'E'
+        mock_get_mailinglist.side_effect = MailingList.DoesNotExist
+
+        sections = list(self.sections)
+        mock_get_course.return_value = {
+            'course_code' : 'Test Course',
+            'sis_course_id': '786534',
+        }
+
+        mock_get_sections.return_value = sections
+
+        # append a second primary section
+        sections.append({
+            'id': None,
+            'name': 'Test Course',
+            'sis_section_id': '123456'
+        })
+
+        mock_get_enrollments.return_value = []
+        result = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(3716)
         # address of the course list should be set in new mailing list
         list_address = settings.LISTSERV_COURSE_ADDRESS_FORMAT.format(
             canvas_course_id=3716,
