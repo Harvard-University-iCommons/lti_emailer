@@ -2,19 +2,22 @@ import json
 import logging
 import re
 
+from functools import wraps
+
 from django.conf import settings
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.template import Context
 from django.template.loader import get_template
+from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
 from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
+from mailgun.exceptions import HttpResponseException
 from mailgun.listserv_client import MailgunClient as ListservClient
 from mailing_list.models import MailingList, SuperSender
 
@@ -24,9 +27,34 @@ logger = logging.getLogger(__name__)
 listserv_client = ListservClient()
 
 
+def handle_exceptions():
+    def decorator(view_func):
+        @wraps(view_func, assigned=available_attrs(view_func))
+        def inner(request, *args, **kwargs):
+            try:
+                return view_func(request, *args, **kwargs)
+            except HttpResponseException as e:
+                # sometimes we need to return an error response from deep down
+                # the call stack.
+                logger.exception(
+                    u'HttpResponseException thrown by route handler, returning '
+                    u'its encapsulated response %s.  POST data: %s',
+                    e.response, json.dumps(request.POST, sort_keys=True))
+                return e.response
+            except:
+                logger.exception(
+                    u'Unhandled exception; aborting. POST data:\n%s\n',
+                    json.dumps(request.POST, sort_keys=True))
+                # tell Mailgun we're unhappy with message and to retry later
+                return JsonResponse({'success': False}, status=500)
+        return inner
+    return decorator
+
+
 @csrf_exempt
 @authenticate()
 @require_http_methods(['POST'])
+@handle_exceptions()
 def handle_mailing_list_email_route(request):
     '''
     Handles the Mailgun route action when email is sent to a Mailgun mailing list.
@@ -35,20 +63,22 @@ def handle_mailing_list_email_route(request):
     '''
     logger.debug(u'Full mailgun post: %s', request.POST)
 
+    from_ = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     recipients = set(address.parse_list(request.POST.get('recipient')))
-    sender = request.POST.get('sender')
+    sender = address.parse(request.POST.get('sender'))
     subject = request.POST.get('subject')
 
-    logger.info(u'Handling Mailgun mailing list email from %s to %s, '
-                u'subject %s, message id %s',
-                sender, recipients, subject, message_id)
+    logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
+                u'%s, subject %s, message id %s',
+                from_, sender, recipients, subject, message_id)
 
-    # temporary hack to stop looping with an HKS alias
-    parsed_sender = address.parse(sender)
-    sender_address = parsed_sender.address.lower()
-    if sender_address == 'dpi-801b@hks.harvard.edu':
-        logger.warning('Received email from dpi-801b@hks.harvard.edu - skipping without sending a bounce.')
+    # short circuit if we detect a bounce loop
+    sender_address = sender.address.lower() if sender else ''
+    from_address = from_.address.lower() if from_ else ''
+    if settings.NO_REPLY_ADDRESS.lower() in (sender_address, from_address):
+        logger.error(u'Caught a bounce loop, dropping it. POST data:\n%s\n',
+                     json.dumps(request.POST))
         return JsonResponse({'success': True})
 
     for recipient in recipients:
@@ -62,11 +92,7 @@ def handle_mailing_list_email_route(request):
                                u"for %s, but we've already handled that.  "
                                u'Skipping.', recipient, message_id)
                 continue
-
-        try:
-            _handle_recipient(request, recipient)
-        except JsonResponse as error_response:
-            return error_response
+        _handle_recipient(request, recipient)
 
     return JsonResponse({'success': True})
 
@@ -82,6 +108,7 @@ def _handle_recipient(request, recipient):
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = address.parse_list(request.POST.get('Cc'))
+    parsed_from = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     sender = request.POST.get('sender')
     subject = request.POST.get('subject')
@@ -135,7 +162,6 @@ def _handle_recipient(request, recipient):
     # out the address from the display name.
     parsed_sender = address.parse(sender)
     sender_address = parsed_sender.address.lower()
-    sender_display_name = parsed_sender.display_name
 
     # any validation that fails will set the bounce template
     bounce_back_email_template = None
@@ -179,21 +205,13 @@ def _handle_recipient(request, recipient):
         if title_prefix not in subject:
             subject = title_prefix + ' ' + subject
 
-    # we want to add 'via Canvas' to the sender's name.  so first make
-    # sure we know their name.
-    logger.debug(u'Original sender name: %s, address: %s',
-                 sender_display_name, sender_address)
-    if not sender_display_name:
-        name = get_name_for_email(ml.canvas_course_id, sender_address)
-        if name:
-            sender_display_name = name
-            logger.debug(u'Looked up sender name: %s, address: %s',
-                         sender_display_name, sender_address)
-
-    # now add in 'via Canvas'
+    # we want to add 'via Canvas' to the sender's name.  do our best to figure
+    # it out, then add 'via Canvas' as long as we could.
+    logger.debug(u'Original sender: %s, original from: %s', sender, parsed_from)
+    sender_display_name = _get_sender_display_name(parsed_sender, parsed_from, ml)
     if sender_display_name:
         sender_display_name += ' via Canvas'
-    logger.debug(u'Final sender name: %s, address: %s',
+    logger.debug(u'Final sender name: %s, sender address: %s',
                  sender_display_name, sender_address)
 
     # make sure inline images actually show up inline, since fscking
@@ -228,7 +246,7 @@ def _handle_recipient(request, recipient):
             u'Error attempting to send message from %s to %s, originally '
             u'sent to list %s, with subject %s', parsed_sender.full_spec(),
             member_addresses, ml.address, subject)
-        raise JsonResponse({'success': False}, status=500)
+        raise
 
     return JsonResponse({'success': True})
 
@@ -255,7 +273,19 @@ def _get_attachments_inlines(request):
 
     for n in xrange(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
-        file_ = request.FILES[attachment_name]
+        try:
+            file_ = request.FILES[attachment_name]
+        except KeyError:
+            logger.exception(u'Mailgun POST claimed to have %s attachments, '
+                             u'but %s is missing',
+                             attachment_count, attachment_name)
+            raise HttpResponseException(JsonResponse(
+                      {
+                          'message': 'Attachment {} missing from POST'.format(
+                                         attachment_name),
+                          'success': False,
+                      },
+                      status=400))
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
@@ -264,6 +294,26 @@ def _get_attachments_inlines(request):
             attachments.append(file_)
 
     return attachments, inlines
+
+
+def _get_sender_display_name(parsed_sender, parsed_from, ml):
+    sender_display_name = parsed_sender.display_name
+
+    # first, try getting it from the "From" field
+    if not sender_display_name:
+        if parsed_sender.address == parsed_from.address:
+            sender_display_name = parsed_from.display_name
+
+    # fall back on looking up the enrollment, won't work for anyone not
+    # enrolled in the course (ie. supersenders, globally sendable lists).
+    if not sender_display_name:
+        name = get_name_for_email(ml.canvas_course_id, parsed_sender.address)
+        if name:
+            sender_display_name = name
+            logger.debug(u'Looked up display name for sender: %s, found: %s',
+                         parsed_sender.address, sender_display_name)
+
+    return sender_display_name
 
 
 def _send_bounce(template_path, sender, recipient, subject, body, message_id):
