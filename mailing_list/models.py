@@ -90,37 +90,37 @@ class MailingListManager(models.Manager):
         overrides = kwargs.get('defaults', {})
         result = []
 
-        if is_course_crosslisted(sis_course_id):
-            try:
-                course_list = mailing_lists_by_section_id.pop(None)
-            except KeyError:
-                course_list = None
+        try:
+            # Check if there is a  Course list(Meta mailing list)
+            course_list = mailing_lists_by_section_id.pop(None)
+        except KeyError:
+            course_list = None
 
-            if not course_list:
-                create_kwargs = {
-                    'canvas_course_id': canvas_course_id,
-                    'section_id': None
-                }
-                create_kwargs.update(overrides)
-                course_list = MailingList(**create_kwargs)
-                course_list.save()
+        if not course_list:
+            create_kwargs = {
+                'canvas_course_id': canvas_course_id,
+                'section_id': None
+            }
+            create_kwargs.update(overrides)
+            course_list = MailingList(**create_kwargs)
+            course_list.save()
 
-            # if there is a course_list, add it to the result list so
-            # it can be used by the template.
-            if course_list:
-                result.append({
-                    'id': course_list.id,
-                    'canvas_course_id': course_list.canvas_course_id,
-                    'sis_section_id': None,
-                    'section_id': course_list.section_id,
-                    'name': 'Course Mailing List',
-                    'address': course_list.address,
-                    'access_level': course_list.access_level,
-                    'members_count': len(course_list.members),
-                    'is_course_list': True,
-                    'cs_class_type': None,
-                    'is_primary': False,
-                })
+        # if there is a course_list, add it to the result list so
+        # it can be used by the template.
+        if course_list:
+            result.append({
+                'id': course_list.id,
+                'canvas_course_id': course_list.canvas_course_id,
+                'sis_section_id': None,
+                'section_id': course_list.section_id,
+                'name': 'Course Mailing List',
+                'address': course_list.address,
+                'access_level': course_list.access_level,
+                'members_count': len(course_list.members),
+                'is_course_list': True,
+                'cs_class_type': None,
+                'is_primary': False,
+            })
 
         for s in canvas_sections:
             section_id = s['id']
