@@ -20,9 +20,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--account-id', required=True,
-                            help='Canvas account id (e.g. 29) or SIS account ID (e.g. sis_account_id:school:hls)')
-        parser.add_argument('--enrollment-term-id', nargs='*', required=True,
-                            help='Canvas enrollment term id (e.g. 1234) or SIS term ID (e.g. sis_term_id:2015-2)')
+                            help='Canvas account id (e.g. 29) or SIS account ID \
+                                  (e.g. sis_account_id:school:hls)')
+        parser.add_argument('--enrollment-term-id', nargs='+', required=True,
+                            help='Canvas enrollment term id (e.g. 1234) or SIS term ID \
+                                  (e.g. sis_term_id:2015-2)')
         parser.add_argument('--output-file', type=argparse.FileType('w'),
                             help='File to output mailing list details to')
 
@@ -38,7 +40,7 @@ class Command(BaseCommand):
                 pass
             except RuntimeError as e:
                 raise CommandError(str(e))
-        
+
         course_lists, failures = {}, {}
         num_lists = 0
         defaults = {'access_level': MailingList.ACCESS_LEVEL_MEMBERS}
