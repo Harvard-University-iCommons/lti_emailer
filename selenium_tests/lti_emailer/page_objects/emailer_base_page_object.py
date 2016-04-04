@@ -8,7 +8,6 @@ class EmailerBasePageObject(BasePageObject):
     def __init__(self, driver):
         super(EmailerBasePageObject, self).__init__(driver)
         try:
-            # self._driver.switch_to.frame(self._driver.find_element_by_id("tool_content"))
             self.focus_on_tool_frame()
         except NoSuchElementException:
             pass
