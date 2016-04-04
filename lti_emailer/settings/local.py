@@ -18,9 +18,9 @@ dictConfig(LOGGING)
 
 SELENIUM_CONFIG = {
     'canvas_base_url': SECURE_SETTINGS.get('canvas_url'),
-    'emailer_course_id':'6389',
-    'emailer_tool_id': '1759',
-    'emailer_tool_relative_url': 'courses/6389/external_tools/',
+    'emailer_course_id':'27',
+    'emailer_tool_id': '141',
+    'emailer_tool_relative_url': 'courses/27/external_tools/',
     'icommons_rest_api': {
         'base_path': 'api/course/v2'
     },

@@ -1,4 +1,3 @@
-import unittest
 from selenium_tests.lti_emailer.emailer_base_test_case import EmailerBaseTestCase
 from selenium_tests.lti_emailer.page_objects.emailer_member_list_page_object import CourseEmailerListPage
 
@@ -9,6 +8,3 @@ class CheckMemberPage(EmailerBaseTestCase):
         course_emailer_page = CourseEmailerListPage(self.driver)
         emailer_main_page.select_member_link()
         self.assertTrue(course_emailer_page.is_loaded())
-
-if __name__ == "__main__":
-    unittest.main()
