@@ -41,7 +41,6 @@ base_post = {
     'sender': 'Integration Test <integrationtest@example.edu>',
     'from': settings.NO_REPLY_ADDRESS,
     'recipient': list_address,
-    'subject': 'blah',
     'To': list_address,
 }
 base_post.update(generate_signature_dict())
@@ -57,6 +56,7 @@ posts = []
 for body in bodies:
     post = copy.deepcopy(base_post)
     post.update(body)
+    post['subject'] = 'empty body test where body="{}"'.format(json.dumps(body))
     posts.append(post)
 
 # figure out which server to post to
