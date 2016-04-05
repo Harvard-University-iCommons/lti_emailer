@@ -43,6 +43,11 @@ class MailgunClient(object):
             'to': to_address,
         }
 
+        # mailgun rejects emails with empty text and html bodies.  if both
+        # are empty, use a single space as the text body to work around that.
+        if not html and not text:
+            payload['text'] = ' '
+
         # include the message-id header if we got it
         if message_id:
             payload['Message-Id'] = message_id
