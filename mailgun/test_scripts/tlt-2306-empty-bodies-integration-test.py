@@ -32,14 +32,19 @@ def generate_signature_dict():
         'signature': signature
     }
 
+# figure out which server to post to
+env_name = settings.ENV_NAME
+if env_name not in ('dev', 'qa', 'stage'):
+    env_name = 'dev'
+
 # NOTE: this list contains only test accounts, and should be configured as
 #       world sendable
-list_address = 'canvas-206-3824@mg.dev.tlt.harvard.edu'
+list_address = 'canvas-206-3824@mg.{}.tlt.harvard.edu'.format(env_name)
 
 # prep the base post body, which has no body params at all
 base_post = {
-    'sender': 'Integration Test <integrationtest@example.edu>',
-    'from': settings.NO_REPLY_ADDRESS,
+    'sender': 'integrationtest@example.edu',
+    'from': 'Integration Test <integrationtest@example.edu>',
     'recipient': list_address,
     'To': list_address,
 }
@@ -58,11 +63,6 @@ for body in bodies:
     post.update(body)
     post['subject'] = 'empty body test where body="{}"'.format(json.dumps(body))
     posts.append(post)
-
-# figure out which server to post to
-env_name = settings.ENV_NAME
-if env_name not in ('dev', 'qa', 'stage'):
-    env_name = 'dev'
 
 # do the posts 
 url = 'https://lti-emailer.%s.tlt.harvard.edu/mailgun/handle_mailing_list_email_route/' % env_name
