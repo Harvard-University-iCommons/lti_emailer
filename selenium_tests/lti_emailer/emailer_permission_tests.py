@@ -17,6 +17,7 @@ class EmailerPermissionTests(EmailerBaseTestCase):
 
         self.masquerade_page.masquerade_as(user_id)
         self.emailer_main_page.get(self.TOOL_URL)
+
         if given_access == 'no':
             self.assertFalse(
                 self.emailer_main_page.is_authorized(),
