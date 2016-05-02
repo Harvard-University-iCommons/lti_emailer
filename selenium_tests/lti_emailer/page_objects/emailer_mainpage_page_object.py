@@ -1,72 +1,38 @@
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+
 from selenium.webdriver.common.by import By
 from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import EmailerBasePageObject
-# from selenium_tests.lti_emailer.page_objects.emailer_member_list_page_object import CourseEmailerListPage
 
-class EmailerMainPageLocators(object):
-    PAGE_TITLE = (By.CSS_SELECTOR, "h1")
+
+class Locators(object):
     UNAUTHORIZED_MESSAGE = (By.ID, "unauthorized_message")
     MEMBER_LINK = (By.PARTIAL_LINK_TEXT, "members")
+    MAILING_LISTS_ID = (By.ID, "course-mailing-lists")
 
 
 class EmailerMainPage(EmailerBasePageObject):
+    page_loaded_locator = Locators.MAILING_LISTS_ID
 
     def is_authorized(self):
-        # frame context stickiness is a bit flaky for some reason, so make sure
-        # we're in the tool_content frame context before checking for elements
-        self.focus_on_tool_frame()
-        # todo: this would be quicker if we can look for a specific indication
-        #       of authorized, e.g. check is_loaded() before
-        #       UNAUTHORIZED_MESSAGE
+
         try:
-            self.find_element(*EmailerMainPageLocators.UNAUTHORIZED_MESSAGE)
+            self.focus_on_tool_frame()
+            self.find_element(*Locators.UNAUTHORIZED_MESSAGE)
         except NoSuchElementException:
 
-            #unauthorized message not found, we should see main page header
-
-            if self.is_loaded():
-                return True
-            else:
-                raise RuntimeError(
-                    'Could not determine if user was authorized to access '
-                    'Emailer main page: no unauthorized message, but page '
-                    'not loaded as expected.'
-                )
+            # unauthorized message not found, we should see main page header
+            return True
 
         # we found the unauthorized message, so we're explicitly unauthorized
         return False
 
-    def is_loaded(self):
-        # Note: this just checks that the breadcrumb title is displayed;
-        # it doesn't guaranteed that everything we expect is rendered on the
-        # page, because angular fetches the data asynchronously
-
-        # frame context stickiness is a bit flaky for some reason, so make sure
-        # we're in the tool_content frame context before checking for elements
-        self.focus_on_tool_frame()
-        title = None
-        try:
-            title = self.find_element(*EmailerMainPageLocators.PAGE_TITLE)
-        except NoSuchElementException:
-            return False
-
-        if title and 'Course Emailer' in self.get_title():
-            return True
-        else:
-            raise RuntimeError(
-                'Could not determine if Emailer main page loaded as expected;'
-                'title element was found but did not contain expected text'
-            )
-
     def get_member_link(self):
-        element = self.find_element(*EmailerMainPageLocators.MEMBER_LINK)
+        element = self.find_element(*Locators.MEMBER_LINK)
         return element
 
     def select_member_link(self):
         """
         select the course info link element and click it
-        # :returns CourseSearchPageObject
         """
-        self.focus_on_tool_frame()
-        self.find_element(*EmailerMainPageLocators.MEMBER_LINK).click()
-        # return CourseEmailerListPage
+        self.find_element(*Locators.MEMBER_LINK).click()

@@ -8,7 +8,7 @@ from icommons_common.canvas_utils import UnicodeCSVWriter
 
 from lti_emailer.canvas_api_client import get_courses_for_account_in_term
 from mailing_list.models import MailingList
-
+from canvas_sdk.exceptions import CanvasAPIError
 
 OUTPUT_FIELDS = ['id', 'sis_course_id', 'name', 'course_code']
 
@@ -19,20 +19,27 @@ class Command(BaseCommand):
     help = 'Activates all mailing lists for a given account and enrollment term'
 
     def add_arguments(self, parser):
-        parser.add_argument('--account-id', type=int, required=True,
-                            help='Canvas account id')
-        parser.add_argument('--enrollment-term-id', type=int, required=True,
-                            help='Canvas enrollment term id')
+        parser.add_argument('--account-id', required=True,
+                            help='Canvas account id (e.g. 29) or SIS account ID \
+                                  (e.g. sis_account_id:school:hls)')
+        parser.add_argument('--enrollment-term-id', nargs='+', required=True,
+                            help='Canvas enrollment term id (e.g. 1234) or SIS term ID \
+                                  (e.g. sis_term_id:2015-2)')
         parser.add_argument('--output-file', type=argparse.FileType('w'),
                             help='File to output mailing list details to')
 
     def handle(self, *args, **options):
-        try:
-            courses = get_courses_for_account_in_term(
-                options['account_id'], options['enrollment_term_id']
-            )
-        except RuntimeError as e:
-            raise CommandError(str(e))
+        courses = []
+        for term_id in options['enrollment_term_id']:
+            try:
+                courses += get_courses_for_account_in_term(
+                    options['account_id'], term_id
+                ) or []
+            except CanvasAPIError as e:
+                # don't raise the error
+                pass
+            except RuntimeError as e:
+                raise CommandError(str(e))
 
         course_lists, failures = {}, {}
         num_lists = 0

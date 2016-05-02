@@ -17,13 +17,16 @@ DEBUG_TOOLBAR_CONFIG = {
 dictConfig(LOGGING)
 
 SELENIUM_CONFIG = {
-    'selenium_username': SECURE_SETTINGS.get('selenium_user'),
-    'selenium_password': SECURE_SETTINGS.get('selenium_password'),
-    'selenium_grid_url': SECURE_SETTINGS.get('selenium_grid_url'),
     'canvas_base_url': SECURE_SETTINGS.get('canvas_url'),
-    'run_locally': True,
-    'emailer_tool_relative_url': 'courses/6389/external_tools/',
-    'emailer_tool_id': '1759',
-    'emailer_course_id':'6389',
+    'emailer_course_id':'27',
+    'emailer_tool_id': '141',
+    'emailer_tool_relative_url': 'courses/27/external_tools/',
+    'icommons_rest_api': {
+        'base_path': 'api/course/v2'
+    },
+    'run_locally': SECURE_SETTINGS.get('selenium_run_locally', False),
+    'selenium_grid_url': SECURE_SETTINGS.get('selenium_grid_url'),
+    'selenium_password': SECURE_SETTINGS.get('selenium_password'),
+    'selenium_username': SECURE_SETTINGS.get('selenium_user'),
     'use_htmlrunner': SECURE_SETTINGS.get('selenium_use_htmlrunner', True),
 }

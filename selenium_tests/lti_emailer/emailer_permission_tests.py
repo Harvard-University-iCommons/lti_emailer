@@ -1,10 +1,7 @@
-import unittest
-
 from ddt import ddt, data, unpack
 
 from selenium_common.base_test_case import get_xl_data
 from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ADD_USERS
-from selenium_common.masquerade.canvas_masquerade_page_object import CanvasMasqueradePageObject
 from selenium_tests.lti_emailer.emailer_base_test_case import \
     EmailerBaseTestCase
 
@@ -18,20 +15,20 @@ class EmailerPermissionTests(EmailerBaseTestCase):
         # CANVAS_ADD_USERS (Excel spreadsheet) then validates if the users
         # are granted/denied access based on their role.
 
-        emailer_main_page = self.emailer_main_page
-        masquerade_page = CanvasMasqueradePageObject(self.driver, self.CANVAS_BASE_URL)
-        masquerade_page.masquerade_as(user_id)
-        emailer_main_page.get(self.TOOL_URL)
+        self.masquerade_page.masquerade_as(user_id)
+        self.emailer_main_page.get(self.TOOL_URL)
+
         if given_access == 'no':
             self.assertFalse(
-                emailer_main_page.is_authorized(),
-                'User {} unexpectedly authorized'.format(user_id)
+                self.emailer_main_page.is_authorized(),
+                'User {} has been authorized, '
+                'but should not be.'.format(user_id)
             )
 
         elif given_access == 'yes':
             self.assertTrue(
-                emailer_main_page.is_authorized(),
-                'User {} not authorized as expected'.format(user_id)
+                self.emailer_main_page.is_authorized(),
+                'User {} not authorized, but should be.'.format(user_id)
             )
 
         else:
@@ -39,6 +36,3 @@ class EmailerPermissionTests(EmailerBaseTestCase):
                 'given_access column for user {} must be either \'yes\' or '
                 '\'no\''.format(user_id)
             )
-
-if __name__ == "__main__":
-    unittest.main()

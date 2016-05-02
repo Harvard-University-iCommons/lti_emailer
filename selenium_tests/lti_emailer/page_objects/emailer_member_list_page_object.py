@@ -1,13 +1,16 @@
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import EmailerBasePageObject
+from selenium_tests.lti_emailer.page_objects.emailer_base_page_object \
+    import EmailerBasePageObject
 
 class EmailerMainPageLocators(object):
     PAGE_TITLE = (By.CSS_SELECTOR, "h1")
     PAGE_TITLE_TAG = (By.TAG_NAME, "title")
+    MEMBER_LIST_ID = (By.ID, "members-list")
 
 
 class CourseEmailerListPage(EmailerBasePageObject):
+    page_loaded_locator = EmailerMainPageLocators.MEMBER_LIST_ID
 
     def is_loaded(self):
         """
