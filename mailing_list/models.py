@@ -185,6 +185,7 @@ class MailingList(models.Model):
     modified_by = models.CharField(max_length=32)
     date_created = models.DateTimeField(blank=True, default=timezone.now)
     date_modified = models.DateTimeField(blank=True, default=timezone.now)
+    alwaysMailStaff = models.BooleanField(default=True)
 
     objects = MailingListManager()
 

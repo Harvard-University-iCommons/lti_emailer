@@ -141,11 +141,16 @@ def _handle_recipient(request, recipient):
             u'course id %s, so we cannot prepend a short title to the '
             u'email subject, or check the super senders.', ml.canvas_course_id)
 
-    # get the list of staff and member addresses.  always include staff addresses
-    # in the members list, so they can send to any list in the course, and receive
-    # all mail for the course.
+    # conditionally include staff addresses in the members list. If alwaysMailStaff is true
+    # all staff will receive the email
     teaching_staff_addresses = ml.teaching_staff_addresses
-    member_addresses = teaching_staff_addresses.union(
+    if ml.alwaysMailStaff:
+        member_addresses = teaching_staff_addresses.union(
+                           [m['address'].lower() for m in ml.members])
+
+    # create a list of staff plus members to use to check permissions against
+    # so all staff can still email all lists
+    staff_plus_members = teaching_staff_addresses.union(
                            [m['address'].lower() for m in ml.members])
 
     # if we can, grab the list of super senders
@@ -170,7 +175,7 @@ def _handle_recipient(request, recipient):
     if sender_address not in super_senders:
         if ml.access_level == MailingList.ACCESS_LEVEL_EVERYONE:
             pass
-        elif sender_address not in member_addresses:
+        elif sender_address not in staff_plus_members:
             # NOTE: list access is minimally ACCESS_LEVEL_MEMBERS at this point,
             #       so we want to let them know the email they sent from isn't
             #       a member of the list.
