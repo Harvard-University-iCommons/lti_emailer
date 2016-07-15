@@ -15,10 +15,38 @@
     });
   });
 
-  app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
+  // todo: can remove $q service after connecting to backend
+  app.controller('MailingListController',
+      ['$http', '$timeout', 'djangoUrl', '$q',
+      function($http, $timeout, $djangoUrl, $q){
     var ml = this;
     var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
+    var URL_SETTINGS = $djangoUrl.reverse('mailing_list:api_course_settings');
 
+    ml.alerts = {
+      course: {
+        settingsUpdated: {
+          true: {
+            type: 'alert-success',
+            message: 'From now on, any email sent to a section will be delivered to members of that section <strong>and to all staff in the course</strong>.'
+          },
+          false: {
+            type: 'alert-success',
+            message: 'From now on, any email sent to a section will be delivered <strong>only to members of that section</strong>.'
+          },
+          failure: {
+            type: 'alert-danger',
+            message: 'Your setting was not applied. Please try again.'
+          }
+        }
+      }
+    };
+    ml.courseSettings = {
+      alert: null,
+      isUpdating: false,
+      formValues: null,  // stores values displayed by UI
+      values: null  // stores server-sourced values
+    };
     ml.isLoading = true;
     ml.isUpdating = false;
     ml.courseList = [];
@@ -64,8 +92,7 @@
       ml.accessLevelDescriptionMap[accessLevel.id] = accessLevel.description;
     }
 
-    $http.get(URL_LISTS).success(function(data){
-      ml.isLoading = false;
+    var listsPromise = $http.get(URL_LISTS).success(function(data){
       var length = data.length;
       var course_list_member_count = 0;
       var list;
@@ -81,6 +108,18 @@
           ml.enrollmentSectionLists.push(list);
         }
       }
+    });
+
+    // todo: change to $http.get(URL_SETTINGS) when the backend is set up
+    var settingsPromise = $q(function(resolve, reject) {
+      setTimeout(function() { resolve({data: {alwaysMailStaff: true}}); }, 1000);
+    }).then(function getCourseSettingsSuccess(response) {
+      ml.courseSettings.values = angular.copy(response.data);
+      ml.courseSettings.formValues = angular.copy(response.data);
+    });
+
+    $q.all([listsPromise, settingsPromise]).then(function initialDataLoaded() {
+      ml.isLoading = false;
       ml.loaded = true;
     });
 
@@ -125,6 +164,26 @@
           $timeout(function(){
             list.update_failed = false;
           }, 2000);
+        });
+    };
+
+    ml.updateCourseSettings = function() {
+      ml.courseSettings.isUpdating = true;
+      var url = $djangoUrl.reverse('mailing_list:api_update_course_settings');
+      // todo: use $http.put(url, courseSettings) instead of this temp promise
+      var mockBackendInteraction = $q(function(resolve, reject) {
+        setTimeout(function() {
+          Math.random() >= 0.5 ? resolve({data: ml.courseSettings.formValues}) : reject();
+        }, 1000);
+      }).then(function putCourseSettingsSuccess(response) {
+          ml.courseSettings.values = angular.copy(response.data);
+          ml.courseSettings.formValues = angular.copy(response.data);
+          ml.courseSettings.alert = ml.alerts.course.settingsUpdated[response.data.alwaysMailStaff];
+        }, function putCourseSettingsFailure(response) {
+          ml.courseSettings.formValues = angular.copy(ml.courseSettings.values);
+          ml.courseSettings.alert = ml.alerts.course.settingsUpdated.failure;
+        }).finally(function putCourseSettingsFinally(response) {
+          ml.courseSettings.isUpdating = false;
         });
     };
 
