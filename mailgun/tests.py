@@ -315,17 +315,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            'Unit Test via Canvas',
-            'unittest@example.edu',
-            ['teacher@example.edu', 'student@example.edu', 'unittest@example.edu'],
-            '[Lorem For Beginners] blah',
+            u'Unit Test via Canvas',
+            u'unittest@example.edu',
+            ['teacher@example.edu', 'unittest@example.edu', 'student@example.edu'],
+            u'[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=['class-list@example.edu', 'bogus@example.edu'],
-            text='blah blah'
+            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
+            text=u'blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
 

@@ -168,6 +168,17 @@ class MailingListManager(models.Manager):
         return result
 
 
+class CourseSettings(models.Model):
+    canvas_course_id = models.IntegerField()
+    alwaysMailStaff = models.NullBooleanField(null=True, default=True)
+    modified_by = models.CharField(null=True, max_length=32)
+    date_created = models.DateTimeField(null=True, default=timezone.now)
+    date_modified = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = 'ml_course_settings'
+
+
 class MailingList(models.Model):
     """
     This model tracks mailing lists created on a third-party listserv service.
@@ -179,13 +190,13 @@ class MailingList(models.Model):
     ACCESS_LEVEL_STAFF = 'staff'
 
     canvas_course_id = models.IntegerField()
+    course_settings = models.ForeignKey(CourseSettings, null=True)
     section_id = models.IntegerField(null=True)
     access_level = models.CharField(max_length=32, default='members')
     created_by = models.CharField(max_length=32)
     modified_by = models.CharField(max_length=32)
     date_created = models.DateTimeField(blank=True, default=timezone.now)
     date_modified = models.DateTimeField(blank=True, default=timezone.now)
-    alwaysMailStaff = models.BooleanField(default=True)
 
     objects = MailingListManager()
 
