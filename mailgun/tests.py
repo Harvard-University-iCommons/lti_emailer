@@ -343,7 +343,7 @@ class RouteHandlerRegressionTests(TestCase):
         # prep a MailingList mock
         members = [{'address': a} for a in ['student@example.edu', 'unittest@example.edu']]
 
-        cs = MagicMock(alwaysMailStaff=False)
+        cs = MagicMock(always_mail_staff=False)
 
         ml = MagicMock(
             canvas_course_id=123,
@@ -410,7 +410,7 @@ class RouteHandlerRegressionTests(TestCase):
         # prep a MailingList mock
         members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
 
-        cs = MagicMock(alwaysMailStaff=True)
+        cs = MagicMock(always_mail_staff=True)
 
         ml = MagicMock(
             canvas_course_id=123,
