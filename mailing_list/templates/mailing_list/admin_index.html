@@ -82,7 +82,7 @@ $(document).ready(function(){
 
     <div class="row" ng-show="ml.courseSettings.formValues">
       <div class="col-md-12">
-        <h2>Global Mailing List Settings</h2>
+        <h3>Change the Global Settings for All Section Mailing Lists</h3>
       </div>
       <div class="col-md-12">
         <div class="radio">
@@ -118,7 +118,7 @@ $(document).ready(function(){
       </div>
     </div>
 
-    <div class="row" ng-show="ml.courseSettings.isUpdating">
+    <div class="row loading-indicator-row" ng-show="ml.courseSettings.isUpdating">
       <div class="col-md-12">
         <div class="loading-indicator text-center">
           <img src="{% static 'images/ajax-loader-large.gif' %}"/>
@@ -136,19 +136,13 @@ $(document).ready(function(){
       </div>
     </div>
 
-    <div class="row" ng-show="ml.courseSettings.formValues">
-      <div class="col-md-12">
-        <hr>
-      </div>
-    </div>
-
-    <div class="row">
+    <div class="row section-list-row">
       <div class="btn-group col-md-12">
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
           <div class="panel panel-default" ng-show="ml.hasNonEnrollmentSections()">
             <div class="panel-heading" role="tab" id="headingOne">
               <h4 class="panel-title">
-                <a class="collapsed"
+                <a class="section-list-toggle collapsed"
                  role="button"
                  data-toggle="collapse"
                  data-parent="#accordion"
@@ -182,47 +176,51 @@ $(document).ready(function(){
                 </div>
               </div>
             </div>
-            </div>
-          <br />
-          <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-            <div class="panel panel-default" ng-show="ml.hasMultipleEnrollmentSections()">
-              <div class="panel-heading" role="tab" id="headingOne">
-                <h4 class="panel-title">
-                  <a class="collapsed"
-                   role="button"
-                   data-toggle="collapse"
-                   data-parent="#accordion"
-                   href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                    <ng-pluralize count="ml.enrollmentSectionLists.length"
-                        when="{'0': 'No Sections', '1': 'Email Registrar Enrollment', 'other': 'Email Registrar Enrollments'}">
-                  </ng-pluralize>
-                  </a>
-                </h4>
-              </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-              <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
-                <div class="panel-body">
-                  <div class="col-md-12">
-                    <p class="caption" ng-show="ml.hasCourseEmailList()">
-                      This course site includes enrollment from two or more courses.
-                      <a target="_blank"
-                       href="https://wiki.harvard.edu/confluence/pages/viewpage.action?pageId=189597345"
-                       class="lti-tooltip"
-                       rel="tooltip"
-                       data-toggle="tooltip"
-                       title=""
-                       data-original-title="More info about cross listed courses">
-                        <i class="fa fa-question-circle"></i>
-                      </a>
-                    </p>
-                    <p class="caption">
-                      The lists below reflect enrollments from the Registrar’s office and will be updated automatically.
-                      Any email sent to a list will be delivered to members of that list <b>and to all staff in the course.</b>
-                    </p>
-                  </div>
-                  <div  ng-repeat="list in ml.enrollmentSectionLists">
-                    {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
-                  </div>
+    <div class="row section-list-row">
+      <div class="btn-group col-md-12">
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+          <div class="panel panel-default" ng-show="ml.hasMultipleEnrollmentSections()">
+            <div class="panel-heading" role="tab" id="headingOne">
+              <h4 class="panel-title">
+                <a class="section-list-toggle collapsed"
+                 role="button"
+                 data-toggle="collapse"
+                 data-parent="#accordion"
+                 href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                  <ng-pluralize count="ml.enrollmentSectionLists.length"
+                      when="{'0': 'No Sections', '1': 'Email Registrar Enrollment', 'other': 'Email Registrar Enrollments'}">
+                </ng-pluralize>
+                </a>
+              </h4>
+            </div>
+
+            <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+              <div class="panel-body">
+                <div class="col-md-12">
+                  <p class="caption" ng-show="ml.hasCourseEmailList()">
+                    This course site includes enrollment from two or more courses.
+                    <a target="_blank"
+                     href="https://wiki.harvard.edu/confluence/pages/viewpage.action?pageId=189597345"
+                     class="lti-tooltip"
+                     rel="tooltip"
+                     data-toggle="tooltip"
+                     title=""
+                     data-original-title="More info about cross listed courses">
+                      <i class="fa fa-question-circle"></i>
+                    </a>
+                  </p>
+                  <p class="caption">
+                    The lists below reflect enrollments from the Registrar’s office and will be updated automatically.
+                    Any email sent to a list will be delivered to members of that list <b>and to all staff in the course.</b>
+                  </p>
+                </div>
+                <div  ng-repeat="list in ml.enrollmentSectionLists">
+                  {% include "mailing_list/_mailing_list_details.html" with scope="class" %}
                 </div>
               </div>
             </div>
