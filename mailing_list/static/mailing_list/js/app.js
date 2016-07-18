@@ -15,7 +15,6 @@
     });
   });
 
-  // todo: can remove $q service after connecting to backend
   app.controller('MailingListController',
       ['$http', '$timeout', 'djangoUrl', '$q',
       function($http, $timeout, $djangoUrl, $q){
@@ -110,13 +109,11 @@
       }
     });
 
-    // todo: change to $http.get(URL_SETTINGS) when the backend is set up
-    var settingsPromise = $q(function(resolve, reject) {
-      setTimeout(function() { resolve({data: {alwaysMailStaff: true}}); }, 1000);
-    }).then(function getCourseSettingsSuccess(response) {
-      ml.courseSettings.values = angular.copy(response.data);
-      ml.courseSettings.formValues = angular.copy(response.data);
-    });
+    var settingsPromise = $http.get(URL_SETTINGS)
+      .then(function getCourseSettingsSuccess(response) {
+        ml.courseSettings.values = angular.copy(response.data);
+        ml.courseSettings.formValues = angular.copy(response.data);
+      });
 
     $q.all([listsPromise, settingsPromise]).then(function initialDataLoaded() {
       ml.isLoading = false;
@@ -169,16 +166,11 @@
 
     ml.updateCourseSettings = function() {
       ml.courseSettings.isUpdating = true;
-      var url = $djangoUrl.reverse('mailing_list:api_update_course_settings');
-      // todo: use $http.put(url, courseSettings) instead of this temp promise
-      var mockBackendInteraction = $q(function(resolve, reject) {
-        setTimeout(function() {
-          Math.random() >= 0.5 ? resolve({data: ml.courseSettings.formValues}) : reject();
-        }, 1000);
-      }).then(function putCourseSettingsSuccess(response) {
+      $http.put(URL_SETTINGS, ml.courseSettings.formValues)
+        .then(function putCourseSettingsSuccess(response) {
           ml.courseSettings.values = angular.copy(response.data);
           ml.courseSettings.formValues = angular.copy(response.data);
-          ml.courseSettings.alert = ml.alerts.course.settingsUpdated[response.data.alwaysMailStaff];
+          ml.courseSettings.alert = ml.alerts.course.settingsUpdated[response.data.always_mail_staff];
         }, function putCourseSettingsFailure(response) {
           ml.courseSettings.formValues = angular.copy(ml.courseSettings.values);
           ml.courseSettings.alert = ml.alerts.course.settingsUpdated.failure;
