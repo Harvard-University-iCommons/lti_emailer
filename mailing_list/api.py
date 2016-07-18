@@ -103,28 +103,24 @@ def get_or_create_course_settings(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
     canvas_course_id = request.LTI['custom_canvas_course_id']
 
-    if request.method == 'PUT':
-        always_mail_staff_flag = json.loads(request.body)['always_mail_staff']
-        try:
-            (course_settings, created) = CourseSettings.objects.get_or_create(canvas_course_id=canvas_course_id)
-            course_settings.alwaysMailStaff = always_mail_staff_flag
+    try:
+        (course_settings, created) = CourseSettings.objects.get_or_create(
+            canvas_course_id=canvas_course_id)
+        if request.method == 'GET' and not created:
+            pass  # just return data, don't update/save record with timestamp
+        else:
+            if request.method == 'PUT':
+                always_mail_staff_flag = json.loads(request.body)[
+                    'always_mail_staff']
+                course_settings.alwaysMailStaff = always_mail_staff_flag
             course_settings.modified_by = logged_in_user_id
             course_settings.save()
-            cache.delete(settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % mailing_list.canvas_course_id)
-        except Exception:
-            message = u"Failed to get_or_create CourseSettings for course %s" % canvas_course_id
-            logger.exception(message)
-            return create_json_500_response(message)
-
-    if request.method == 'GET':
-        try:
-            (course_settings, created) = CourseSettings.objects.get_or_create(canvas_course_id=canvas_course_id)
-            course_settings.modified_by = logged_in_user_id
-            course_settings.save()
-        except Exception:
-            message = u"Failed to get_or_create CourseSettings for course %s" % canvas_course_id
-            logger.exception(message)
-            return create_json_500_response(message)
+            cache.delete(
+                settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id)
+    except Exception:
+        message = u"Failed to get_or_create CourseSettings for course %s" % canvas_course_id
+        logger.exception(message)
+        return create_json_500_response(message)
 
     result = {
         'canvas_course_id': course_settings.canvas_course_id,
@@ -132,4 +128,3 @@ def get_or_create_course_settings(request):
     }
 
     return create_json_200_response(result)
-
