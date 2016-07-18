@@ -143,10 +143,10 @@ def _handle_recipient(request, recipient):
 
     member_addresses = set([m['address'].lower() for m in ml.members])
 
-    # conditionally include staff addresses in the members list. If alwaysMailStaff is true
+    # conditionally include staff addresses in the members list. If always_mail_staff is true
     # all staff will receive the email
     teaching_staff_addresses = ml.teaching_staff_addresses
-    if ml.course_settings and ml.course_settings.alwaysMailStaff:
+    if ml.course_settings and ml.course_settings.always_mail_staff:
         member_addresses = member_addresses.union(teaching_staff_addresses)
     elif ml.course_settings == None:
         member_addresses = member_addresses.union(teaching_staff_addresses)

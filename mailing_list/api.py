@@ -112,7 +112,7 @@ def get_or_create_course_settings(request):
             if request.method == 'PUT':
                 always_mail_staff_flag = json.loads(request.body)[
                     'always_mail_staff']
-                course_settings.alwaysMailStaff = always_mail_staff_flag
+                course_settings.always_mail_staff = always_mail_staff_flag
             course_settings.modified_by = logged_in_user_id
             course_settings.save()
             cache.delete(
@@ -124,7 +124,7 @@ def get_or_create_course_settings(request):
 
     result = {
         'canvas_course_id': course_settings.canvas_course_id,
-        'always_mail_staff': course_settings.alwaysMailStaff,
+        'always_mail_staff': course_settings.always_mail_staff,
     }
 
     return create_json_200_response(result)

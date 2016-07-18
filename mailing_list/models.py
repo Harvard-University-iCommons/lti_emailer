@@ -170,7 +170,7 @@ class MailingListManager(models.Manager):
 
 class CourseSettings(models.Model):
     canvas_course_id = models.IntegerField()
-    alwaysMailStaff = models.NullBooleanField(null=True, default=True)
+    always_mail_staff = models.NullBooleanField(null=True, default=True)
     modified_by = models.CharField(null=True, max_length=32)
     date_created = models.DateTimeField(null=True, default=timezone.now)
     date_modified = models.DateTimeField(null=True, default=timezone.now)

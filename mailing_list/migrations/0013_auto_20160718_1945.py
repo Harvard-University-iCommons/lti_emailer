@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('canvas_course_id', models.IntegerField()),
-                ('alwaysMailStaff', models.NullBooleanField(default=True)),
+                ('always_mail_staff', models.NullBooleanField(default=True)),
                 ('modified_by', models.CharField(max_length=32, null=True)),
                 ('date_created', models.DateTimeField(default=django.utils.timezone.now, null=True)),
                 ('date_modified', models.DateTimeField(default=django.utils.timezone.now, null=True)),
