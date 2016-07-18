@@ -87,17 +87,17 @@ def set_access_level(request, mailing_list_id):
     return create_json_200_response(result)
 
 
-#@login_required
-#@lti_role_required(const.TEACHING_STAFF_ROLES)
-#@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
+@login_required
+@lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(['GET', 'PUT'])
 def get_or_create_course_settings(request):
     """
     :param request:
     :return: JSON response
     """
-    logged_in_user_id = '20533064' #request.LTI['lis_person_sourcedid']
-    canvas_course_id = 214 #request.LTI['custom_canvas_course_id']
+    logged_in_user_id = request.LTI['lis_person_sourcedid']
+    canvas_course_id = request.LTI['custom_canvas_course_id']
 
     if request.method == 'PUT':
         always_mail_staff_flag = json.loads(request.body)['always_mail_staff']
