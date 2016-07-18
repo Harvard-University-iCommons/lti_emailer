@@ -269,7 +269,7 @@ class RouteHandlerRegressionTests(TestCase):
     @patch('mailgun.route_handlers.SuperSender.objects.filter')
     @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
-    def test_multi_mailing_list_recipients(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+    def test_multi_mailing_list_recipients_with_course_settings_none(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         '''
         TLT-2066
         Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
@@ -277,12 +277,14 @@ class RouteHandlerRegressionTests(TestCase):
         '''
         # prep a MailingList mock
         members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
+
         ml = MagicMock(
             canvas_course_id=123,
             section_id=456,
             teaching_staff_addresses={'teacher@example.edu'},
             members=members,
-            address='class-list@example.edu'
+            address='class-list@example.edu',
+            course_settings=None
         )
         mock_ml_get.return_value = ml
 
@@ -318,6 +320,140 @@ class RouteHandlerRegressionTests(TestCase):
             u'Unit Test via Canvas',
             u'unittest@example.edu',
             ['teacher@example.edu', 'unittest@example.edu', 'student@example.edu'],
+            u'[Lorem For Beginners] blah',
+            attachments=[],
+            html='',
+            inlines=[],
+            message_id=None,
+            original_cc_address=[],
+            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
+            text=u'blah blah'
+        )
+        ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
+
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_multi_mailing_list_recipients_with_always_mail_staff_false(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+        '''
+        TLT-2066
+        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+        request param
+        '''
+        # prep a MailingList mock
+        members = [{'address': a} for a in ['student@example.edu', 'unittest@example.edu']]
+
+        cs = MagicMock(alwaysMailStaff=False)
+
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher1@example.edu', 'teacher2@example.edu'},
+            members=members,
+            address='class-list@example.edu',
+            course_settings=cs
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        recipients = ', '.join([ml.address, 'bogus@example.edu'])
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'recipient': recipients,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': recipients
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+        send_mail_call = call(
+            u'Unit Test via Canvas',
+            u'unittest@example.edu',
+            ['unittest@example.edu', 'student@example.edu'],
+            u'[Lorem For Beginners] blah',
+            attachments=[],
+            html='',
+            inlines=[],
+            message_id=None,
+            original_cc_address=[],
+            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
+            text=u'blah blah'
+        )
+        ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
+
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_multi_mailing_list_recipients_with_always_mail_staff_true(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+        '''
+        TLT-2066
+        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+        request param
+        '''
+        # prep a MailingList mock
+        members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
+
+        cs = MagicMock(alwaysMailStaff=True)
+
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher1@example.edu', 'teacher2@example.edu'},
+            members=members,
+            address='class-list@example.edu',
+            course_settings=cs
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        recipients = ', '.join([ml.address, 'bogus@example.edu'])
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'recipient': recipients,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': recipients
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+        send_mail_call = call(
+            u'Unit Test via Canvas',
+            u'unittest@example.edu',
+            ['teacher1@example.edu', 'teacher2@example.edu', 'unittest@example.edu', 'student@example.edu'],
             u'[Lorem For Beginners] blah',
             attachments=[],
             html='',

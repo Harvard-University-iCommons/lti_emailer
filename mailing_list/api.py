@@ -93,8 +93,12 @@ def set_access_level(request, mailing_list_id):
 @require_http_methods(['GET', 'PUT'])
 def get_or_create_course_settings(request):
     """
+    method allows both GET and PUT requests. If GET is used, we will try to get the object
+    if the object does not exist, it will be created with default values.
+    If put is used, we will try to get the object
+    if the object does not exist, it will be created and the put value will be used instead of the default.
     :param request:
-    :return: JSON response
+    :return: JSON response of the course settings object
     """
     logged_in_user_id = request.LTI['lis_person_sourcedid']
     canvas_course_id = request.LTI['custom_canvas_course_id']
