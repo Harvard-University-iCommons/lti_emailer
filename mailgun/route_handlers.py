@@ -19,7 +19,7 @@ from lti_emailer.canvas_api_client import get_name_for_email
 from mailgun.decorators import authenticate
 from mailgun.exceptions import HttpResponseException
 from mailgun.listserv_client import MailgunClient as ListservClient
-from mailing_list.models import MailingList, SuperSender
+from mailing_list.models import MailingList, SuperSender, CourseSettings
 
 
 logger = logging.getLogger(__name__)
@@ -141,11 +141,22 @@ def _handle_recipient(request, recipient):
             u'course id %s, so we cannot prepend a short title to the '
             u'email subject, or check the super senders.', ml.canvas_course_id)
 
-    # get the list of staff and member addresses.  always include staff addresses
-    # in the members list, so they can send to any list in the course, and receive
-    # all mail for the course.
+    member_addresses = set([m['address'].lower() for m in ml.members])
+
+    # conditionally include staff addresses in the members list. If alwaysMailStaff is true
+    # all staff will receive the email
     teaching_staff_addresses = ml.teaching_staff_addresses
-    member_addresses = teaching_staff_addresses.union(
+    if ml.course_settings and ml.course_settings.alwaysMailStaff:
+        member_addresses = member_addresses.union(teaching_staff_addresses)
+    elif ml.course_settings == None:
+        member_addresses = member_addresses.union(teaching_staff_addresses)
+        # if the course settings object does not exist create it, this equates to True
+        ml.course_settings = CourseSettings.objects.create(canvas_course_id=ml.canvas_course_id)
+        ml.save()
+
+    # create a list of staff plus members to use to check permissions against
+    # so all staff can email all lists
+    staff_plus_members = teaching_staff_addresses.union(
                            [m['address'].lower() for m in ml.members])
 
     # if we can, grab the list of super senders
@@ -170,7 +181,7 @@ def _handle_recipient(request, recipient):
     if sender_address not in super_senders:
         if ml.access_level == MailingList.ACCESS_LEVEL_EVERYONE:
             pass
-        elif sender_address not in member_addresses:
+        elif sender_address not in staff_plus_members:
             # NOTE: list access is minimally ACCESS_LEVEL_MEMBERS at this point,
             #       so we want to let them know the email they sent from isn't
             #       a member of the list.
