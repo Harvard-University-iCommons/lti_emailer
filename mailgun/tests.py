@@ -272,9 +272,9 @@ class RouteHandlerRegressionTests(TestCase):
     def test_multi_mailing_list_recipients_with_course_settings_none(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         '''
         TLT-1943
-        Verifies that all staff is included on emails when the value of course_settings is none. This is the same
-        behavior as the default value of true. We don't want to break existing behavior for lists that have no set
-        the always_mail_staff flag.
+        Verifies that always_mail_staff is set to True in course settings for the course when
+        course settings in None to start. This is the default behavior, if a course settings object does not
+        exist, one will be created and always_mail_staff will be set to True by default.
         request param
         '''
         # prep a MailingList mock
@@ -318,20 +318,7 @@ class RouteHandlerRegressionTests(TestCase):
         # run the view, verify success
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
-        send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'unittest@example.edu',
-            ['teacher@example.edu', 'unittest@example.edu', 'student@example.edu'],
-            u'[Lorem For Beginners] blah',
-            attachments=[],
-            html='',
-            inlines=[],
-            message_id=None,
-            original_cc_address=[],
-            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
-            text=u'blah blah'
-        )
-        ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
+        self.assertTrue(ml.course_settings.always_mail_staff)
 
     @patch('mailgun.route_handlers.SuperSender.objects.filter')
     @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
