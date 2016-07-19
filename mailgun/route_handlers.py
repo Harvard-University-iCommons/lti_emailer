@@ -143,20 +143,23 @@ def _handle_recipient(request, recipient):
 
     member_addresses = set([m['address'].lower() for m in ml.members])
 
-    # conditionally include staff addresses in the members list. If always_mail_staff is true
-    # all staff will receive the email
+    # conditionally include staff addresses in the members list. If
+    # always_mail_staff is true all staff will receive the email
     teaching_staff_addresses = ml.teaching_staff_addresses
 
-    # if the course settings object does not exist create it, this equates to True
-    print('ml.course_settings: {}'.format(ml.course_settings))
+    # if the course settings object does not exist create it to initialize the
+    # defaults
     if ml.course_settings is None:
-        # we need to call get or create here as there might already be a setting for the
-        # course in question that has not been applied to this list yet
-        course_settings, created = CourseSettings.objects.get_or_create(canvas_course_id=ml.canvas_course_id)
+        # we need to call get or create here as there might already be a setting
+        # for the course in question that has not been applied to this list yet
+        course_settings, created = CourseSettings.objects.get_or_create(
+            canvas_course_id=ml.canvas_course_id)
         ml.course_settings = course_settings
         ml.save()
 
-    if ml.course_settings and ml.course_settings.always_mail_staff:
+    # for non-full-course-mailing lists, only include teachers from other
+    # sections if the course settings say to do so
+    if ml.is_course_list and ml.course_settings.always_mail_staff:
         member_addresses = member_addresses.union(teaching_staff_addresses)
 
     # create a list of staff plus members to use to check permissions against

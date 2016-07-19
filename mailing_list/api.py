@@ -68,7 +68,6 @@ def set_access_level(request, mailing_list_id):
 
         mailing_list = MailingList.objects.get(id=mailing_list_id)
         mailing_list.modified_by = logged_in_user_id
-        mailing_list.date_modified = timezone.now()
         mailing_list.access_level = access_level
         mailing_list.save()
 
