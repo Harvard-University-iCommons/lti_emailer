@@ -149,7 +149,7 @@ def _handle_recipient(request, recipient):
 
     # if the course settings object does not exist create it, this equates to True
     print('ml.course_settings: {}'.format(ml.course_settings))
-    if ml.course_settings == None:
+    if ml.course_settings is None:
         # we need to call get or create here as there might already be a setting for the
         # course in question that has not been applied to this list yet
         course_settings, created = CourseSettings.objects.get_or_create(canvas_course_id=ml.canvas_course_id)
