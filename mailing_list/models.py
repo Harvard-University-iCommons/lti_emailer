@@ -169,10 +169,10 @@ class MailingListManager(models.Manager):
 
 
 class CourseSettings(models.Model):
-    canvas_course_id = models.IntegerField()
+    canvas_course_id = models.IntegerField(primary_key=True)
     always_mail_staff = models.NullBooleanField(null=True, default=True)
     modified_by = models.CharField(null=True, max_length=32)
-    date_created = models.DateTimeField(null=True, default=timezone.now)
+    date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(null=True, default=timezone.now)
 
     class Meta:
@@ -195,7 +195,7 @@ class MailingList(models.Model):
     access_level = models.CharField(max_length=32, default='members')
     created_by = models.CharField(max_length=32)
     modified_by = models.CharField(max_length=32)
-    date_created = models.DateTimeField(blank=True, default=timezone.now)
+    date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(blank=True, default=timezone.now)
 
     objects = MailingListManager()

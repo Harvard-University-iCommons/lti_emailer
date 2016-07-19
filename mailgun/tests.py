@@ -271,8 +271,10 @@ class RouteHandlerRegressionTests(TestCase):
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_multi_mailing_list_recipients_with_course_settings_none(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         '''
-        TLT-2066
-        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+        TLT-1943
+        Verifies that all staff is included on emails when the value of course_settings is none. This is the same
+        behavior as the default value of true. We don't want to break existing behavior for lists that have no set
+        the always_mail_staff flag.
         request param
         '''
         # prep a MailingList mock
@@ -336,8 +338,8 @@ class RouteHandlerRegressionTests(TestCase):
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
     def test_multi_mailing_list_recipients_with_always_mail_staff_false(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         '''
-        TLT-2066
-        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+        TLT-1943
+        Verifies that all staff is NOT included on emails when the value of course_settings is FALSE.
         request param
         '''
         # prep a MailingList mock
@@ -405,6 +407,10 @@ class RouteHandlerRegressionTests(TestCase):
         '''
         TLT-2066
         Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+
+        TLT-1943
+        Verifies that all staff is included on emails when the value of course_settings is TRUE. This is the same
+        behavior as the NONE value.
         request param
         '''
         # prep a MailingList mock
