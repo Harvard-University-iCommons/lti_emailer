@@ -16,6 +16,16 @@ DEBUG_TOOLBAR_CONFIG = {
 
 dictConfig(LOGGING)
 
+# REST API info needed for selenium_common
+ICOMMONS_REST_API_TOKEN = SECURE_SETTINGS.get('icommons_rest_api_token')
+ICOMMONS_REST_API_HOST = SECURE_SETTINGS.get('icommons_rest_api_host')
+
+# Allows the REST API passthrough to successfully negotiate an SSL session
+# with an unverified certificate, e.g. the one that ships with django-sslserver
+# Default to False, but if testing locally, set to True
+ICOMMONS_REST_API_SKIP_CERT_VERIFICATION = SECURE_SETTINGS.get(
+            'icommons_rest_api_skip_cert_verification', False)
+
 SELENIUM_CONFIG = {
     'canvas_base_url': SECURE_SETTINGS.get('canvas_url'),
     'emailer_course_id':'27',

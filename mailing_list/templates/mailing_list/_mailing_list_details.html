@@ -1,11 +1,14 @@
 {% load static %}
 
-<div class="col-md-12">
-    <hr width="98%">
+<div class="row">
+  <div class="col-md-12">
+    <hr>
+  </div>
 </div>
 
 {% verbatim %}
 <!-- 4 column row  -->
+<div class="row">
 <!-- column 1 -->
 <div class="col-md-3">
   <p>
@@ -51,6 +54,7 @@
 <!-- column 4 -->
 <div class="col-md-1 editMenu">
     {% verbatim %}
+  <span class="pull-left">
     <a href="#"
        class="editSection lti-tooltip"
        rel="tooltip"
@@ -61,11 +65,13 @@
        data-original-title="Edit mailing list permission">
         <i class="fa fa-gear"></i>
     </a>
+  </span>
     {% endverbatim %}
     <img src="{% static 'images/ajax-loader-small.gif' %}" ng-show="list.isUpdating" class="ng-hide">
     <span class="text-success feedback ng-hide" ng-show="list.updated">✓</span>
     <span class="text-danger feedback ng-hide" ng-show="list.update_failed">✗</span>
 </div>
+</div><!-- .row -->
 
 
 <!-- Modal -->

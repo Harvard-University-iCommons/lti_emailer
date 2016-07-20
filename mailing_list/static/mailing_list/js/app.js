@@ -15,10 +15,37 @@
     });
   });
 
-  app.controller('MailingListController', ['$http', '$timeout', 'djangoUrl', function($http, $timeout, $djangoUrl){
+  app.controller('MailingListController',
+      ['$http', '$timeout', 'djangoUrl', '$q',
+      function($http, $timeout, $djangoUrl, $q){
     var ml = this;
     var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
+    var URL_SETTINGS = $djangoUrl.reverse('mailing_list:api_course_settings');
 
+    ml.alerts = {
+      course: {
+        settingsUpdated: {
+          true: {
+            type: 'alert-success',
+            message: 'From now on, any email sent to a section will be delivered to members of that section <strong>and to all staff in the course</strong>.'
+          },
+          false: {
+            type: 'alert-success',
+            message: 'From now on, any email sent to a section will be delivered <strong>only to members of that section</strong>.'
+          },
+          failure: {
+            type: 'alert-danger',
+            message: 'Your setting was not applied. Please try again.'
+          }
+        }
+      }
+    };
+    ml.courseSettings = {
+      alert: null,
+      isUpdating: false,
+      formValues: null,  // stores values displayed by UI
+      values: null  // stores server-sourced values
+    };
     ml.isLoading = true;
     ml.isUpdating = false;
     ml.courseList = [];
@@ -64,8 +91,7 @@
       ml.accessLevelDescriptionMap[accessLevel.id] = accessLevel.description;
     }
 
-    $http.get(URL_LISTS).success(function(data){
-      ml.isLoading = false;
+    var listsPromise = $http.get(URL_LISTS).success(function(data){
       var length = data.length;
       var course_list_member_count = 0;
       var list;
@@ -81,6 +107,16 @@
           ml.enrollmentSectionLists.push(list);
         }
       }
+    });
+
+    var settingsPromise = $http.get(URL_SETTINGS)
+      .then(function getCourseSettingsSuccess(response) {
+        ml.courseSettings.values = angular.copy(response.data);
+        ml.courseSettings.formValues = angular.copy(response.data);
+      });
+
+    $q.all([listsPromise, settingsPromise]).then(function initialDataLoaded() {
+      ml.isLoading = false;
       ml.loaded = true;
     });
 
@@ -88,11 +124,24 @@
       return ml.courseList.length > 0;
     };
 
+    ml.hasMultipleSections = function() {
+      // returns true if there are any sections other than the primary section
+      // (which contains the full course enrollment, teachers + students)
+      return ml.hasMultipleEnrollmentSections() || ml.hasNonEnrollmentSections();
+    };
+
     ml.hasMultipleEnrollmentSections = function() {
+      // All courses have at least one section, the primary section (which
+      // corresponds to the full course enrollment list for the primary course)
+      // This returns true if there are other registrar-fed or secondary
+      // cross-listed sections.
       return ml.enrollmentSectionLists.length > 1;
     };
 
     ml.hasNonEnrollmentSections = function() {
+      // Returns true if course is associated with manually created sections
+      // (Canvas-only sections created using Canvas section tool or Harvard
+      // Manage Sections tool)
       return ml.nonEnrollmentSectionLists.length > 0;
     };
 
@@ -128,6 +177,21 @@
         });
     };
 
+    ml.updateCourseSettings = function() {
+      ml.courseSettings.isUpdating = true;
+      $http.put(URL_SETTINGS, ml.courseSettings.formValues)
+        .then(function putCourseSettingsSuccess(response) {
+          ml.courseSettings.values = angular.copy(response.data);
+          ml.courseSettings.formValues = angular.copy(response.data);
+          ml.courseSettings.alert = ml.alerts.course.settingsUpdated[response.data.always_mail_staff];
+        }, function putCourseSettingsFailure(response) {
+          ml.courseSettings.formValues = angular.copy(ml.courseSettings.values);
+          ml.courseSettings.alert = ml.alerts.course.settingsUpdated.failure;
+        }).finally(function putCourseSettingsFinally(response) {
+          ml.courseSettings.isUpdating = false;
+        });
+    };
+
     ml.listMembersUrl = function(list) {
       if(list.section_id) {
         return window.globals.append_resource_link_id(
@@ -137,6 +201,10 @@
         return window.globals.append_resource_link_id(
           $djangoUrl.reverse('mailing_list:list_members_no_id'));
       }
+    };
+
+    ml.showSettings = function() {
+      return (ml.courseSettings.formValues && ml.hasMultipleSections());
     };
   }]);
 })();
