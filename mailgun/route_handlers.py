@@ -157,9 +157,9 @@ def _handle_recipient(request, recipient):
         ml.course_settings = course_settings
         ml.save()
 
-    # for non-full-course-mailing lists, only include teachers from other
+    # for non-full-course mailing lists, only include teachers from other
     # sections if the course settings say to do so
-    if ml.is_course_list and ml.course_settings.always_mail_staff:
+    if ml.section_id is not None and ml.course_settings.always_mail_staff:
         member_addresses = member_addresses.union(teaching_staff_addresses)
 
     # create a list of staff plus members to use to check permissions against
