@@ -124,11 +124,24 @@
       return ml.courseList.length > 0;
     };
 
+    ml.hasMultipleSections = function() {
+      // returns true if there are any sections other than the primary section
+      // (which contains the full course enrollment, teachers + students)
+      return ml.hasMultipleEnrollmentSections() || ml.hasNonEnrollmentSections();
+    };
+
     ml.hasMultipleEnrollmentSections = function() {
+      // All courses have at least one section, the primary section (which
+      // corresponds to the full course enrollment list for the primary course)
+      // This returns true if there are other registrar-fed or secondary
+      // cross-listed sections.
       return ml.enrollmentSectionLists.length > 1;
     };
 
     ml.hasNonEnrollmentSections = function() {
+      // Returns true if course is associated with manually created sections
+      // (Canvas-only sections created using Canvas section tool or Harvard
+      // Manage Sections tool)
       return ml.nonEnrollmentSectionLists.length > 0;
     };
 
@@ -188,6 +201,10 @@
         return window.globals.append_resource_link_id(
           $djangoUrl.reverse('mailing_list:list_members_no_id'));
       }
+    };
+
+    ml.showSettings = function() {
+      return (ml.courseSettings.formValues && ml.hasMultipleSections());
     };
   }]);
 })();
