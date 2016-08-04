@@ -269,20 +269,78 @@ class RouteHandlerRegressionTests(TestCase):
     @patch('mailgun.route_handlers.SuperSender.objects.filter')
     @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
     @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
-    def test_multi_mailing_list_recipients(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+    def test_multi_mailing_list_recipients_with_course_settings_none(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         '''
-        TLT-2066
-        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+        TLT-1943
+        Verifies that always_mail_staff is set to True in course settings for the course when
+        course settings in None to start. This is the default behavior, if a course settings object does not
+        exist, one will be created and always_mail_staff will be set to True by default.
         request param
         '''
         # prep a MailingList mock
         members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
+
         ml = MagicMock(
             canvas_course_id=123,
             section_id=456,
             teaching_staff_addresses={'teacher@example.edu'},
             members=members,
-            address='class-list@example.edu'
+            address='class-list@example.edu',
+            course_settings=None
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        recipients = ', '.join([ml.address, 'bogus@example.edu'])
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'recipient': recipients,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': recipients
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ml.course_settings.always_mail_staff)
+
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_multi_mailing_list_recipients_with_always_mail_staff_false(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+        '''
+        TLT-1943
+        Verifies that all staff is NOT included on emails when the value of course_settings is FALSE.
+        request param
+        '''
+        # prep a MailingList mock
+        members = [{'address': a} for a in ['student@example.edu', 'unittest@example.edu']]
+
+        cs = MagicMock(always_mail_staff=False)
+
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher1@example.edu', 'teacher2@example.edu'},
+            members=members,
+            address='class-list@example.edu',
+            course_settings=cs
         )
         mock_ml_get.return_value = ml
 
@@ -315,17 +373,162 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            'Unit Test via Canvas',
-            'unittest@example.edu',
-            ['teacher@example.edu', 'student@example.edu', 'unittest@example.edu'],
-            '[Lorem For Beginners] blah',
+            u'Unit Test via Canvas',
+            u'unittest@example.edu',
+            ['unittest@example.edu', 'student@example.edu'],
+            u'[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=['class-list@example.edu', 'bogus@example.edu'],
-            text='blah blah'
+            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
+            text=u'blah blah'
+        )
+        ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
+
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_course_list_does_not_check_section_settings(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+        """
+        TLT-1943
+        Verifies that MailingList.course_settings.always_mail_staff is ignored
+        for course lists. Couldn't find a way to patch set.union() for an object
+        instance in the test method, so instead this test hacks the
+        MailingList.teaching_staff_addresses to return an address which is NOT
+        a member of the list itself. This is not something that would ever
+        happen for a course list, because a course list is supposed to contain
+        everyone in the course by definition; this is just used as a way to
+        determine whether the method under test adds the teaching staff
+        addresses to the final recipient list (it should not).
+        """
+        # prep a MailingList mock
+        members = [{'address': a} for a in ['student@example.edu', 'unittest@example.edu']]
+
+        cs = MagicMock(always_mail_staff=False)
+
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=None,  # this signifies a full course list
+            teaching_staff_addresses={'teacher1@example.edu'},
+            members=members,
+            address='class-list@example.edu',
+            course_settings=cs
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        recipients = ', '.join([ml.address, 'bogus@example.edu'])
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'recipient': recipients,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': recipients
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+        send_mail_call = call(
+            u'Unit Test via Canvas',
+            u'unittest@example.edu',
+            ['unittest@example.edu', 'student@example.edu'],
+            u'[Lorem For Beginners] blah',
+            attachments=[],
+            html='',
+            inlines=[],
+            message_id=None,
+            original_cc_address=[],
+            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
+            text=u'blah blah'
+        )
+        ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
+
+    @patch('mailgun.route_handlers.SuperSender.objects.filter')
+    @patch('mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
+    @patch('mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
+    def test_multi_mailing_list_recipients_with_always_mail_staff_true(self, mock_ml_get, mock_ci_get, mock_ss_filter):
+        '''
+        TLT-2066
+        Verifies that we can handle route handler POSTs that have multiple mailing list addresses in the recipient
+
+        TLT-1943
+        Verifies that all staff is included on emails when the value of course_settings is TRUE. This is the same
+        behavior as the NONE value.
+        request param
+        '''
+        # prep a MailingList mock
+        members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
+
+        cs = MagicMock(always_mail_staff=True)
+
+        ml = MagicMock(
+            canvas_course_id=123,
+            section_id=456,
+            teaching_staff_addresses={'teacher1@example.edu', 'teacher2@example.edu'},
+            members=members,
+            address='class-list@example.edu',
+            course_settings=cs
+        )
+        mock_ml_get.return_value = ml
+
+        # prep a CourseInstance mock
+        ci = MagicMock(course_instance_id=789,
+                       canvas_course_id=ml.canvas_course_id,
+                       short_title='Lorem For Beginners',
+                       course=MagicMock(school_id='colgsas'))
+        mock_ci_get.return_value = ci
+
+        # prep the SuperSender result
+        mock_ss_filter.return_value.values_list.return_value=[]
+
+        # prep the post body
+        recipients = ', '.join([ml.address, 'bogus@example.edu'])
+        post_body = {
+            'sender': 'Unit Test <unittest@example.edu>',
+            'recipient': recipients,
+            'subject': 'blah',
+            'body-plain': 'blah blah',
+            'To': recipients
+        }
+        post_body.update(generate_signature_dict())
+
+        # prep the request
+        request = self.factory.post('/', post_body)
+        request.user = self.user
+
+        # run the view, verify success
+        response = handle_mailing_list_email_route(request)
+        self.assertEqual(response.status_code, 200)
+        send_mail_call = call(
+            u'Unit Test via Canvas',
+            u'unittest@example.edu',
+            ['teacher1@example.edu', 'teacher2@example.edu', 'unittest@example.edu', 'student@example.edu'],
+            u'[Lorem For Beginners] blah',
+            attachments=[],
+            html='',
+            inlines=[],
+            message_id=None,
+            original_cc_address=[],
+            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
+            text=u'blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
 

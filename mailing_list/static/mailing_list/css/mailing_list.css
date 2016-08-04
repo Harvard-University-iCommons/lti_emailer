@@ -1,0 +1,16 @@
+hr {
+    width: 98%
+}
+
+.loading-indicator-row {
+    margin-bottom: 20px;  /* matches .alert bottom margin */
+}
+
+.panel-heading .section-list-toggle:after {
+    font-family: 'FontAwesome';
+    content: '\f0d7'  /* .fa-caret-down */
+}
+
+.panel-heading .section-list-toggle.collapsed:after {
+    content: '\f0da'  /* .fa-caret-right */
+}
