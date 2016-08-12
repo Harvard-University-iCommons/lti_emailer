@@ -13,9 +13,9 @@ from lti_permissions.decorators import lti_permission_required
 from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
 from mailing_list.models import MailingList
 
-from icommons_common.canvas_api.helpers import roles as canvas_roles
-
 from mailing_list.utils import is_course_crosslisted
+
+from icommons_common.canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
 
 logger = logging.getLogger(__name__)
 
@@ -61,17 +61,9 @@ def list_members(request, section_id=None):
     else:
         mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id__isnull=True)
 
-    enrollments_mod = []
-    role_list = canvas_roles.get_roles_for_account_id(1)
-    enrollments_raw = get_enrollments(canvas_course_id, section_id)
-    for enrollment in enrollments_raw:
-        if enrollment['role_id'] in role_list.keys():
-            enrollment['role_label'] = role_list[enrollment['role_id']]['label']
-        else:
-            enrollment['role_label'] = enrollment['role']
-        enrollments_mod.append(enrollment)
-
-    enrollments_mod.sort(key=lambda x: x['sortable_name'])
+    enrollments = get_enrollments(canvas_course_id, section_id)
+    canvas_api_helpers_enrollments.add_role_labels_to_enrollments(enrollments)
+    enrollments.sort(key=lambda x: x['sortable_name'])
     section = get_section(canvas_course_id, section_id)
 
     if not section:
@@ -83,4 +75,4 @@ def list_members(request, section_id=None):
 
     return render(request, 'mailing_list/list_details.html',
                   {'section': section,
-                   'enrollments': enrollments_mod})
+                   'enrollments': enrollments})
