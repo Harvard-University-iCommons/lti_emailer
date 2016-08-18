@@ -20,7 +20,7 @@
 {% for enrollment_by_name in enrollments_by_name %}
     {% for enrollee in enrollment_by_name.list %} 
         <li class="list-group-item list-student {{ enrollment_by_name.grouper|lower }}">
-            <span class="studentRole">{{enrollee.role|get_enroll_type_display}}</span>
+            <span class="studentRole">{{enrollee.role_label}}</span>
             <span class="studentName">{{enrollee.sortable_name}}</span>
             <span class="label label-{{enrollee.badge_label_name|lower}}">{{enrollee.badge_label_name|upper}}</span>
             <span>

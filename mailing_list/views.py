@@ -15,6 +15,8 @@ from mailing_list.models import MailingList
 
 from mailing_list.utils import is_course_crosslisted
 
+from icommons_common.canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +62,7 @@ def list_members(request, section_id=None):
         mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id__isnull=True)
 
     enrollments = get_enrollments(canvas_course_id, section_id)
-
+    canvas_api_helpers_enrollments.add_role_labels_to_enrollments(enrollments)
     enrollments.sort(key=lambda x: x['sortable_name'])
     section = get_section(canvas_course_id, section_id)
 
