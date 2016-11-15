@@ -6,8 +6,11 @@ TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for
 import logging
 
 from django.conf import settings
+from django.core.cache import caches
 
-from canvas_sdk.methods import accounts
+from canvas_sdk.methods import (
+    accounts,
+    communication_channels)
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
@@ -20,8 +23,10 @@ from icommons_common.canvas_api.helpers import (
 from lti_permissions.verification import is_allowed
 
 
+cache = caches['shared']
 logger = logging.getLogger(__name__)
 
+CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID = "comm-channels-by-canvas-user-id_%s"
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
@@ -120,3 +125,45 @@ def get_users_in_course(canvas_course_id):
 
 def _copy_user_attributes_to_enrollment(user, enrollment):
     enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
+
+
+def get_alternate_emails_for_user_email(canvas_course_id, email_address):
+    course_users = get_users_in_course(canvas_course_id)
+    user_ids = [c['id'] for c in course_users if c['email'] == email_address]
+    # if for some reason the user appears more than once in the course,
+    # accept that; we only fail if there are no matches whatsoever
+    if len(user_ids) == 0:
+        logger.error(u'Looking up alternate mailing list users for sender {}: '
+                     u'this sender address does not match any users in the '
+                     u'course. Course users: {}'.format(email_address,
+                                                        course_users))
+        return []
+
+    result = _list_user_comm_channels(user_ids[0])
+
+    active_emails = [cc['address'] for cc in result
+                     if cc.get('type') == 'email'
+                     and cc.get('workflow_state') == 'active'
+                     and cc.get('address')]
+    logger.debug(u'Active Canvas email communication channels for sender {}: '
+                 u'{}'.format(email_address, active_emails))
+    return active_emails
+
+
+def _list_user_comm_channels(user_id, use_cache=False):
+    cache_key = CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID % user_id
+    result = cache.get(cache_key) if use_cache else None
+    if not result:
+        kwargs = {'user_id': user_id}
+        try:
+            result = get_all_list_data(
+                SDK_CONTEXT,
+                communication_channels.list_user_communication_channels,
+                **kwargs)
+        except CanvasAPIError:
+            logger.error('Unable to get communication channels for '
+                         'Canvas user {}'.format(user_id))
+            raise
+        if use_cache:
+            cache.set(cache_key, result)
+    return result
