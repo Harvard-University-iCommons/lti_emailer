@@ -18,7 +18,9 @@ from icommons_common.utils import Bunch
 from mailing_list.models import MailingList
 from mailgun.decorators import authenticate
 from mailgun.exceptions import HttpResponseException
-from mailgun.route_handlers import handle_mailing_list_email_route
+from mailgun.route_handlers import (
+    CommChannelCache,
+    handle_mailing_list_email_route)
 
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))
@@ -231,17 +233,25 @@ class RouteHandlerAccessTests(TestCase):
         """
 
         # create mock objects with the required defaults
+        self.alt_emails = []
         self.ml_mock = self._get_ml_mock()
-        self.ci_mock = self._get_ci_mock()  # depends on ml_mock
-        self.post_body = self._get_post_body()
+        self.ci_mock = self._get_ci_mock()  # depends on self.ml_mock
+
+        # create fake request
+        self.post_body = self._get_post_body()  # depends on self.ml_mock
 
         # patch the target methods with the mocks we created above
+        self.mock_get_alt_emails = self._create_patch(
+            'mailgun.route_handlers.CommChannelCache.get_for')
+        self.mock_get_alt_emails.return_value = self.alt_emails
         self.mock_get_ci = self._create_patch(
             'mailgun.route_handlers.CourseInstance.objects.get_primary_course_by_canvas_course_id')
         self.mock_get_ci.return_value = self.ci_mock
         self.mock_get_ml = self._create_patch(
             'mailgun.route_handlers.MailingList.objects.get_or_create_or_delete_mailing_list_by_address')
         self.mock_get_ml.return_value = self.ml_mock
+
+        # patch target methods that don't need defaults
         self.mock_send_bounce = self._create_patch(
             'mailgun.route_handlers._send_bounce')
         self.mock_ss = self._create_patch(
@@ -271,10 +281,10 @@ class RouteHandlerAccessTests(TestCase):
 
     def _get_post_body(self):
         post_body_template = {
-            'recipient': self.ml_mock.address,
-            'sender': 'Student X <{}>'.format(self.regular_member_address),
-            'subject': 'blah',
-            'To': self.ml_mock.address}
+            'recipient': [self.ml_mock.address],
+            'sender': ['Student X <{}>'.format(self.regular_member_address)],
+            'subject': ['blah'],
+            'To': [self.ml_mock.address]}
         post_body_template.update(generate_signature_dict())
         return post_body_template
 
@@ -283,6 +293,40 @@ class RouteHandlerAccessTests(TestCase):
         request.user = self.user
         return request
 
+
+class RouteHandlerSuperSenderTests(RouteHandlerAccessTests):
+    def test_from_is_supersender_sender_is_authorized(self):
+        """
+        for any list type (testing readonly here), mail should be
+        delivered/routed as the from address if from address is a supersender
+        and sender is one of the active email addresses in the supersender's
+        Canvas communication channels
+        """
+        send_mail_mock = self.mock_get_ml.return_value.send_mail
+
+        alternate_email = 'alt@example.edu'
+        from_display_name = 'Student'
+        self.mock_get_ml.return_value.access_level = MailingList.ACCESS_LEVEL_EVERYONE
+        self.mock_get_alt_emails.return_value = [alternate_email]
+        self.mock_ss.return_value.values_list.return_value = [self.regular_member_address]
+        self.post_body['sender'] = 'Alt Email <{}>'.format(alternate_email)
+        self.post_body['from'] = '{} <{}>'.format(from_display_name,
+                                                  self.regular_member_address)
+
+        response = handle_mailing_list_email_route(self._get_post_request())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.mock_send_bounce.call_count, 0)
+
+        # check that first two positional args to send_mail() are what we expect
+        sender_display_name = send_mail_mock.call_args[0][0]
+        sender_address = send_mail_mock.call_args[0][1]
+        expected_display_name = from_display_name + ' via Canvas'
+        self.assertEqual(sender_display_name, expected_display_name)
+        self.assertEqual(sender_address, self.regular_member_address)
+
+
+class RouteHandlerPublicListTests(RouteHandlerAccessTests):
     def test_public_list(self):
         """
         senders who are not mailing list members should be able to send to a
@@ -297,6 +341,36 @@ class RouteHandlerAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.mock_send_bounce.call_count, 0)
 
+    def test_public_list_from_is_member_sender_is_authorized(self):
+        """
+        for public lists, mail should be delivered/routed as the from address if
+        from address is a member and sender is one of the active email addresses
+        in the member's Canvas communication channels
+        """
+        send_mail_mock = self.mock_get_ml.return_value.send_mail
+
+        alternate_email = 'alt@example.edu'
+        from_display_name = 'Student'
+        self.mock_get_ml.return_value.access_level = MailingList.ACCESS_LEVEL_EVERYONE
+        self.mock_get_alt_emails.return_value = [alternate_email]
+        self.post_body['sender'] = 'Alt Email <{}>'.format(alternate_email)
+        self.post_body['from'] = '{} <{}>'.format(from_display_name,
+                                                  self.regular_member_address)
+
+        response = handle_mailing_list_email_route(self._get_post_request())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.mock_send_bounce.call_count, 0)
+
+        # check that first two positional args to send_mail() are what we expect
+        sender_display_name = send_mail_mock.call_args[0][0]
+        sender_address = send_mail_mock.call_args[0][1]
+        expected_display_name = from_display_name + ' via Canvas'
+        self.assertEqual(sender_display_name, expected_display_name)
+        self.assertEqual(sender_address, self.regular_member_address)
+
+
+class RouteHandlerReadOnlyListTests(RouteHandlerAccessTests):
     def test_read_only_list(self):
         """
         even staff list members should not be able to send to a read-only list
@@ -317,6 +391,18 @@ class RouteHandlerAccessTests(TestCase):
         self.assertEqual(bounce_back_template_arg,
                          'mailgun/email/bounce_back_readonly_list.html')
 
+    def test_super_senders_can_send_to_read_only_lists(self):
+        """ super senders _can_ send to read-only lists """
+        self.mock_get_ml.return_value.access_level = MailingList.ACCESS_LEVEL_READONLY
+        self.mock_ss.return_value.values_list.return_value = [self.regular_member_address]
+
+        response = handle_mailing_list_email_route(self._get_post_request())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.mock_send_bounce.call_count, 0)
+
+
+class RouteHandlerMembersOnlyListTests(RouteHandlerAccessTests):
     def test_members_list_sender_and_from_are_not_members(self):
         """
         incoming mail with sender and from addresses that do not match a list
@@ -345,18 +431,20 @@ class RouteHandlerAccessTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.mock_send_bounce.call_count, 0)
+        # no need to fetch valid email communication channels
+        self.assertEqual(self.mock_get_alt_emails.call_count, 0)
 
     def test_members_list_from_is_member_sender_is_authorized(self):
         """
-        for members-only lists, mail should be delivered/routed if sender is
-        not a member, from address is a member, and sender is one of the
+        for members-only lists, mail should be delivered/routed as the from
+        address if from address is a member and sender is one of the
         active email addresses in the member's Canvas communication channels
         """
         send_mail_mock = self.mock_get_ml.return_value.send_mail
 
         alternate_email = 'alt@example.edu'
         from_display_name = 'Student'
-        self.mock_get_ml.return_value._get_alternate_emails_for_user_email.return_value = [alternate_email]
+        self.mock_get_alt_emails.return_value = [alternate_email]
         self.post_body['sender'] = 'Alt Email <{}>'.format(alternate_email)
         self.post_body['from'] = '{} <{}>'.format(from_display_name,
                                                   self.regular_member_address)
@@ -375,13 +463,18 @@ class RouteHandlerAccessTests(TestCase):
 
     def test_members_list_from_is_member_sender_is_unauthorized(self):
         """
-        for members-only or staff-only lists, mail should bounce if sender is
-        not a member, from address is a member, and sender is not one of the
-        active email addresses in the member's Canvas communication channels
+        for members-only or staff-only lists from address is a member and sender
+        is not one of the active email addresses in the member's Canvas
+        communication channels, regardless of sender membership
         """
 
-        self.mock_get_ml.return_value._get_alternate_emails_for_user_email.return_value = ['alt@example.edu']
-        self.post_body['sender'] = 'Not a member <notamember@example.edu>'
+        self.mock_get_alt_emails.return_value = ['alt@example.edu']
+        # note: Teacher _is_ a valid mailing list member (part of the teaching
+        # staff addresses, but since Teacher's email address is _not_ a valid
+        # communication channel for the Student represented by the from address,
+        # this will be rejected; the code should not fall back on checking the
+        # sender address.
+        self.post_body['sender'] = 'Teacher <{}>'.format(self.staff_member_address)
         self.post_body['from'] = 'Student <{}>'.format(self.regular_member_address)
 
         response = handle_mailing_list_email_route(self._get_post_request())
@@ -393,6 +486,8 @@ class RouteHandlerAccessTests(TestCase):
         self.assertEqual(bounce_back_template_arg,
                          'mailgun/email/bounce_back_no_comm_channel_match.html')
 
+
+class RouteHandlerStaffOnlyListTests(RouteHandlerAccessTests):
     def test_staff_list_sender_is_member(self):
         """
         senders who are teaching staff list members should be able to send to a
@@ -419,9 +514,8 @@ class RouteHandlerAccessTests(TestCase):
 
         alternate_email = 'alt@example.edu'
         from_display_name = 'Staff'
-        ml = self.mock_get_ml.return_value
-        ml.access_level = MailingList.ACCESS_LEVEL_STAFF
-        ml._get_alternate_emails_for_user_email.return_value = [alternate_email]
+        self.mock_get_ml.return_value.access_level = MailingList.ACCESS_LEVEL_STAFF
+        self.mock_get_alt_emails.return_value = [alternate_email]
         self.post_body['sender'] = 'Alt Email <{}>'.format(alternate_email)
         self.post_body['from'] = '{} <{}>'.format(from_display_name,
                                                   self.staff_member_address)
@@ -436,6 +530,57 @@ class RouteHandlerAccessTests(TestCase):
         expected_display_name = from_display_name + ' via Canvas'
         self.assertEqual(sender_display_name, expected_display_name)
         self.assertEqual(sender_address, self.staff_member_address)
+
+
+class RouteHandlerMultipleRecipientAccessTests(RouteHandlerAccessTests):
+    def test_multiple_recipient_lists_use_comm_channel_caching(self):
+        """
+        when sender is not a member but from address is a member, we shouldn't
+        be fetching Canvas data more than once for the same user to determine
+        if sender is authorized for that member.
+        """
+
+        send_mail_mock = self.mock_get_ml.return_value.send_mail
+
+        alternate_email = 'alt@example.edu'
+        from_display_name = 'Student'
+        self.mock_get_alt_emails.return_value = [alternate_email]
+
+        self.post_body['sender'] = 'Alt Email <{}>'.format(alternate_email)
+        self.post_body['from'] = '{} <{}>'.format(from_display_name,
+                                                  self.regular_member_address)
+        # two unique recipients means that we'll be running through the same
+        # from/sender list authorization logic for the same twice, once for each
+        # list, so we can check whether the information has been cached.
+        recipients = [self.ml_mock.address, '2@example.edu']
+        self.assertNotEqual(*recipients)
+        self.post_body['recipient'] = [','.join(recipients)]
+
+        response = handle_mailing_list_email_route(self._get_post_request())
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(send_mail_mock.call_count, 2)  # once for each list
+        # caching done behind this call, tested in CommChannelCacheTests
+        self.assertEqual(self.mock_get_alt_emails.call_count, 2)
+
+
+class CommChannelCacheTests(TestCase):
+
+    @patch('mailgun.route_handlers.get_alternate_emails_for_user_email')
+    def test_comm_channel_caches_backend_calls(self, mock_get_alt_emails):
+        """
+        Multiple calls to the CommChannelCache for the same user return the
+        expected result but do not result in multiple backend calls.
+        """
+        expected_result = ['alt@example.edu']
+        mock_get_alt_emails.return_value = expected_result
+        ccc = CommChannelCache()
+        e_list = ['unique@example.edu', 'dupe@example.edu', 'dupe@example.edu']
+        unique_emails = len(set(e_list))
+        for email in e_list:
+            result = ccc.get_for(email)
+            self.assertEqual(result, expected_result)
+        self.assertEqual(mock_get_alt_emails.call_count, unique_emails)
 
 
 @override_settings(LISTSERV_API_KEY=str(uuid.uuid4()))

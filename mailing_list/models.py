@@ -8,7 +8,6 @@ from django.utils import timezone
 from flanker import addresslib
 
 from lti_emailer import canvas_api_client
-from lti_emailer.canvas_api_client import get_alternate_emails_for_user_email
 from mailgun.listserv_client import MailgunClient as ListservClient
 from icommons_common.models import CourseInstance
 
@@ -229,9 +228,9 @@ class MailingList(models.Model):
             if e['email'] is not None
         }
 
-    def _get_alternate_emails_for_user_email(self, sender_from):
-        emails = get_alternate_emails_for_user_email(self.canvas_course_id,
-                                                     sender_from)
+    def get_alternate_emails_for_user_email(self, sender_from):
+        emails = canvas_api_client.get_alternate_emails_for_user_email(
+            self.canvas_course_id, sender_from)
         return emails
 
     def _get_whitelist_email_set(self):

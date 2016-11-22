@@ -15,7 +15,9 @@ from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address
 
 from icommons_common.models import CourseInstance
-from lti_emailer.canvas_api_client import get_name_for_email
+from lti_emailer.canvas_api_client import (
+    get_alternate_emails_for_user_email,
+    get_name_for_email)
 from mailgun.decorators import authenticate
 from mailgun.exceptions import HttpResponseException
 from mailgun.listserv_client import MailgunClient as ListservClient
@@ -68,6 +70,7 @@ def handle_mailing_list_email_route(request):
     recipients = set(address.parse_list(request.POST.get('recipient')))
     sender = address.parse(request.POST.get('sender'))
     subject = request.POST.get('subject')
+    user_alt_email_cache = CommChannelCache()
 
     logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
                 u'%s, subject %s, message id %s',
@@ -92,12 +95,12 @@ def handle_mailing_list_email_route(request):
                                u"for %s, but we've already handled that.  "
                                u'Skipping.', recipient, message_id)
                 continue
-        _handle_recipient(request, recipient)
+        _handle_recipient(request, recipient, user_alt_email_cache)
 
     return JsonResponse({'success': True})
 
 
-def _handle_recipient(request, recipient):
+def _handle_recipient(request, recipient, user_alt_email_cache):
     '''
     The logic behind whether an email will be forwarded to list members or
     trigger a bounce email can be complicated.  A (hopefully simpler to follow)
@@ -186,28 +189,73 @@ def _handle_recipient(request, recipient):
     # from address is the actual list member and the sender address is an active
     # communication channel in Canvas for said member we will use the from
     # address instead (see logic below)
-    parsed_reply_to = parsed_sender
+    parsed_reply_to = None
 
     # any validation that fails will set the bounce template
     bounce_back_email_template = None
 
-    # if sender is a super sender or the list permission is open to everyone,
-    # proceed without checking for list membership
-    if sender_address not in super_senders \
-            and ml.access_level != MailingList.ACCESS_LEVEL_EVERYONE:
-        # NOTE: list access is minimally ACCESS_LEVEL_MEMBERS at this point
-        if sender_address not in staff_plus_members:
-            # check if email is being sent on behalf of a list member by an
-            # alternate email account
-            if not from_address or from_address not in staff_plus_members:
-                # neither of the possible sender addresses matches a list member
+    # is sender or from_ a supersender?
+    if from_address in super_senders and from_address != sender_address:
+        alt_emails = user_alt_email_cache.get_for(from_address)
+        if sender_address in alt_emails:
+            parsed_reply_to = parsed_from
+    elif sender_address in super_senders:
+        parsed_reply_to = parsed_sender
+    is_super_sender = bool(parsed_reply_to)
+
+    # is the mailing list open to everyone?
+    if not parsed_reply_to \
+            and ml.access_level == MailingList.ACCESS_LEVEL_EVERYONE:
+        parsed_reply_to = parsed_sender
+        if from_address in staff_plus_members \
+                and from_address != sender_address:
+            alt_emails = user_alt_email_cache.get_for(from_address)
+            if sender_address in alt_emails:
+                parsed_reply_to = parsed_from
+
+    if not parsed_reply_to:
+        if ml.access_level == MailingList.ACCESS_LEVEL_STAFF:
+            if from_address in teaching_staff_addresses \
+                    and from_address != sender_address:
+                # check if email is being sent on behalf of a list member by an
+                # alternate email account
+                alt_emails = user_alt_email_cache.get_for(from_address)
+                if sender_address in alt_emails:
+                    parsed_reply_to = parsed_from
+                else:
+                    # the from address matches a teaching staff list member, but
+                    # the sender address is not a valid communication channel
+                    # for that member in Canvas
+                    # * note that alternate emails are not cached by default, so
+                    # changes to a user's alternate emails in Canvas should be
+                    # recognized immediately by this handler logic
+                    logger.info(
+                        u'Sending mailing list bounce back email to sender for '
+                        u'mailing list %s because the sender address %s is not '
+                        u'one of the active email communication channels for '
+                        u'the list member matching the from address %s',
+                        recipient, sender_address, from_address)
+                    bounce_back_email_template = 'mailgun/email/bounce_back_no_comm_channel_match.html'
+            elif sender_address in teaching_staff_addresses:
+                parsed_reply_to = parsed_sender
+            else:
                 logger.info(
                     u'Sending mailing list bounce back email to sender for '
                     u'mailing list %s because neither the sender address %s '
-                    u'nor the from address %s was a member',
+                    u'nor the from address %s was a staff member',
                     recipient, sender_address, from_address)
-                bounce_back_email_template = 'mailgun/email/bounce_back_not_subscribed.html'
-            elif sender_address not in ml._get_alternate_emails_for_user_email(from_address):
+                bounce_back_email_template = 'mailgun/email/bounce_back_access_denied.html'
+
+    if not parsed_reply_to and not bounce_back_email_template:
+        # is sender or from_ a member of the list?
+        if from_address in staff_plus_members \
+                and from_address != sender_address:
+            # check if email is being sent on behalf of a list member by an
+            # alternate email account
+            alt_emails = user_alt_email_cache.get_for(from_address)
+            if sender_address in alt_emails:
+                parsed_reply_to = parsed_from
+            else:
                 # the from address matches a list member, but the sender address
                 # is not a valid communication channel for that member in Canvas
                 # * note that alternate emails are not cached by default, so
@@ -220,26 +268,25 @@ def _handle_recipient(request, recipient):
                     u'member matching the from address %s',
                     recipient, sender_address, from_address)
                 bounce_back_email_template = 'mailgun/email/bounce_back_no_comm_channel_match.html'
-            else:
-                parsed_reply_to = parsed_from
+        elif sender_address in staff_plus_members:
+            parsed_reply_to = parsed_sender
+        else:
+            # neither of the possible sender addresses matches a list member
+            logger.info(
+                u'Sending mailing list bounce back email to sender for '
+                u'mailing list %s because neither the sender address %s '
+                u'nor the from address %s was a member',
+                recipient, sender_address, from_address)
+            bounce_back_email_template = 'mailgun/email/bounce_back_not_subscribed.html'
 
-        if bounce_back_email_template is None:
-            # at this point either the sender_address or the from_address is
-            # a valid member of the course
-            if ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
-                logger.info(
-                    u'Sending mailing list bounce back email to sender '
-                    u'address %s (from address %s) for mailing list %s because '
-                    u'the list is readonly', sender_address, from_address, recipient)
-                bounce_back_email_template = 'mailgun/email/bounce_back_readonly_list.html'
-            elif ml.access_level == MailingList.ACCESS_LEVEL_STAFF \
-                    and parsed_reply_to.address.lower() not in teaching_staff_addresses:
-                logger.info(
-                    u'Sending mailing list bounce back email to sender for '
-                    u'mailing list %s because neither the sender address %s '
-                    u'nor the from address %s was a staff member',
-                    recipient, sender_address, from_address)
-                bounce_back_email_template = 'mailgun/email/bounce_back_access_denied.html'
+    if not is_super_sender and not bounce_back_email_template:
+        if ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
+            logger.info(
+                u'Sending mailing list bounce back email to sender '
+                u'address %s (from address %s) for mailing list %s because '
+                u'the list is readonly', sender_address, from_address,
+                recipient)
+            bounce_back_email_template = 'mailgun/email/bounce_back_readonly_list.html'
 
     # bounce and return if they don't have the correct permissions
     if bounce_back_email_template:
@@ -349,6 +396,35 @@ def _get_attachments_inlines(request):
             attachments.append(file_)
 
     return attachments, inlines
+
+
+class CommChannelCache(object):
+    """
+    Cache layer for Canvas calls to get alternate communication channels.
+    This could/should be replaced by caching in an appropriate object tied
+    to the mailgun event.
+
+    This really only useful if the logic in the access checking section of
+    _handle_recipient() has to request alternate emails more than
+    once for the same `from` address, e.g. when multiple mailing lists are
+    handled in a single handle_mailing_list_email_route() command invocation,
+    or if the logic eventually has pathways that could result in multiple checks
+    for the same recipient.
+    """
+    _user_map = {}
+
+    def get_for(self, email_address):
+        """
+        returns and caches a list of valid alternate emails for `email_address`.
+        Find user via search in Canvas, and determine if user
+        """
+        alt_emails = self._user_map.get(email_address)
+        if alt_emails is None:
+            alt_emails = get_alternate_emails_for_user_email(email_address)
+            self._user_map[email_address] = alt_emails
+            logger.debug(u'Caching valid alternate emails for user {}: '
+                         u'{}'.format(email_address, alt_emails))
+        return alt_emails
 
 
 def _get_sender_display_name(reply_to_address, parsed_from, ml):
