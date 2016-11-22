@@ -427,14 +427,15 @@ class CommChannelCache(object):
         return alt_emails
 
 
-def _get_sender_display_name(reply_to_address, parsed_from, ml):
+def _get_sender_display_name(parsed_reply_to, parsed_from, ml):
     # Use the user's preferred display name if provided
-    sender_display_name = reply_to_address.display_name
+    sender_display_name = parsed_reply_to.display_name
+    reply_to_address = parsed_reply_to.address.lower()
 
     # get it from the 'from' address if we don't already have it (only if the
     # from address matches the sender)
     if not sender_display_name and \
-            reply_to_address.address.lower() == parsed_from.address.lower():
+            reply_to_address == parsed_from.address.lower():
         sender_display_name = parsed_from.display_name
 
     # if we still don't have a display name, fall back on looking up the
