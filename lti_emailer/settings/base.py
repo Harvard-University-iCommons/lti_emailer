@@ -243,6 +243,11 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
+        'lti_emailer': {
+            'level': _DEFAULT_LOG_LEVEL,
+            'handlers': ['console', 'app_logfile'],
+            'propagate': False,
+        },
         'mailgun': {
             'level': _DEFAULT_LOG_LEVEL,
             'handlers': ['console', 'app_logfile'],
