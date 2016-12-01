@@ -194,8 +194,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     # any validation that fails will set the bounce template
     bounce_back_email_template = None
 
-    # is sender or from_ a supersender?
-    if from_address in super_senders and from_address != sender_address:
+    # is sender or from_address a supersender?
+    if from_address != sender_address and from_address in super_senders:
         alt_emails = user_alt_email_cache.get_for(from_address)
         if sender_address in alt_emails:
             parsed_reply_to = parsed_from
@@ -207,16 +207,16 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     if not parsed_reply_to \
             and ml.access_level == MailingList.ACCESS_LEVEL_EVERYONE:
         parsed_reply_to = parsed_sender
-        if from_address in staff_plus_members \
-                and from_address != sender_address:
+        if from_address != sender_address \
+                and from_address in staff_plus_members:
             alt_emails = user_alt_email_cache.get_for(from_address)
             if sender_address in alt_emails:
                 parsed_reply_to = parsed_from
 
     if not parsed_reply_to:
         if ml.access_level == MailingList.ACCESS_LEVEL_STAFF:
-            if from_address in teaching_staff_addresses \
-                    and from_address != sender_address:
+            if from_address != sender_address \
+                    and from_address in teaching_staff_addresses:
                 # check if email is being sent on behalf of a list member by an
                 # alternate email account
                 alt_emails = user_alt_email_cache.get_for(from_address)
@@ -248,8 +248,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     if not parsed_reply_to and not bounce_back_email_template:
         # is sender or from_ a member of the list?
-        if from_address in staff_plus_members \
-                and from_address != sender_address:
+        if from_address != sender_address \
+                and from_address in staff_plus_members:
             # check if email is being sent on behalf of a list member by an
             # alternate email account
             alt_emails = user_alt_email_cache.get_for(from_address)
@@ -411,7 +411,9 @@ class CommChannelCache(object):
     or if the logic eventually has pathways that could result in multiple checks
     for the same recipient.
     """
-    _user_map = {}
+
+    def __init__(self):
+        self._user_map = {}
 
     def get_for(self, email_address):
         """
