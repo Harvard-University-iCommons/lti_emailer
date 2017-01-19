@@ -294,6 +294,11 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                      subject, body_plain or body_html, message_id)
         return
 
+    # always send the email to the sender. Add sender to member_list(tlt-2960)
+    logger.debug(" Adding sender address  %s to the final list.",
+                 parsed_reply_to.address.lower())
+    member_addresses.union(parsed_reply_to.address.lower())
+
     # finally, we can send the email to the list
     member_addresses = list(member_addresses)
     logger.debug(u'Full list of recipients: %s', member_addresses)
