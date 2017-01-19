@@ -145,6 +145,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
             u'email subject, or check the super senders.', ml.canvas_course_id)
 
     member_addresses = set([m['address'].lower() for m in ml.members])
+    logger.debug(" length of member_addresses list :", len(member_addresses))
 
     # conditionally include staff addresses in the members list. If
     # always_mail_staff is true all staff will receive the email
@@ -295,7 +296,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
         return
 
     # always send the email to the sender. Add sender to member_list(tlt-2960)
-    logger.debug(" Adding sender address  %s to the final list.",
+    logger.debug(" Adding parsed_reply_to(sender)address to the final list.",
                  parsed_reply_to.address.lower())
     member_addresses.union(parsed_reply_to.address.lower())
 
