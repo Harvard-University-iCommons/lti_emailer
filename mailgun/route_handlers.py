@@ -294,6 +294,12 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                      subject, body_plain or body_html, message_id)
         return
 
+    # always send the email to the sender. Add 'parsed_reply_to to the
+    # member_addresses set(tlt-2960)
+    logger.debug(u'Adding parsed_reply_to (sender) address to the final '
+                 u'recipient list:%s.', parsed_reply_to.address.lower())
+    member_addresses.add(parsed_reply_to.address.lower())
+
     # finally, we can send the email to the list
     member_addresses = list(member_addresses)
     logger.debug(u'Full list of recipients: %s', member_addresses)
