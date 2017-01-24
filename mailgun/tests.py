@@ -924,8 +924,8 @@ class RouteHandlerRegressionTests(TestCase):
     def test_sender_receives_copy_when_always_mail_staff_false(self, mock_ml_get, mock_ci_get, mock_ss_filter):
         """
         TLT-2960
-        Verifies that when the  course_settings is False, the Sender gets a copy
-        of the email, even if they are not in the section
+        Verifies that when the always_mail_staff course setting is False, the
+        Sender gets a copy of the email, even if they are not in the section
         """
         members = [{'address': a} for a in ['student@example.edu', 'unittest@example.edu']]
         cs = MagicMock(always_mail_staff=False)
@@ -973,7 +973,7 @@ class RouteHandlerRegressionTests(TestCase):
         send_mail_call = call(
             u'Unit Test via Canvas',
             u'teacher1@example.edu',
-            ['teacher1@example.edu', 'unittest@example.edu', 'student@example.edu'],#sender is included in email
+            ['teacher1@example.edu', 'unittest@example.edu', 'student@example.edu'],  #sender is included in email
             u'[Lorem For Beginners] blah',
             attachments=[],
             html='',
@@ -992,13 +992,13 @@ class RouteHandlerRegressionTests(TestCase):
         """
         TLT-2960
 
-        Verifies that when the course_settings is False and the sender is in the
-        section, the Sender  doesn't get a duplicate email
+        Verifies that when the always_mail_staff course setting is False and the
+        sender is in the section, the Sender doesn't get a duplicate email
         """
         # prep a MailingList mock
-        members = [{'address': a} for a in ['teacher1@example.edu','unittest@example.edu', 'student@example.edu']]
+        members = [{'address': a} for a in ['teacher1@example.edu', 'unittest@example.edu', 'student@example.edu']]
 
-        cs = MagicMock(always_mail_staff= False)
+        cs = MagicMock(always_mail_staff=False)
 
         ml = MagicMock(
             canvas_course_id=123,
@@ -1018,11 +1018,11 @@ class RouteHandlerRegressionTests(TestCase):
         mock_ci_get.return_value = ci
 
         # prep the SuperSender result
-        mock_ss_filter.return_value.values_list.return_value=[]
+        mock_ss_filter.return_value.values_list.return_value = []
 
         # prep the post body
 
-         # send mail to a canvas section
+        # send mail to a canvas section
         recipients = (['canvas-123-456@example.edu'])
         post_body = {
             'sender': 'Unit Test <teacher1@example.edu>',
@@ -1043,7 +1043,7 @@ class RouteHandlerRegressionTests(TestCase):
         send_mail_call = call(
             u'Unit Test via Canvas',
             u'teacher1@example.edu',
-            ['teacher1@example.edu', 'student@example.edu','unittest@example.edu'],
+            ['teacher1@example.edu', 'student@example.edu', 'unittest@example.edu'],
             u'[Lorem For Beginners] blah',
             attachments=[],
             html='',
@@ -1062,13 +1062,13 @@ class RouteHandlerRegressionTests(TestCase):
         """
         TLT-2960
 
-        When the  course_settings is False,  and multiple sections are
-        simultaneously emailed, that teh sender get2 multiple emails
+        When the always_mail_staff course setting is False, and multiple
+        sections are simultaneously emailed, the sender gets multiple emails
         """
         # prep a MailingList mock, teacher not in section
         members = [{'address': a} for a in ['unittest@example.edu', 'student@example.edu']]
 
-        cs = MagicMock(always_mail_staff= False)
+        cs = MagicMock(always_mail_staff=False)
 
         ml = MagicMock(
             canvas_course_id=123,
@@ -1088,7 +1088,7 @@ class RouteHandlerRegressionTests(TestCase):
         mock_ci_get.return_value = ci
 
         # prep the SuperSender result
-        mock_ss_filter.return_value.values_list.return_value=[]
+        mock_ss_filter.return_value.values_list.return_value = []
 
         # prep the post body
 
@@ -1194,7 +1194,7 @@ class RouteHandlerRegressionTests(TestCase):
         mock_ci_get.return_value = ci
 
         # prep the SuperSender result
-        mock_ss_filter.return_value.values_list.return_value=[]
+        mock_ss_filter.return_value.values_list.return_value = []
 
         # prep the post body
         post_body = {
