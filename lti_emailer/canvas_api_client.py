@@ -138,23 +138,27 @@ def get_alternate_emails_for_user_email(email_address):
                      u'this address does not match any '
                      u'users.'.format(email_address))
         return []
-    elif len(users) > 1:
-        logger.error(u'Looking up alternate mailing list users for {}: '
-                     u'this address matches more than one user. User list: '
-                     u'{}'.format(email_address, users))
-        return []
-    logger.debug(u'Found a Canvas user with primary email address {}: '
-                 u'{}'.format(email_address, users[0]))
 
-    result = _list_user_comm_channels(users[0].get('id'))
+    logger.debug(u'Looking up alternate mailing list users for {}: '
+                 u'this address matches the following user(s). User list: '
+                 u'{}'.format(email_address, users))
 
-    active_emails = [cc.get('address') for cc in result
+    all_comm_channels = list()
+    for user in users:
+        user_comm_channels = _list_user_comm_channels(user.get('id'))
+        all_comm_channels += user_comm_channels if user_comm_channels else []
+        logger.debug(u'Communication channels for user {}: '
+                     u'{}'.format(user.get('id'), user_comm_channels))
+
+    active_emails = [cc.get('address') for cc in all_comm_channels
                      if cc.get('type') == 'email'
                      and cc.get('workflow_state') == 'active'
                      and cc.get('address')]
+    active_emails_deduped = list(set(active_emails))
     logger.debug(u'Active Canvas email communication channels for sender {}: '
-                 u'{}'.format(email_address, active_emails))
-    return active_emails
+                 u'{}'.format(email_address, active_emails_deduped))
+
+    return active_emails_deduped
 
 
 def _get_users_by_email(email_address, account_id=None, use_cache=True):
