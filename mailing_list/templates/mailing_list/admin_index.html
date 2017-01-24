@@ -40,8 +40,8 @@ $(document).ready(function(){
             This tool provides mailing lists that allow you to contact members
             of your course using an email client (e.g. Outlook, Gmail, etc.)
             as an alternative to the Canvas Inbox. You <b>must</b> send your
-            message from the email address that is set as your default in
-            Canvas or your message will not be delivered.
+            message from an email address that is listed in your Canvas user
+            account or your message will not be delivered.
               <a target="_blank"
                  href="https://wiki.harvard.edu/confluence/display/canvas/Course+Emailer "
                  class="lti-tooltip"
@@ -111,9 +111,7 @@ $(document).ready(function(){
           </label>
         </div>
         <p>
-          With either of the above options, the sender will always
-          receive a copy of the email sent to either the entire
-          course or a section.
+          Members of the course will always receive a copy of their sent email.
         </p>
       </div>
     </div>
@@ -167,9 +165,6 @@ $(document).ready(function(){
                   Any changes you make to those sections will be reflected within these lists.
                   </div>
 
-                  <p class="caption">
-                    Any email sent to a section will be delivered to members of that section <b>and to all staff in the course.</b>
-                  </p>
                 </div>
                 <div class="content-section" ng-repeat="list in ml.nonEnrollmentSectionLists">
                   {% include "mailing_list/_mailing_list_details.html" with scope="section" %}
