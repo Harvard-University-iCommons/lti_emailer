@@ -1,0 +1,11 @@
+{% extends 'mailgun/email/base.html' %}
+
+{% block content %}
+This mailing list does not recognize the email address you are
+using. This is because you are attempting to send from {{ sender }},
+which is not listed in your Canvas account.
+<a href="https://guides.instructure.com/m/4152/l/41471-how-do-i-add-an-additional-email-address-as-a-contact-method-in-canvas">
+  Add this email address to your Canvas profile
+</a>
+and then send the message again.
+{% endblock content %}

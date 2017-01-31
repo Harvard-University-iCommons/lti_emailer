@@ -6,22 +6,27 @@ TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for
 import logging
 
 from django.conf import settings
+from django.core.cache import caches
 
-from canvas_sdk.methods import accounts
+from canvas_sdk.methods import (
+    accounts,
+    communication_channels)
+from canvas_sdk.methods.users import list_users_in_account
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
 from icommons_common.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.canvas_api.helpers import (
     courses as canvas_api_helper_courses,
-    roles as canvas_api_helper_roles,
-    sections as canvas_api_helper_sections
-)
+    sections as canvas_api_helper_sections)
 from lti_permissions.verification import is_allowed
 
 
+cache = caches['shared']
 logger = logging.getLogger(__name__)
 
+CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID = "comm-channels-by-canvas-user-id_%s"
+CACHE_KEY_USER_IN_ACCOUNT_BY_SEARCH_TERM = "user-in-account-{}-by-search-term-{}"
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
@@ -120,3 +125,97 @@ def get_users_in_course(canvas_course_id):
 
 def _copy_user_attributes_to_enrollment(user, enrollment):
     enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
+
+
+def get_alternate_emails_for_user_email(email_address):
+    if not email_address or not email_address.strip():
+        return []
+
+    users = _get_users_by_email(email_address)
+    users = [u for u in users if u.get('email') == email_address]
+    if len(users) == 0:
+        logger.error(u'Looking up alternate mailing list users for {}: '
+                     u'this address does not match any '
+                     u'users.'.format(email_address))
+        return []
+
+    logger.debug(u'Looking up alternate mailing list users for {}: '
+                 u'this address matches the following user(s). User list: '
+                 u'{}'.format(email_address, users))
+
+    all_comm_channels = list()
+    for user in users:
+        user_comm_channels = _list_user_comm_channels(user.get('id'))
+        all_comm_channels += user_comm_channels if user_comm_channels else []
+        logger.debug(u'Communication channels for user {}: '
+                     u'{}'.format(user.get('id'), user_comm_channels))
+
+    active_emails = [cc.get('address') for cc in all_comm_channels
+                     if cc.get('type') == 'email'
+                     and cc.get('workflow_state') == 'active'
+                     and cc.get('address')]
+    active_emails_deduped = list(set(active_emails))
+    logger.debug(u'Active Canvas email communication channels for sender {}: '
+                 u'{}'.format(email_address, active_emails_deduped))
+
+    return active_emails_deduped
+
+
+def _get_users_by_email(email_address, account_id=None, use_cache=True):
+    if not email_address or not email_address.strip():
+        return []
+
+    if account_id is None:
+        account_id = '1'  # account ID for root account in Canvas
+    cache_key = CACHE_KEY_USER_IN_ACCOUNT_BY_SEARCH_TERM.format(account_id,
+                                                                email_address)
+    result = cache.get(cache_key) if use_cache else None
+    if not result:
+        kwargs = {'search_term': email_address, 'include': 'email'}
+        try:
+            result = get_all_list_data(
+                SDK_CONTEXT,
+                list_users_in_account,
+                account_id,
+                **kwargs)
+        except CanvasAPIError:
+            logger.error(u'Unable to lookup users in account {} for email '
+                         u'address {}'.format(account_id, email_address))
+            raise
+        logger.debug(u'Canvas user search results for account {} with search '
+                     u'term {}: {}'.format(account_id, email_address, result))
+        if use_cache:
+            cache.set(cache_key, result)
+    return result
+
+
+def _list_user_comm_channels(user_id, use_cache=False):
+    """
+    Note: we don't want to cache by default because we want to immediately
+    pick up changes in user communication channels if they change them, e.g.
+    if they're notified they need to update their communication channels and
+    they attempt to email a list immediately afterwards, we want to pick up
+    that change. Caching can still be done at the level of the mailgun route
+    handler event trigger.
+    """
+    if not user_id:
+        return []
+
+    cache_key = CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID % user_id
+    result = cache.get(cache_key) if use_cache else None
+    if not result:
+        kwargs = {'user_id': user_id}
+        try:
+            result = get_all_list_data(
+                SDK_CONTEXT,
+                communication_channels.list_user_communication_channels,
+                **kwargs)
+        except CanvasAPIError:
+            logger.error(u'Unable to get communication channels for '
+                         u'Canvas user {}'.format(user_id))
+            raise
+        logger.debug(u'Canvas communication channel results for user {}: '
+                     u'{}'.format(user_id, result))
+        if use_cache:
+            cache.set(cache_key, result)
+    return result

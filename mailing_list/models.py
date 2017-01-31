@@ -228,6 +228,11 @@ class MailingList(models.Model):
             if e['email'] is not None
         }
 
+    def get_alternate_emails_for_user_email(self, sender_from):
+        emails = canvas_api_client.get_alternate_emails_for_user_email(
+            self.canvas_course_id, sender_from)
+        return emails
+
     def _get_whitelist_email_set(self):
         return {x.email.lower() for x in EmailWhitelist.objects.all()}
 

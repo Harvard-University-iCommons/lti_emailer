@@ -1,18 +1,6 @@
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <meta name="viewport" content="width=device-width">
-    </head>
-    <body>
-        <h4>***Your message could not be delivered to mailing list {{ recipient }}.***</h4>
-        <p>
-            This mailing list has been disabled. Please contact the teaching staff for this course
-            if you think this was in error.
-        </p>
-        <p>------------------------------</p>
-        <p><b>From:</b> {{ sender }}</p>
-        <p><b>To:</b> {{ recipient }}</p>
-        <p><b>Subject:</b> {{ subject }}</p>
-        <p>{{ message_body }}</p>
-    </body>
-</html>
+{% extends 'mailgun/email/base.html' %}
+
+{% block content %}
+This mailing list has been disabled. Please contact the teaching staff for this
+course if you think this was in error.
+{% endblock content %}
