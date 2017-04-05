@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import json
 import logging
 import re
@@ -306,7 +307,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     # if we found the course instance, insert [SHORT TITLE] into the subject
     if ci and ci.short_title:
-        title_prefix = u'[{}]'.format(ci.short_title)
+        title_prefix = '[{}]'.format(ci.short_title)
         if title_prefix not in subject:
             subject = title_prefix + ' ' + subject
 
@@ -389,7 +390,7 @@ def _get_attachments_inlines(request):
                              attachment_count, attachment_name)
             raise HttpResponseException(JsonResponse(
                       {
-                          'message': u'Attachment {} missing from POST'.format(
+                          'message': 'Attachment {} missing from POST'.format(
                                          attachment_name),
                           'success': False,
                       },
