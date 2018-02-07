@@ -9,14 +9,14 @@ from selenium_common.canvas.canvas_masquerade_page_object \
     import CanvasMasqueradePageObject
 from selenium_tests.lti_emailer.page_objects.emailer_mainpage_page_object \
     import EmailerMainPage
+from canvas_sdk import RequestContext
 from canvas_sdk.methods.external_tools \
     import (get_single_external_tool_courses,
             create_external_tool_courses,
             delete_external_tool_courses)
 from canvas_sdk.exceptions import CanvasAPIError
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
 
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
+SDK_CONTEXT = RequestContext(**settings.CANVAS_SDK_SETTINGS)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()

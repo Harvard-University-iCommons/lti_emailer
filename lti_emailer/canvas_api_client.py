@@ -3,31 +3,30 @@ Utility methods for working with canvas_python_sdk which add a caching layer to 
 
 TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
 """
+import csv
+import codecs
+import cStringIO
 import logging
 
-from django.conf import settings
-from django.core.cache import caches
-
-from canvas_sdk.methods import (
-    accounts,
-    communication_channels)
+from canvas_sdk import RequestContext
+from canvas_sdk.exceptions import CanvasAPIError
+from canvas_sdk.methods import accounts, communication_channels
 from canvas_sdk.methods.users import list_users_in_account
 from canvas_sdk.utils import get_all_list_data
-from canvas_sdk.exceptions import CanvasAPIError
-
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
-from icommons_common.canvas_api.helpers import (
-    courses as canvas_api_helper_courses,
-    sections as canvas_api_helper_sections)
+from django.conf import settings
+from django.core.cache import caches
+from icommons_common.canvas_api.helpers import \
+    courses as canvas_api_helper_courses
+from icommons_common.canvas_api.helpers import \
+    sections as canvas_api_helper_sections
 from lti_permissions.verification import is_allowed
-
 
 cache = caches['shared']
 logger = logging.getLogger(__name__)
 
 CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID = "comm-channels-by-canvas-user-id_%s"
 CACHE_KEY_USER_IN_ACCOUNT_BY_SEARCH_TERM = "user-in-account-{}-by-search-term-{}"
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
+SDK_CONTEXT = RequestContext(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
 USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
 
@@ -219,3 +218,39 @@ def _list_user_comm_channels(user_id, use_cache=False):
         if use_cache:
             cache.set(cache_key, result)
     return result
+
+
+class UnicodeCSVWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+
+    This code comes from https://docs.python.org/2/library/csv.html#examples
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            try:
+                self.writerow(row)
+            except:
+                logger.error('failed to write row: {}'.format(row))
+                raise

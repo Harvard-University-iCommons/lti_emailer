@@ -1,14 +1,10 @@
-import logging
-import requests
 import json
+import logging
 
+import requests
 from django.conf import settings
-
-from icommons_common.utils import ApiRequestTimer
-
 from lti_emailer.exceptions import ListservApiError
-from mailgun.utils import replace_non_ascii
-
+from mailgun.utils import ApiRequestTimer, replace_non_ascii
 
 logger = logging.getLogger(__name__)
 

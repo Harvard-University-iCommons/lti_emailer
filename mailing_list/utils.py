@@ -1,5 +1,7 @@
+import json
 import logging
 
+from django.http import HttpResponse
 from icommons_common.models import CourseInstance, XlistMap
 
 logger = logging.getLogger(__name__)
@@ -44,3 +46,19 @@ def get_section_sis_enrollment_status(sis_section_id):
     except CourseInstance.DoesNotExist:
         # there was no record for this id, so return None
         return None
+
+
+def create_json_200_response(data={'message': 'success'}):
+    return HttpResponse(
+        json.dumps(data),
+        status=200,
+        content_type='application/json'
+    )
+
+
+def create_json_500_response(message):
+    return HttpResponse(
+        json.dumps({'error': message}),
+        status=500,
+        content_type='application/json'
+    )

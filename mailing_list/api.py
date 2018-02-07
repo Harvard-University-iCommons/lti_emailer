@@ -1,20 +1,16 @@
-import logging
 import json
+import logging
 
 from django.conf import settings
-from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
-from django.utils import timezone
 from django.core.cache import cache
-
-from django_auth_lti.decorators import lti_role_required
+from django.views.decorators.http import require_http_methods
 from django_auth_lti import const
-
-from icommons_common.view_utils import create_json_200_response, create_json_500_response
+from django_auth_lti.decorators import lti_role_required
 from lti_permissions.decorators import lti_permission_required
 
-from .models import MailingList, CourseSettings
-
+from .models import CourseSettings, MailingList
+from .utils import create_json_200_response, create_json_500_response
 
 logger = logging.getLogger(__name__)
 

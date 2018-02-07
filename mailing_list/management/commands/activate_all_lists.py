@@ -2,13 +2,11 @@ import argparse
 import logging
 from operator import itemgetter
 
-from django.core.management.base import BaseCommand, CommandError
-
-from icommons_common.canvas_utils import UnicodeCSVWriter
-
-from lti_emailer.canvas_api_client import get_courses_for_account_in_term
-from mailing_list.models import MailingList
 from canvas_sdk.exceptions import CanvasAPIError
+from django.core.management.base import BaseCommand, CommandError
+from lti_emailer.canvas_api_client import (UnicodeCSVWriter,
+                                           get_courses_for_account_in_term)
+from mailing_list.models import MailingList
 
 OUTPUT_FIELDS = ['id', 'sis_course_id', 'name', 'course_code']
 

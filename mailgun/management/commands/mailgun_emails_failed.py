@@ -9,7 +9,7 @@ import pytz
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from icommons_common.canvas_utils import UnicodeCSVWriter
+from lti_emailer.canvas_api_client import UnicodeCSVWriter
 from mailgun.management.commands._mailgun_api import get_events
 
 
@@ -65,7 +65,7 @@ class Command(BaseCommand):
                     u'sending to a user:\n%s', json.dumps(event))
                 continue
 
-            try:       
+            try:
                 timestamp = datetime.datetime.fromtimestamp(event['timestamp'], UTC)
                 timestamp = timestamp.astimezone(TZ).strftime(OUTPUT_DATETIME_FORMAT)
                 list_addresses = [a for a in event['message']['recipients']
