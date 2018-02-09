@@ -262,7 +262,7 @@ LOGGING = {
            'handlers': ['console', 'app_logfile'],
            'level': _DEFAULT_LOG_LEVEL,
            'propagate': False,
-         },
+        },
     }
 }
 
