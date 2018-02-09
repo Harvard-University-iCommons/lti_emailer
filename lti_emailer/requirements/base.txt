@@ -9,6 +9,7 @@ ndg-httpsclient==0.4.2
 psycopg2==2.6.2
 redis==2.10.5
 requests==2.12.1
+cx_oracle==5.3
 
 # flanker==0.4.38 requires cryptography but hasn't been updated in a long time
 cryptography==1.6
