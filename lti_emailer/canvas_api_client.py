@@ -120,7 +120,11 @@ def get_teaching_staff_enrollments(canvas_course_id):
 
 
 def get_users_in_course(canvas_course_id):
-    return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
+    try:
+        return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
+    except:
+        logger.exception('failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
+        raise
 
 
 def _copy_user_attributes_to_enrollment(user, enrollment):
