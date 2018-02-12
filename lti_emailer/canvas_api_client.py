@@ -18,7 +18,9 @@ from canvas_sdk.exceptions import CanvasAPIError
 from icommons_common.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.canvas_api.helpers import (
     courses as canvas_api_helper_courses,
+    enrollments as canvas_api_enrollments,
     sections as canvas_api_helper_sections)
+
 from lti_permissions.verification import is_allowed
 
 
@@ -61,22 +63,46 @@ def get_enrollments(canvas_course_id, section_id=None):
     :param section_id:
     :return enrollments list:
     """
-    users = get_users_in_course(canvas_course_id)
-    enrollments = []
-    for user in users:
-        for enrollment in user['enrollments']:
-            if section_id:
+
+    if section_id:
+        users = get_users_in_course_without_enrollments(canvas_course_id)
+        # fetch section enrollments and append email attributes
+
+        section_enrollments = get_all_list_data(
+            SDK_CONTEXT,
+            canvas_api_enrollments.list_enrollments_sections,
+            section_id)
+        logger.debug(" section_enrollments for section id and  size =", section_id, size(enrollments))
+
+        enrollments_filtered = _filter_student_view_enrollments(section_enrollments)
+        logger.debug(" enrollments_filtered size =", section_id, size(enrollments_filtered))
+
+        for user in users:
+            for enrollment in enrollments_filtered:
+                logger.debug ("enrollment=", enrollment)
                 if enrollment['course_section_id'] == int(section_id):
                     _copy_user_attributes_to_enrollment(user, enrollment)
                     enrollments.append(enrollment)
-            else:
-                # if the user has any enrollment in the course
-                # we add them to the list and then stop (break)
-                # on to the next user.
-                _copy_user_attributes_to_enrollment(user, enrollment)
-                enrollments.append(enrollment)
-                break
 
+        logger.debug("section enrollments  size =", section_id, size(enrollments_filtered))
+
+    else:
+        users = get_users_in_course(canvas_course_id)
+        enrollments = []
+        for user in users:
+            for enrollment in user['enrollments']:
+                if section_id:
+                    if enrollment['course_section_id'] == int(section_id):
+                        _copy_user_attributes_to_enrollment(user, enrollment)
+                        enrollments.append(enrollment)
+                else:
+                    # if the user has any enrollment in the course
+                    # we add them to the list and then stop (break)
+                    # on to the next user.
+                    _copy_user_attributes_to_enrollment(user, enrollment)
+                    enrollments.append(enrollment)
+                    break
+    logger.debug(" enrollments size =", size(enrollments))
     return enrollments
 
 
@@ -119,9 +145,19 @@ def get_teaching_staff_enrollments(canvas_course_id):
     return enrollments
 
 
-def get_users_in_course(canvas_course_id):
+def get_users_in_course_without_enrollments(canvas_course_id):
     try:
-        return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
+        canvas_api_helper_courses.get_users_in_course_without_enrollments(canvas_course_id, section)
+    except:
+        logger.exception(
+            'failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
+        raise
+
+
+
+def get_users_in_course(canvas_course_id, section_id=None):
+    try:
+        canvas_api_helper_courses.get_users_in_course(canvas_course_id)
     except:
         logger.exception('failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
         raise
