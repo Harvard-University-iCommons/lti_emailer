@@ -12,13 +12,14 @@ from canvas_sdk.methods import (
     accounts,
     communication_channels)
 from canvas_sdk.methods.users import list_users_in_account
+from canvas_sdk.methods.enrollments import list_enrollments_sections
+
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
 from icommons_common.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.canvas_api.helpers import (
     courses as canvas_api_helper_courses,
-    enrollments as canvas_api_enrollments,
     sections as canvas_api_helper_sections)
 
 from lti_permissions.verification import is_allowed
@@ -63,32 +64,31 @@ def get_enrollments(canvas_course_id, section_id=None):
     :param section_id:
     :return enrollments list:
     """
-
+    enrollments = []
     if section_id:
         users = get_users_in_course_without_enrollments(canvas_course_id)
         # fetch section enrollments and append email attributes
 
         section_enrollments = get_all_list_data(
             SDK_CONTEXT,
-            canvas_api_enrollments.list_enrollments_sections,
+            list_enrollments_sections,
             section_id)
-        logger.debug(" section_enrollments for section id and  size =", section_id, size(enrollments))
+        logger.debug(" section_enrollments for section id  %s and  size = %s", section_id, len(section_enrollments))
 
+        # Filter 'Test Student' if present
         enrollments_filtered = _filter_student_view_enrollments(section_enrollments)
-        logger.debug(" enrollments_filtered size =", section_id, size(enrollments_filtered))
 
         for user in users:
             for enrollment in enrollments_filtered:
-                logger.debug ("enrollment=", enrollment)
+
                 if enrollment['course_section_id'] == int(section_id):
                     _copy_user_attributes_to_enrollment(user, enrollment)
                     enrollments.append(enrollment)
 
-        logger.debug("section enrollments  size =", section_id, size(enrollments_filtered))
+        logger.debug("section enrollments  size = %s", len(enrollments_filtered))
 
     else:
         users = get_users_in_course(canvas_course_id)
-        enrollments = []
         for user in users:
             for enrollment in user['enrollments']:
                 if section_id:
@@ -102,9 +102,15 @@ def get_enrollments(canvas_course_id, section_id=None):
                     _copy_user_attributes_to_enrollment(user, enrollment)
                     enrollments.append(enrollment)
                     break
-    logger.debug(" enrollments size =", size(enrollments))
+    logger.debug(" enrollments size = %s", len(enrollments))
     return enrollments
 
+def _filter_student_view_enrollments(enrollments):
+    # Filter "Test Student" out of enrollments, "Test Student" is added via the "View as student" feature
+    return filter(
+        lambda x: x['type'] != 'StudentViewEnrollment',
+        enrollments
+    )
 
 def get_name_for_email(canvas_course_id, address):
     users = get_users_in_course(canvas_course_id)
@@ -147,7 +153,7 @@ def get_teaching_staff_enrollments(canvas_course_id):
 
 def get_users_in_course_without_enrollments(canvas_course_id):
     try:
-        canvas_api_helper_courses.get_users_in_course_without_enrollments(canvas_course_id, section)
+        return canvas_api_helper_courses.get_users_in_course_without_enrollments(canvas_course_id)
     except:
         logger.exception(
             'failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
@@ -155,9 +161,9 @@ def get_users_in_course_without_enrollments(canvas_course_id):
 
 
 
-def get_users_in_course(canvas_course_id, section_id=None):
+def get_users_in_course(canvas_course_id):
     try:
-        canvas_api_helper_courses.get_users_in_course(canvas_course_id)
+        return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
     except:
         logger.exception('failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
         raise
