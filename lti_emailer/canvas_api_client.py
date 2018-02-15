@@ -3,7 +3,7 @@ Utility methods for working with canvas_python_sdk which add a caching layer to 
 
 TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
 """
-import logging
+import logging,time
 
 from django.conf import settings
 from django.core.cache import caches
@@ -65,10 +65,12 @@ def get_enrollments(canvas_course_id, section_id=None):
     :return enrollments list:
     """
     enrollments = []
+    start_time = time.time()
     if section_id:
         users = get_users_in_course_without_enrollments(canvas_course_id)
-        # fetch section enrollments and append email attributes
+        user_dict = dict((u["id"], u) for u in users)
 
+        # fetch section enrollments and append email attributes
         section_enrollments = get_all_list_data(
             SDK_CONTEXT,
             list_enrollments_sections,
@@ -77,15 +79,10 @@ def get_enrollments(canvas_course_id, section_id=None):
 
         # Filter 'Test Student' if present
         enrollments_filtered = _filter_student_view_enrollments(section_enrollments)
-
-        for user in users:
-            for enrollment in enrollments_filtered:
-
-                if enrollment['course_section_id'] == int(section_id):
-                    _copy_user_attributes_to_enrollment(user, enrollment)
-                    enrollments.append(enrollment)
-
-        logger.debug("section enrollments  size = %s", len(enrollments_filtered))
+        for enrollment in enrollments_filtered:
+            user = user_dict[enrollment["user_id"]]
+            _copy_user_attributes_to_enrollment(user, enrollment)
+            enrollments.append(enrollment)
 
     else:
         users = get_users_in_course(canvas_course_id)
@@ -102,7 +99,9 @@ def get_enrollments(canvas_course_id, section_id=None):
                     _copy_user_attributes_to_enrollment(user, enrollment)
                     enrollments.append(enrollment)
                     break
-    logger.debug(" enrollments size = %s", len(enrollments))
+
+    logger.debug(" enrollments size = %s, total time for getting enrollments = %s ms",
+                 len(enrollments), time.time() - start_time)
     return enrollments
 
 def _filter_student_view_enrollments(enrollments):
