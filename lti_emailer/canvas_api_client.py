@@ -70,11 +70,14 @@ def get_enrollments(canvas_course_id, section_id=None):
         users = get_users_in_course_without_enrollments(canvas_course_id)
         user_dict = dict((u["id"], u) for u in users)
 
+        logger.debug('got users in course {} without enrollments: {}'.format(canvas_course_id, len(users)))
+
         # fetch section enrollments and append email attributes
         section_enrollments = get_all_list_data(
             SDK_CONTEXT,
             list_enrollments_sections,
-            section_id)
+            section_id,
+            per_page=1000)
         logger.debug(" section_enrollments for section id  %s and  size = %s", section_id, len(section_enrollments))
 
         # Filter 'Test Student' if present

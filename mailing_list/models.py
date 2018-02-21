@@ -56,6 +56,7 @@ class MailingListManager(models.Manager):
             # if there is a section id, make sure that a section exists in canvas.
             canvas_section = canvas_api_client.get_section(canvas_course_id, section_id)
             if canvas_section:
+                logger.debug('getting the mailing list for a section: {}'.format(canvas_section))
                 try:
                     mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id=section_id)
                 except MailingList.DoesNotExist:
