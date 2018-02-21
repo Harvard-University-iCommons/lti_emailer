@@ -69,7 +69,7 @@ class MailingListManager(models.Manager):
             # if there is not a section_id, this is a class list, try to get it otherwise it will throw DoesNotExist
             # This address is created in the calling method.
             mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id__isnull=True)
-            
+
         return mailing_list
 
     def get_or_create_or_delete_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
@@ -219,7 +219,7 @@ class MailingList(models.Model):
         """
         return {
             e['email'].lower() for e in canvas_api_client.get_enrollments(self.canvas_course_id, self.section_id)
-            if e['email'] is not None
+            if e.get('email') is not None
         }
 
     def _get_enrolled_teaching_staff_email_set(self):
