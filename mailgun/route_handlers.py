@@ -134,6 +134,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                      body_plain or body_html, message_id)
         return
 
+    logger.debug(u'Got the MailingList object: {}'.format(ml))
+
     # try to determine the course instance, and from there the school
     school_id = None
     ci = CourseInstance.objects.get_primary_course_by_canvas_course_id(ml.canvas_course_id)
