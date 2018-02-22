@@ -3,7 +3,8 @@ Utility methods for working with canvas_python_sdk which add a caching layer to 
 
 TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
 """
-import logging,time
+import logging,
+import time
 
 from django.conf import settings
 from django.core.cache import caches
