@@ -134,6 +134,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                      body_plain or body_html, message_id)
         return
 
+    logger.debug(u'Got the MailingList object: {}'.format(ml))
+
     # try to determine the course instance, and from there the school
     school_id = None
     ci = CourseInstance.objects.get_primary_course_by_canvas_course_id(ml.canvas_course_id)
@@ -146,10 +148,12 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
             u'email subject, or check the super senders.', ml.canvas_course_id)
 
     member_addresses = set([m['address'].lower() for m in ml.members])
+    logger.debug(u'Got member_addresses: %d', len(member_addresses))
 
     # conditionally include staff addresses in the members list. If
     # always_mail_staff is true all staff will receive the email
     teaching_staff_addresses = ml.teaching_staff_addresses
+    logger.debug(u'Got teaching_staff_addresses: %d', len(teaching_staff_addresses))
 
     # if the course settings object does not exist create it to initialize the
     # defaults

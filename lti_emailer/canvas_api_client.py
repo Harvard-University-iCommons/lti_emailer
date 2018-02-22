@@ -12,6 +12,8 @@ from canvas_sdk.methods import (
     accounts,
     communication_channels)
 from canvas_sdk.methods.users import list_users_in_account
+from canvas_sdk.methods.enrollments import list_enrollments_sections
+
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
@@ -19,6 +21,7 @@ from icommons_common.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.canvas_api.helpers import (
     courses as canvas_api_helper_courses,
     sections as canvas_api_helper_sections)
+
 from lti_permissions.verification import is_allowed
 
 
@@ -80,6 +83,13 @@ def get_enrollments(canvas_course_id, section_id=None):
     return enrollments
 
 
+def _filter_student_view_enrollments(enrollments):
+    # Filter "Test Student" out of enrollments, "Test Student" is added via the "View as student" feature
+    return filter(
+        lambda x: x['type'] != 'StudentViewEnrollment',
+        enrollments
+    )
+
 def get_name_for_email(canvas_course_id, address):
     users = get_users_in_course(canvas_course_id)
     names_by_email = {u['email']: u['name'] for u in users}
@@ -88,11 +98,8 @@ def get_name_for_email(canvas_course_id, address):
 
 def get_section(canvas_course_id, section_id):
     if section_id:
-        sections = get_sections(canvas_course_id)
-        section_id = int(section_id)
-        for section in sections:
-            if section['id'] == section_id:
-                return section
+        section = canvas_api_helper_sections.get_section(canvas_course_id, section_id)
+        return section
     return None
 
 
@@ -120,7 +127,11 @@ def get_teaching_staff_enrollments(canvas_course_id):
 
 
 def get_users_in_course(canvas_course_id):
-    return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
+    try:
+        return canvas_api_helper_courses.get_users_in_course(canvas_course_id)
+    except:
+        logger.exception('failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
+        raise
 
 
 def _copy_user_attributes_to_enrollment(user, enrollment):
