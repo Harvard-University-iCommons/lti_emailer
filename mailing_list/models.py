@@ -70,7 +70,7 @@ class MailingListManager(models.Manager):
             # if there is not a section_id, this is a class list, try to get it otherwise it will throw DoesNotExist
             # This address is created in the calling method.
             mailing_list = MailingList.objects.get(canvas_course_id=canvas_course_id, section_id__isnull=True)
-        logger.debug('got mailing_list: {}'.format(mailing_list)
+        logger.debug('got mailing_list: {}'.format(mailing_list))
         return mailing_list
 
     def get_or_create_or_delete_mailing_lists_for_canvas_course_id(self, canvas_course_id, **kwargs):
