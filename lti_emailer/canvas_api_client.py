@@ -65,48 +65,24 @@ def get_enrollments(canvas_course_id, section_id=None):
     :param section_id:
     :return enrollments list:
     """
+    users = get_users_in_course(canvas_course_id)
     enrollments = []
-    start_time = time.time()
-    if section_id:
-        users = get_users_in_course_without_enrollments(canvas_course_id)
-        user_dict = dict((u["id"], u) for u in users)
-
-        logger.debug('got users in course {} without enrollments: {}'.format(canvas_course_id, len(users)))
-
-        # fetch section enrollments and append email attributes
-        section_enrollments = get_all_list_data(
-            SDK_CONTEXT,
-            list_enrollments_sections,
-            section_id,
-            per_page=1000)
-        logger.debug(" section_enrollments for section id  %s and  size = %s", section_id, len(section_enrollments))
-
-        # Filter 'Test Student' if present
-        enrollments_filtered = _filter_student_view_enrollments(section_enrollments)
-        for enrollment in enrollments_filtered:
-            user = user_dict[enrollment["user_id"]]
-            _copy_user_attributes_to_enrollment(user, enrollment)
-            enrollments.append(enrollment)
-
-    else:
-        users = get_users_in_course(canvas_course_id)
-        for user in users:
-            for enrollment in user['enrollments']:
-                if section_id:
-                    if enrollment['course_section_id'] == int(section_id):
-                        _copy_user_attributes_to_enrollment(user, enrollment)
-                        enrollments.append(enrollment)
-                else:
-                    # if the user has any enrollment in the course
-                    # we add them to the list and then stop (break)
-                    # on to the next user.
+    for user in users:
+        for enrollment in user['enrollments']:
+            if section_id:
+                if enrollment['course_section_id'] == int(section_id):
                     _copy_user_attributes_to_enrollment(user, enrollment)
                     enrollments.append(enrollment)
-                    break
+            else:
+                # if the user has any enrollment in the course
+                # we add them to the list and then stop (break)
+                # on to the next user.
+                _copy_user_attributes_to_enrollment(user, enrollment)
+                enrollments.append(enrollment)
+                break
 
-    logger.debug(" enrollments size = %s, total time for getting enrollments = %s ms",
-                 len(enrollments), time.time() - start_time)
     return enrollments
+
 
 def _filter_student_view_enrollments(enrollments):
     # Filter "Test Student" out of enrollments, "Test Student" is added via the "View as student" feature
