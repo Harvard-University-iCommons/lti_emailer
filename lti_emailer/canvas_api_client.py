@@ -123,7 +123,7 @@ def get_name_for_email(canvas_course_id, address):
 
 def get_section(canvas_course_id, section_id):
     if section_id:
-        section = canvas_api_helper.get_section(section_id)
+        section = canvas_api_helper_sections.get_section(section_id)
         return section
     return None
 
