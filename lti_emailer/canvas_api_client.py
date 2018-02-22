@@ -123,11 +123,8 @@ def get_name_for_email(canvas_course_id, address):
 
 def get_section(canvas_course_id, section_id):
     if section_id:
-        sections = get_sections(canvas_course_id)
-        section_id = int(section_id)
-        for section in sections:
-            if section['id'] == section_id:
-                return section
+        section = canvas_api_helper.get_section(section_id)
+        return section
     return None
 
 
