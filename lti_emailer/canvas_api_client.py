@@ -4,7 +4,6 @@ Utility methods for working with canvas_python_sdk which add a caching layer to 
 TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
 """
 import logging
-import time
 
 from django.conf import settings
 from django.core.cache import caches
@@ -125,16 +124,6 @@ def get_teaching_staff_enrollments(canvas_course_id):
                 _copy_user_attributes_to_enrollment(user, enrollment)
                 enrollments.append(enrollment)
     return enrollments
-
-
-def get_users_in_course_without_enrollments(canvas_course_id):
-    try:
-        return canvas_api_helper_courses.get_users_in_course_without_enrollments(canvas_course_id)
-    except:
-        logger.exception(
-            'failure in canvas_api.helpers.courses.get_users_in_course(): canvas_course_id {}'.format(canvas_course_id))
-        raise
-
 
 
 def get_users_in_course(canvas_course_id):
