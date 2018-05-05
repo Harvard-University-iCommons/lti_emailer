@@ -31,7 +31,7 @@ NEW_ROLES = [
 
 NOT_ALLOWED_ROLES = [
     'Enrollee',
-    'Petitoiner',
+    'Petitioner',
     'Waitlisted',
     'Course Assistant'
 ]
