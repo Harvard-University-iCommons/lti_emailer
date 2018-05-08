@@ -3,7 +3,8 @@ import itertools
 
 from django.db import migrations
 
-# Adds new roles to the lti_school_permissions table and removes all isites migration permission records.
+# Adds new roles to the lti_permissions table with the same permissions that are mapped over from their equivalent
+# previous role. There are 4 roles that are by default, not allowed in all schools.
 
 NEW_ROLES_MAP = {
     'Course Head': ['Head Instructor', 'Course Director'],
