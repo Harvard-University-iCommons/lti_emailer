@@ -9,8 +9,8 @@ from django.db import migrations
 NEW_ROLES_MAP = {
     'Course Head': ['Head Instructor', 'Course Director'],
     'Faculty': ['Instructor', 'Primary Instructor', 'Secondary Instructor'],
-    'Teacher': ['TF/TA Instructor', 'Faculty Assistant'],
-    'TA': ['Course Assistant'],
+    'TeacherEnrollment': ['TF/TA', 'Faculty Assistant'],
+    'TaEnrollment': ['Course Assistant'],
     'Teaching Staff': ['Preceptor'],
     'Student': ['Enrollee'],
     'Prospective Enrollee': ['Petitioner', 'Waitlisted'],
@@ -25,7 +25,7 @@ NEW_ROLES = [
     'Primary Instructor',
     'Secondary Instructor',
     'Course Director',
-    'TF/TA Instructor',
+    'TF/TA',
     'Faculty Assistant',
     'Preceptor',
 ]
