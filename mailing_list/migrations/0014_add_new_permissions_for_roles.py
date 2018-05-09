@@ -10,7 +10,6 @@ NEW_ROLES_MAP = {
     'Course Head': ['Head Instructor', 'Course Director'],
     'Faculty': ['Instructor', 'Primary Instructor', 'Secondary Instructor'],
     'TeacherEnrollment': ['TF/TA', 'Faculty Assistant'],
-    'TaEnrollment': ['Course Assistant'],
     'Teaching Staff': ['Preceptor'],
     'Student': ['Enrollee'],
     'Prospective Enrollee': ['Petitioner', 'Waitlisted'],
