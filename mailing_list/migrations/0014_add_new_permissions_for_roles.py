@@ -7,10 +7,9 @@ from django.db import migrations
 # previous role. There are 4 roles that are by default, not allowed in all schools.
 
 NEW_ROLES_MAP = {
-    'Course Head': ['Head Instructor', 'Course Director'],
+    'Head Instructor': ['Course Director'],
     'Faculty': ['Instructor', 'Primary Instructor', 'Secondary Instructor'],
-    'Teacher': ['TF/TA Instructor', 'Faculty Assistant'],
-    'TA': ['Course Assistant'],
+    'TeacherEnrollment': ['TF/TA', 'Faculty Assistant'],
     'Teaching Staff': ['Preceptor'],
     'Student': ['Enrollee'],
     'Prospective Enrollee': ['Petitioner', 'Waitlisted'],
@@ -20,12 +19,11 @@ PERMISSION_NAMES = ['lti_emailer_send_all',
                     'lti_emailer_view']
 
 NEW_ROLES = [
-    'Head Instructor',
     'Instructor',
     'Primary Instructor',
     'Secondary Instructor',
     'Course Director',
-    'TF/TA Instructor',
+    'TF/TA',
     'Faculty Assistant',
     'Preceptor',
 ]
@@ -41,6 +39,10 @@ NOT_ALLOWED_ROLES = [
 def create_permissions(apps, schema_editor):
     permission_class = apps.get_model('lti_permissions',
                                       'LtiPermission')
+
+    # Make sure to rename all Course Head roles to Head Instructor prior to creating the new permissions
+    permission_class.objects.filter(canvas_role='Course Head').update(canvas_role='Head Instructor')
+
     all_permissions = permission_class.objects.all()
 
     # Create the new set of permissions mapped from the current permissions role
