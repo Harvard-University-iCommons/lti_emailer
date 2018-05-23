@@ -7,7 +7,6 @@ from django.db import migrations
 # previous role. There are 4 roles that are by default, not allowed in all schools.
 
 NEW_ROLES_MAP = {
-    'Head Instructor': ['Course Director'],
     'Faculty': ['Instructor', 'Primary Instructor', 'Secondary Instructor'],
     'TeacherEnrollment': ['TF/TA', 'Faculty Assistant'],
     'Teaching Staff': ['Preceptor'],
@@ -22,7 +21,6 @@ NEW_ROLES = [
     'Instructor',
     'Primary Instructor',
     'Secondary Instructor',
-    'Course Director',
     'TF/TA',
     'Faculty Assistant',
     'Preceptor',
