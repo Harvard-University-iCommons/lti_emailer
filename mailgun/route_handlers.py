@@ -73,6 +73,8 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     user_alt_email_cache = CommChannelCache()
 
+    sender = _remove_batv_prefix(sender)
+
     logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
                 u'%s, subject %s, message id %s',
                 from_, sender, recipients, subject, message_id)
@@ -120,6 +122,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     logger.debug(u'Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
+
+    sender = _remove_batv_prefix(sender)
 
     # short circuit if the mailing list doesn't exist
     try:
@@ -407,6 +411,21 @@ def _get_attachments_inlines(request):
             attachments.append(file_)
 
     return attachments, inlines
+
+
+def _remove_batv_prefix(sender_address):
+    # Strip BATV prefix from the envelope-sender address if present
+    try:
+        batv_pattern = '^prvs=[^=]+=(.+)'
+        batv_address = re.match(batv_pattern, sender_address)
+        if batv_address:
+            logger.warning('sender address ({}) has BATV prefix, removing: {}'.format(batv_address.group(0), batv_address.group(1)))
+            return batv_address.group(1)
+    except Exception:
+        logger.exception('error while removing BATV prefix from {}'.format(sender_address))
+
+    # otherwise just return the original address
+    return sender_address
 
 
 class CommChannelCache(object):
