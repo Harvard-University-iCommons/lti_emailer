@@ -5,7 +5,7 @@ django-redis-cache==1.7.1
 flanker==0.4.38
 hiredis==0.2.0
 ims_lti_py==0.6
-ndg-httpsclient==0.4.2
+ndg-httpsclient==0.5.1
 psycopg2==2.7.3.1
 redis==2.10.5
 requests==2.12.1
@@ -15,7 +15,7 @@ cx_oracle==5.3
 cryptography==1.6
 
 # ndg-httpsclient==0.4.2 requires pyopenssl but has no version specified
-pyopenssl>=17.5.0
+pyopenssl==18.0.0
 
 git+ssh://git@github.com/penzance/canvas_python_sdk.git@v0.10.2#egg=canvas-python-sdk==0.10.2
 git+ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git@v1.33.2#egg=django-icommons-common==1.33.2
