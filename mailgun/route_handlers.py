@@ -422,7 +422,7 @@ def _remove_batv_prefix(sender_address):
             logger.warning('sender address ({}) has BATV prefix, removing: {}'.format(batv_address.group(0), batv_address.group(1)))
             return batv_address.group(1)
     except Exception:
-        logger.exception('error while removing BATV prefix ({}) from {}'.format(batv_pattern, sender_address))
+        logger.exception('error while removing BATV prefix ({}) from {}/{}'.format(batv_pattern, sender_address, type(sender_address)))
 
     # otherwise just return the original address
     return sender_address
