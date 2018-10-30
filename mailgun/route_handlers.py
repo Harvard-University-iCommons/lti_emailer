@@ -413,7 +413,7 @@ def _get_attachments_inlines(request):
 
 def _remove_batv_prefix(sender_address):
     # Strip BATV prefix from the envelope-sender address if present
-    batv_pattern = '^prvs=[^=]+=(.+)'
+    batv_pattern = '^\w+=+[^=]+=+(.+)'
     try:
         batv_address = re.match(batv_pattern, sender_address)
         if batv_address:
