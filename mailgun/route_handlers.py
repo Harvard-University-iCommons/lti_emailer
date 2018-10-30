@@ -69,11 +69,9 @@ def handle_mailing_list_email_route(request):
     from_ = address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     recipients = set(address.parse_list(request.POST.get('recipient')))
-    sender = address.parse(request.POST.get('sender'))
+    sender = address.parse(_remove_batv_prefix(request.POST.get('sender')))
     subject = request.POST.get('subject')
     user_alt_email_cache = CommChannelCache()
-
-    sender = _remove_batv_prefix(sender)
 
     logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
                 u'%s, subject %s, message id %s',
