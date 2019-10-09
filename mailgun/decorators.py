@@ -8,7 +8,7 @@ from functools import wraps
 from django.conf import settings
 from django.utils.decorators import available_attrs
 from django.shortcuts import redirect
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 
 
 logger = logging.getLogger(__name__)

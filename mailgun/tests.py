@@ -7,7 +7,7 @@ from StringIO import StringIO
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.http import HttpResponse, JsonResponse
 from django.test import TestCase, RequestFactory
 from django.test.utils import override_settings

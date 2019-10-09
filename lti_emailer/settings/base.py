@@ -14,7 +14,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 import re
 import logging
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from .secure import SECURE_SETTINGS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,7 +27,7 @@ DEBUG = SECURE_SETTINGS.get('enable_debug', False)
 
 # Application definition
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -37,14 +37,15 @@ INSTALLED_APPS = (
     'icommons_common',
     'lti_permissions',
     'icommons_ui',
-    'djangular',
+    'djng',
     'lti_emailer',
     'mailing_list',
     'mailgun'
-)
+]
 
-MIDDLEWARE_CLASSES = (
-    'djangular.middleware.DjangularUrlMiddleware',
+MIDDLEWARE = [
+    # NOTE - djng needs to be the first item in this list
+    'djng.middleware.AngularUrlMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,7 +54,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-)
+]
 
 AUTHENTICATION_BACKENDS = (
     'django_auth_lti.backends.LTIAuthBackend',
@@ -90,7 +91,7 @@ DATABASE_ROUTERS = ['icommons_common.routers.CourseSchemaDatabaseRouter']
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': SECURE_SETTINGS.get('db_default_name', 'lti_emailer'),
         'USER': SECURE_SETTINGS.get('db_default_user', 'postgres'),
         'PASSWORD': SECURE_SETTINGS.get('db_default_password'),

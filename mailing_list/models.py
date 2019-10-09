@@ -191,7 +191,7 @@ class MailingList(models.Model):
     ACCESS_LEVEL_STAFF = 'staff'
 
     canvas_course_id = models.IntegerField()
-    course_settings = models.ForeignKey(CourseSettings, null=True)
+    course_settings = models.ForeignKey(CourseSettings, null=True, on_delete=models.CASCADE)
     section_id = models.IntegerField(null=True)
     access_level = models.CharField(max_length=32, default='members')
     created_by = models.CharField(max_length=32)

@@ -1,4 +1,4 @@
-from urlparse import urljoin
+from urllib.parse import urljoin
 from os.path import abspath, dirname, join
 from django.conf import settings
 import logging

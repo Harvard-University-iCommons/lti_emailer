@@ -4,13 +4,13 @@ import logging
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from ims_lti_py.tool_config import ToolConfig
+from lti.contrib.django import DjangoToolProvider
 
 from django_auth_lti import const
 from django_auth_lti.decorators import lti_role_required

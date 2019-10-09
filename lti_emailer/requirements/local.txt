@@ -5,8 +5,8 @@
  
 # below are requirements specific to the local environment
 
-django-debug-toolbar==1.5
-django-sslserver==0.19
+django-debug-toolbar==1.9
+django-sslserver==0.21
 mock==2.0.0
 pep8==1.7.0
 flake8==2.6.2
