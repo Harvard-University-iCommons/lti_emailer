@@ -61,8 +61,8 @@ class Command(BaseCommand):
 
             if sender.endswith(settings.LISTSERV_DOMAIN):
                 logger.error(
-                    u'Unexpectedly received a failure event for the mailer '
-                    u'sending to a user:\n%s', json.dumps(event))
+                    'Unexpectedly received a failure event for the mailer '
+                    'sending to a user:\n%s', json.dumps(event))
                 continue
 
             try:       

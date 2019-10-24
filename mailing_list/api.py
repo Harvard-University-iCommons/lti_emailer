@@ -43,7 +43,7 @@ def lists(request):
         )
 
     except Exception:
-        message = u"Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
+        message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
         logger.exception(message)
         return create_json_500_response(message)
 
@@ -79,7 +79,7 @@ def set_access_level(request, mailing_list_id):
             'access_level': access_level
         }
     except Exception:
-        message = u"Failed to activate MailingList %s with LTI params %s" % (mailing_list_id, json.dumps(request.LTI))
+        message = "Failed to activate MailingList %s with LTI params %s" % (mailing_list_id, json.dumps(request.LTI))
         logger.exception(message)
         return create_json_500_response(message)
 
@@ -117,7 +117,7 @@ def get_or_create_course_settings(request):
             cache.delete(
                 settings.CACHE_KEY_LISTS_BY_CANVAS_COURSE_ID % canvas_course_id)
     except Exception:
-        message = u"Failed to get_or_create CourseSettings for course %s" % canvas_course_id
+        message = "Failed to get_or_create CourseSettings for course %s" % canvas_course_id
         logger.exception(message)
         return create_json_500_response(message)
 

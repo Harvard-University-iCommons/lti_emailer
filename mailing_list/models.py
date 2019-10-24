@@ -163,7 +163,7 @@ class MailingListManager(models.Manager):
             })
 
         # Delete existing mailing lists who's section no longer exists
-        for section_id, mailing_list in mailing_lists_by_section_id.iteritems():
+        for section_id, mailing_list in mailing_lists_by_section_id.items():
             mailing_list.delete()
 
         return result
@@ -206,7 +206,7 @@ class MailingList(models.Model):
         unique_together = ('canvas_course_id', 'section_id')
 
     def __unicode__(self):
-        return u'canvas_course_id: {}, section_id: {}'.format(
+        return 'canvas_course_id: {}, section_id: {}'.format(
             self.canvas_course_id,
             self.section_id
         )
@@ -261,8 +261,8 @@ class MailingList(models.Model):
                   subject='', text='', html='', original_to_address=None,
                   original_cc_address=None, attachments=None, inlines=None,
                   message_id=None):
-        logger.debug(u'in send_mail: sender_address=%s, to_address=%s, '
-                     u'mailing_list.address=%s ',
+        logger.debug('in send_mail: sender_address=%s, to_address=%s, '
+                     'mailing_list.address=%s ',
                      sender_address, to_address, self.address)
         mailing_list_address = addresslib.address.parse(self.address)
         mailing_list_address.display_name = sender_display_name
@@ -287,7 +287,7 @@ class EmailWhitelist(models.Model):
         db_table = 'ml_email_whitelist'
 
     def __unicode__(self):
-        return u'email: {}'.format(
+        return 'email: {}'.format(
             self.email
         )
 
@@ -304,7 +304,7 @@ class SuperSender(models.Model):
         db_table = 'ml_super_sender'
 
     def __unicode__(self):
-        return u'email: {}, school: {}'.format(
+        return 'email: {}, school: {}'.format(
             self.email,
             self.school_id
         )

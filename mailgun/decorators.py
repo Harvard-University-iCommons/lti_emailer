@@ -23,12 +23,12 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
                 token = request.POST['token']
                 signature = request.POST['signature']
             except KeyError as e:
-                logger.error(u"Received mailgun callback request with missing auth param %s", e.message)
+                logger.error("Received mailgun callback request with missing auth param %s", e.message)
                 return redirect(redirect_url)
 
             time_diff = time.time() - float(timestamp)
             if time_diff >= settings.MAILGUN_CALLBACK_TIMEOUT:
-                logger.error(u"Received stale mailgun callback request, time difference was %d", time_diff)
+                logger.error("Received stale mailgun callback request, time difference was %d", time_diff)
                 return redirect(redirect_url)
 
             digest = hmac.new(
@@ -38,7 +38,7 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
             ).hexdigest()
 
             if signature != digest:
-                logger.error(u"Received invalid mailgun callback request signature %s != digest %s", signature, digest)
+                logger.error("Received invalid mailgun callback request signature %s != digest %s", signature, digest)
                 return redirect(redirect_url)
 
             return view_func(request, *args, **kwargs)

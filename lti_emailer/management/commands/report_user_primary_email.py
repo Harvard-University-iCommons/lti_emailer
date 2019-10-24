@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     logger.exception("Failed to retrieve users for canvas_course_id %d", ci.canvas_course_id)
                     continue
 
-                for p in Person.objects.filter(univ_id__in=users.keys()):
+                for p in Person.objects.filter(univ_id__in=list(users.keys())):
                     user = users[p.univ_id]
                     if p.email_address != user['email']:
                         for role in user['roles']:
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         with open(report_path, 'wb') as f:
             writer = csv.writer(f, dialect='excel')
             writer.writerow(['Role', 'SIS Email', 'Canvas Email'])
-            for role, rows in report_data.iteritems():
+            for role, rows in report_data.items():
                 writer.writerows(rows)
 
         logger.info("User primary email report complete for term_id %d at %s", term_id, report_path)

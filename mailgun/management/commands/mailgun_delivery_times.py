@@ -32,7 +32,7 @@ class Command(BaseCommand):
         try:
             events = get_events(begin, end, EVENTS_OF_INTEREST)
         except RuntimeError as e:
-            raise CommandError(unicode(e))
+            raise CommandError(str(e))
         logger.debug('Done pulling events')
         self.process_events(events)
 

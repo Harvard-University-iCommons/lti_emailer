@@ -9,12 +9,12 @@ class HttpResponseException(RuntimeError):
     def __init__(self, response):
         if not isinstance(response, HttpResponse):
             raise TypeError(
-                      u'HttpResponseException expected an HttpResponse, got'
-                      u'a {}'.format(type(response)))
+                      'HttpResponseException expected an HttpResponse, got'
+                      'a {}'.format(type(response)))
         self.response = response
 
 
     def __unicode__(self):
-        return u'HttpResponseException<{} {}>: {}'.format(
+        return 'HttpResponseException<{} {}>: {}'.format(
                    type(self.response), self.response.status_code,
-                   unicode(self.response))
+                   str(self.response))
