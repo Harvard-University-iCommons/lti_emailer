@@ -36,11 +36,11 @@ def tool_config(request):
         title=title,
         launch_url=url,
         secure_launch_url=url,
-        description="This LTI tool provides a suite of tools for administering your Canvas account."
+        description="This LTI tool allows email functionality for this course site."
     )
 
-    # this is how to tell Canvas that this tool provides an account navigation link:
-    nav_params = {
+    # this is how to tell Canvas that this tool provides a course navigation link:
+    course_nav_params = {
         'enabled': 'true',
         'text': title,
         'default': 'disabled',
@@ -48,7 +48,7 @@ def tool_config(request):
     }
     custom_fields = {'canvas_membership_roles': '$Canvas.membership.roles'}
     lti_tool_config.set_ext_param('canvas.instructure.com', 'custom_fields', custom_fields)
-    lti_tool_config.set_ext_param('canvas.instructure.com', 'account_navigation', nav_params)
+    lti_tool_config.set_ext_param('canvas.instructure.com', 'course_navigation', course_nav_params)
     lti_tool_config.set_ext_param('canvas.instructure.com', 'privacy_level', 'public')
 
     return HttpResponse(lti_tool_config.to_xml(), content_type='text/xml')
