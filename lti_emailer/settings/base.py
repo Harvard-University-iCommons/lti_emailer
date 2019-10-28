@@ -292,7 +292,7 @@ REPORT_DIR = SECURE_SETTINGS.get('report_dir', BASE_DIR)
 LISTSERV_DOMAIN = SECURE_SETTINGS.get('listserv_domain')
 LISTSERV_API_URL = SECURE_SETTINGS.get('listserv_api_url')
 LISTSERV_API_USER = SECURE_SETTINGS.get('listserv_api_user')
-LISTSERV_API_KEY = SECURE_SETTINGS.get('listserv_api_key')
+LISTSERV_API_KEY = str(SECURE_SETTINGS.get('listserv_api_key'))
 
 LISTSERV_SECTION_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)-(?P<section_id>\d+)@%s$" % LISTSERV_DOMAIN)
 LISTSERV_COURSE_ADDRESS_RE = re.compile("^canvas-(?P<canvas_course_id>\d+)@%s$" % LISTSERV_DOMAIN)

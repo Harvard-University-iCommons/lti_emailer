@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
-from flanker import addresslib
+from flanker.addresslib import address as addresslib_address
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
@@ -264,8 +264,7 @@ class MailingList(models.Model):
         logger.debug('in send_mail: sender_address=%s, to_address=%s, '
                      'mailing_list.address=%s ',
                      sender_address, to_address, self.address)
-        mailing_list_address = addresslib.address.parse(self.address)
-        mailing_list_address.display_name = sender_display_name
+        mailing_list_address = addresslib_address.parse('{} {}'.format(sender_display_name, self.address))
         listserv_client.send_mail(
             mailing_list_address.full_spec(), sender_address, to_address,
             subject, text, html, original_to_address, original_cc_address,
