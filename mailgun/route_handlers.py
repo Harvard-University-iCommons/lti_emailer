@@ -13,7 +13,7 @@ from django.template.loader import get_template
 from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from flanker.addresslib import address
+from flanker.addresslib import address as addresslib_address
 
 from icommons_common.models import CourseInstance
 from lti_emailer.canvas_api_client import (
@@ -66,10 +66,10 @@ def handle_mailing_list_email_route(request):
     '''
     logger.debug(u'Full mailgun post: %s', request.POST)
 
-    from_ = address.parse(request.POST.get('from'))
+    from_ = addresslib_address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
-    recipients = set(address.parse_list(request.POST.get('recipient')))
-    sender = address.parse(_remove_batv_prefix(request.POST.get('sender')))
+    recipients = set(addresslib_address.parse_list(request.POST.get('recipient')))
+    sender = addresslib_address.parse(_remove_batv_prefix(request.POST.get('sender')))
     subject = request.POST.get('subject')
     user_alt_email_cache = CommChannelCache()
 
@@ -111,12 +111,12 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     attachments, inlines = _get_attachments_inlines(request)
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
-    cc_list = address.parse_list(request.POST.get('Cc'))
-    parsed_from = address.parse(request.POST.get('from'))
+    cc_list = addresslib_address.parse_list(request.POST.get('Cc'))
+    parsed_from = addresslib_address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
     sender = request.POST.get('sender')
     subject = request.POST.get('subject')
-    to_list = address.parse_list(request.POST.get('To'))
+    to_list = addresslib_address.parse_list(request.POST.get('To'))
 
     logger.debug(u'Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
@@ -188,7 +188,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     # if we want to check email addresses against the sender, we need to parse
     # out the address from the display name.
-    parsed_sender = address.parse(sender)
+    parsed_sender = addresslib_address.parse(sender)
     sender_address = parsed_sender.address.lower()
     from_address = parsed_from.address.lower() if parsed_from else None
 
