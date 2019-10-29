@@ -264,7 +264,7 @@ class MailingList(models.Model):
         logger.debug(u'in send_mail: sender_address=%s, to_address=%s, '
                      u'mailing_list.address=%s ',
                      sender_address, to_address, self.address)
-        mailing_list_address = addresslib_address.parse('{} {}'.format(sender_display_name, self.address))
+        mailing_list_address = addresslib_address.parse(u'{} {}'.format(sender_display_name, self.address))
         listserv_client.send_mail(
             mailing_list_address.full_spec(), sender_address, to_address,
             subject, text, html, original_to_address, original_cc_address,
