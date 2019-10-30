@@ -31,7 +31,7 @@ def tool_config(request):
     url = "https://{}{}".format(request.get_host(), reverse('lti_launch'))
     url = _url(url)
 
-    title = 'Admin Console'
+    title = 'LTI Emailer'
     lti_tool_config = ToolConfig(
         title=title,
         launch_url=url,
