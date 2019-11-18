@@ -32,7 +32,7 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
                 return redirect(redirect_url)
 
             digest = hmac.new(
-                key=settings.LISTSERV_API_KEY,
+                key=settings.LISTSERV_API_KEY.encode(),
                 msg='{}{}'.format(timestamp, token),
                 digestmod=hashlib.sha256
             ).hexdigest()
