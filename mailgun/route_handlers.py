@@ -8,7 +8,6 @@ from functools import wraps
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
-from django.template import Context
 from django.template.loader import get_template
 from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
@@ -487,12 +486,12 @@ def _send_bounce(template_path, sender, recipient, subject, body, message_id):
     no_reply_address = settings.NO_REPLY_ADDRESS
 
     template = get_template(template_path)
-    content = template.render(Context({
+    content = template.render({
         'sender': sender,
         'recipient': recipient,
         'subject': subject,
         'message_body': body,
-    }))
+    })
     listserv_client.send_mail(no_reply_address, no_reply_address, sender,
                               subject='Undeliverable mail', html=content,
                               message_id=message_id)
