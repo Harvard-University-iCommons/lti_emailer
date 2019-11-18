@@ -31,8 +31,9 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
                 logger.error("Received stale mailgun callback request, time difference was %d", time_diff)
                 return redirect(redirect_url)
 
+            listserv_api_key = settings.LISTSERV_API_KEY
             digest = hmac.new(
-                key=settings.LISTSERV_API_KEY.encode('utf-8'),
+                key=listserv_api_key.encode('utf-8'),
                 msg='{}{}'.format(timestamp, token),
                 digestmod=hashlib.sha256
             ).hexdigest()
