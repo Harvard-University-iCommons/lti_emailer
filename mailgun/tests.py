@@ -1375,8 +1375,8 @@ def generate_signature_dict():
     timestamp = str(time.time())
     token = str(uuid.uuid4())
     signature = hmac.new(
-        key=settings.LISTSERV_API_KEY,
-        msg='{}{}'.format(timestamp, token),
+        key=settings.LISTSERV_API_KEY.encode('utf-8'),
+        msg='{}{}'.format(timestamp, token).encode('utf-8'),
         digestmod=hashlib.sha256
     ).hexdigest()
     return {
