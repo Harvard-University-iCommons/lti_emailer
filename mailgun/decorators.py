@@ -23,7 +23,7 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
                 token = request.POST['token']
                 signature = request.POST['signature']
             except KeyError as e:
-                logger.error("Received mailgun callback request with missing auth param %s", e.message)
+                logger.error("Received mailgun callback request with missing auth param %s", e)
                 return redirect(redirect_url)
 
             time_diff = time.time() - float(timestamp)

@@ -95,7 +95,7 @@ class RouteHandlerUnitTests(TestCase):
 
         # expecting server error
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.content, json.dumps({'success': False}))
+        self.assertEqual(response.content, b'{"success": false}')
 
         # verify we logged post data
         self.assertEqual(mock_log_exc.call_count, 1)
