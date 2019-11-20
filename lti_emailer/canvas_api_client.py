@@ -32,7 +32,7 @@ CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID = "comm-channels-by-canvas-user-id_%s"
 CACHE_KEY_USER_IN_ACCOUNT_BY_SEARCH_TERM = "user-in-account-{}-by-search-term-{}"
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
-USER_ATTRIBUTES_TO_COPY = [u'email', u'name', u'sortable_name']
+USER_ATTRIBUTES_TO_COPY = ['email', 'name', 'sortable_name']
 
 
 def get_course(canvas_course_id):
@@ -85,10 +85,7 @@ def get_enrollments(canvas_course_id, section_id=None):
 
 def _filter_student_view_enrollments(enrollments):
     # Filter "Test Student" out of enrollments, "Test Student" is added via the "View as student" feature
-    return filter(
-        lambda x: x['type'] != 'StudentViewEnrollment',
-        enrollments
-    )
+    return [x for x in enrollments if x['type'] != 'StudentViewEnrollment']
 
 def get_name_for_email(canvas_course_id, address):
     users = get_users_in_course(canvas_course_id)
@@ -145,29 +142,29 @@ def get_alternate_emails_for_user_email(email_address):
     users = _get_users_by_email(email_address)
     users = [u for u in users if u.get('email') == email_address]
     if len(users) == 0:
-        logger.error(u'Looking up alternate mailing list users for {}: '
-                     u'this address does not match any '
-                     u'users.'.format(email_address))
+        logger.error('Looking up alternate mailing list users for {}: '
+                     'this address does not match any '
+                     'users.'.format(email_address))
         return []
 
-    logger.debug(u'Looking up alternate mailing list users for {}: '
-                 u'this address matches the following user(s). User list: '
-                 u'{}'.format(email_address, users))
+    logger.debug('Looking up alternate mailing list users for {}: '
+                 'this address matches the following user(s). User list: '
+                 '{}'.format(email_address, users))
 
     all_comm_channels = list()
     for user in users:
         user_comm_channels = _list_user_comm_channels(user.get('id'))
         all_comm_channels += user_comm_channels if user_comm_channels else []
-        logger.debug(u'Communication channels for user {}: '
-                     u'{}'.format(user.get('id'), user_comm_channels))
+        logger.debug('Communication channels for user {}: '
+                     '{}'.format(user.get('id'), user_comm_channels))
 
     active_emails = [cc.get('address') for cc in all_comm_channels
                      if cc.get('type') == 'email'
                      and cc.get('workflow_state') == 'active'
                      and cc.get('address')]
     active_emails_deduped = list(set(active_emails))
-    logger.debug(u'Active Canvas email communication channels for sender {}: '
-                 u'{}'.format(email_address, active_emails_deduped))
+    logger.debug('Active Canvas email communication channels for sender {}: '
+                 '{}'.format(email_address, active_emails_deduped))
 
     return active_emails_deduped
 
@@ -190,11 +187,11 @@ def _get_users_by_email(email_address, account_id=None, use_cache=True):
                 account_id,
                 **kwargs)
         except CanvasAPIError:
-            logger.error(u'Unable to lookup users in account {} for email '
-                         u'address {}'.format(account_id, email_address))
+            logger.error('Unable to lookup users in account {} for email '
+                         'address {}'.format(account_id, email_address))
             raise
-        logger.debug(u'Canvas user search results for account {} with search '
-                     u'term {}: {}'.format(account_id, email_address, result))
+        logger.debug('Canvas user search results for account {} with search '
+                     'term {}: {}'.format(account_id, email_address, result))
         if use_cache:
             cache.set(cache_key, result)
     return result
@@ -222,11 +219,11 @@ def _list_user_comm_channels(user_id, use_cache=False):
                 communication_channels.list_user_communication_channels,
                 **kwargs)
         except CanvasAPIError:
-            logger.error(u'Unable to get communication channels for '
-                         u'Canvas user {}'.format(user_id))
+            logger.error('Unable to get communication channels for '
+                         'Canvas user {}'.format(user_id))
             raise
-        logger.debug(u'Canvas communication channel results for user {}: '
-                     u'{}'.format(user_id, result))
+        logger.debug('Canvas communication channel results for user {}: '
+                     '{}'.format(user_id, result))
         if use_cache:
             cache.set(cache_key, result)
     return result

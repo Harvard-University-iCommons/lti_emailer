@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 from django.db import models, migrations
 import datetime
-
+import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 ('email', models.EmailField(max_length=254)),
                 ('created_by', models.CharField(max_length=32)),
                 ('date_created', models.DateTimeField(default=datetime.datetime.utcnow, blank=True)),
-                ('mailing_list', models.ForeignKey(to='mailing_list.MailingList')),
+                ('mailing_list', models.ForeignKey(to='mailing_list.MailingList', on_delete=django.db.models.deletion.CASCADE)),
             ],
             options={
                 'db_table': 'ml_unsubscribed',

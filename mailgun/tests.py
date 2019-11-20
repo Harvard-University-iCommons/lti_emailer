@@ -3,11 +3,11 @@ import hmac
 import json
 import time
 import uuid
-from StringIO import StringIO
+from io import StringIO
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.http import HttpResponse, JsonResponse
 from django.test import TestCase, RequestFactory
 from django.test.utils import override_settings
@@ -95,7 +95,7 @@ class RouteHandlerUnitTests(TestCase):
 
         # expecting server error
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.content, json.dumps({'success': False}))
+        self.assertEqual(response.content, b'{"success": false}')
 
         # verify we logged post data
         self.assertEqual(mock_log_exc.call_count, 1)
@@ -194,8 +194,8 @@ class RouteHandlerUnitTests(TestCase):
         self.assertEqual(mock_log_exc.call_count, 2)
         missing_attachment_call = mock_log_exc.call_args_list[0]
         self.assertEqual(missing_attachment_call[0][0], # positional arg
-                         u'Mailgun POST claimed to have %s attachments, but %s '
-                         u'is missing')
+                         'Mailgun POST claimed to have %s attachments, but %s '
+                         'is missing')
         log_the_post_call = mock_log_exc.call_args_list[1]
         self.assertEqual(json.loads(log_the_post_call[0][-1]), post_body)
 
@@ -759,17 +759,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'unittest@example.edu',
+            'Unit Test via Canvas',
+            'unittest@example.edu',
             ['unittest@example.edu', 'student@example.edu'],
-            u'[Lorem For Beginners] blah',
+            '[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
-            text=u'blah blah'
+            original_to_address=['class-list@example.edu', 'bogus@example.edu'],
+            text='blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
 
@@ -833,17 +833,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'unittest@example.edu',
+            'Unit Test via Canvas',
+            'unittest@example.edu',
             ['unittest@example.edu', 'student@example.edu'],
-            u'[Lorem For Beginners] blah',
+            '[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
-            text=u'blah blah'
+            original_to_address=['class-list@example.edu', 'bogus@example.edu'],
+            text='blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
 
@@ -904,17 +904,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'unittest@example.edu',
+            'Unit Test via Canvas',
+            'unittest@example.edu',
             ['teacher1@example.edu', 'teacher2@example.edu', 'unittest@example.edu', 'student@example.edu'],
-            u'[Lorem For Beginners] blah',
+            '[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=[u'class-list@example.edu', u'bogus@example.edu'],
-            text=u'blah blah'
+            original_to_address=['class-list@example.edu', 'bogus@example.edu'],
+            text='blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
 
@@ -971,17 +971,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'teacher1@example.edu',
+            'Unit Test via Canvas',
+            'teacher1@example.edu',
             ['teacher1@example.edu', 'unittest@example.edu', 'student@example.edu'],  #sender is included in email
-            u'[Lorem For Beginners] blah',
+            '[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=[u'canvas-123-456@example.edu'],
-            text=u'blah blah'
+            original_to_address=['canvas-123-456@example.edu'],
+            text='blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call])
 
@@ -1041,17 +1041,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'teacher1@example.edu',
+            'Unit Test via Canvas',
+            'teacher1@example.edu',
             ['teacher1@example.edu', 'student@example.edu', 'unittest@example.edu'],
-            u'[Lorem For Beginners] blah',
+            '[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=[u'canvas-123-456@example.edu'],
-            text=u'blah blah'
+            original_to_address=['canvas-123-456@example.edu'],
+            text='blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call])
 
@@ -1102,7 +1102,7 @@ class RouteHandlerRegressionTests(TestCase):
             'To': recipients
         }
         post_body.update(generate_signature_dict())
-        print(" post_body=", post_body)
+        print((" post_body=", post_body))
 
         # prep the request
         request = self.factory.post('/', post_body)
@@ -1112,17 +1112,17 @@ class RouteHandlerRegressionTests(TestCase):
         response = handle_mailing_list_email_route(request)
         self.assertEqual(response.status_code, 200)
         send_mail_call = call(
-            u'Unit Test via Canvas',
-            u'teacher1@example.edu',
+            'Unit Test via Canvas',
+            'teacher1@example.edu',
             ['teacher1@example.edu', 'student@example.edu','unittest@example.edu'],
-            u'[Lorem For Beginners] blah',
+            '[Lorem For Beginners] blah',
             attachments=[],
             html='',
             inlines=[],
             message_id=None,
             original_cc_address=[],
-            original_to_address=[u'canvas-123-456@example.edu',u'canvas-789-456@example.edu'],
-            text=u'blah blah'
+            original_to_address=['canvas-123-456@example.edu','canvas-789-456@example.edu'],
+            text='blah blah'
         )
         ml.send_mail.assert_has_calls([send_mail_call, send_mail_call])
         self.assertEqual(ml.send_mail.call_count, 2)
@@ -1375,8 +1375,8 @@ def generate_signature_dict():
     timestamp = str(time.time())
     token = str(uuid.uuid4())
     signature = hmac.new(
-        key=settings.LISTSERV_API_KEY,
-        msg='{}{}'.format(timestamp, token),
+        key=settings.LISTSERV_API_KEY.encode('utf-8'),
+        msg='{}{}'.format(timestamp, token).encode('utf-8'),
         digestmod=hashlib.sha256
     ).hexdigest()
     return {

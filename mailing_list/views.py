@@ -37,7 +37,7 @@ def admin_index(request):
     else:
         course_name = canvas_course_id
         
-    logger.info(u"Rendering mailing_list admin_index view for user %s",
+    logger.info("Rendering mailing_list admin_index view for user %s",
                 logged_in_user_id)
     return render(request, 'mailing_list/admin_index.html', {'course_name': course_name,})
 
@@ -53,8 +53,8 @@ def list_members(request, section_id=None):
         return HttpResponseBadRequest('Unable to determine canvas course id')
 
     logger.info(
-        u'Rendering mailing_list section_list_details view for canvas course %s '
-        u'section %s', canvas_course_id, section_id)
+        'Rendering mailing_list section_list_details view for canvas course %s '
+        'section %s', canvas_course_id, section_id)
 
     if section_id:
         mailing_list = get_object_or_404(MailingList, canvas_course_id=canvas_course_id, section_id=section_id)

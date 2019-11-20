@@ -54,7 +54,7 @@ class MailingListModelTests(TestCase):
         )
 
         self.assertEqual(result, [{
-             'access_level': u'members',
+             'access_level': 'members',
             'members_count': 0,
             'name': 'Course Mailing List',
             'cs_class_type': None,
@@ -66,7 +66,7 @@ class MailingListModelTests(TestCase):
             'is_primary': False,
             'section_id': None
             },{
-            'access_level': u'members',
+            'access_level': 'members',
             'members_count': 0,
             'name': 'section name 1',
             'cs_class_type': None,
@@ -78,7 +78,7 @@ class MailingListModelTests(TestCase):
             'is_primary': False,
             'section_id': 1582
         },{
-            'access_level': u'members',
+            'access_level': 'members',
             'members_count': 0,
             'name': 'section name 2',
             'cs_class_type': None,
@@ -134,7 +134,7 @@ class MailingListModelTests(TestCase):
         )
 
         self.assertEqual([{
-                'access_level': u'members',
+                'access_level': 'members',
                 'members_count': 0,
                 'name': 'Course Mailing List',
                 'cs_class_type': None,
@@ -146,7 +146,7 @@ class MailingListModelTests(TestCase):
                 'is_primary': False,
                 'section_id': None
             },{
-                'access_level': u'members',
+                'access_level': 'members',
                 'members_count': 0,
                 'name': 'section name 1',
                 'cs_class_type': 'E',
@@ -158,7 +158,7 @@ class MailingListModelTests(TestCase):
                 'is_primary': False,
                 'section_id': 1582
             },{
-                'access_level': u'members',
+                'access_level': 'members',
                 'members_count': 0,
                 'name': 'section name 2',
                 'cs_class_type': None,
@@ -211,7 +211,7 @@ class MailingListModelTests(TestCase):
         )
 
         self.assertEqual([{
-            'access_level': u'members',
+            'access_level': 'members',
             'members_count': 0,
             'name': 'Course Mailing List',
             'cs_class_type': None,
@@ -223,7 +223,7 @@ class MailingListModelTests(TestCase):
             'is_primary': False,
             'section_id': None
             },{
-            'access_level': u'members',
+            'access_level': 'members',
             'members_count': 0,
             'name': 'section name 1',
             'cs_class_type': None,

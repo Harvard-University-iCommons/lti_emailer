@@ -13,13 +13,13 @@
 <html lang="en" ng-app="mailingList">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{% static 'favicon.ico' %}" rel="icon" type="image/x-icon">
-    <link rel="stylesheet" type="text/css" href="{% static "harvard-bootstrap/css/harvard-bootstrap.css" %}" media="screen"/>
+    <link href="https://static.tlt.harvard.edu/shared/favicon.ico" rel="icon" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="https://static.tlt.harvard.edu/shared/harvard-bootstrap/css/harvard-bootstrap.css" media="screen"/>
     {% block css %}{% endblock css %}
-    <script src="{% static 'jquery-1.10.2/jquery-1.10.2.min.js' %}"></script>
-    <script src="{% static "bootstrap-3.0.3/dist/js/bootstrap.min.js" %}"></script>
-    <script src="{% static "bootstrap-datepicker/js/bootstrap-datepicker.js" %}"></script>
-    <script src="{% static "listjs/list.min.js" %}"></script>
+    <script src="https://static.tlt.harvard.edu/shared/jquery-2.2.2/jquery-2.2.2.min.js"></script>
+    <script src="https://static.tlt.harvard.edu/shared/bootstrap-3.3.6/dist/js/bootstrap.min.js"></script>
+    <script src="https://static.tlt.harvard.edu/shared/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+    <script src="https://static.tlt.harvard.edu/shared/listjs/list.min.js"></script>
     {% include 'django_auth_lti/resource_link_id.html' %}
     {% block js %}{% endblock js %}
     <title>Course Emailer</title>
