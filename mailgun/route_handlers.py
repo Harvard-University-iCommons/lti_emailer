@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 import json
 import logging
 import re
@@ -8,7 +8,6 @@ from functools import wraps
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
-from django.template import Context
 from django.template.loader import get_template
 from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
@@ -40,13 +39,13 @@ def handle_exceptions():
                 # sometimes we need to return an error response from deep down
                 # the call stack.
                 logger.exception(
-                    u'HttpResponseException thrown by route handler, returning '
-                    u'its encapsulated response %s.  POST data: %s',
+                    'HttpResponseException thrown by route handler, returning '
+                    'its encapsulated response %s.  POST data: %s',
                     e.response, json.dumps(request.POST, sort_keys=True))
                 return e.response
             except:
                 logger.exception(
-                    u'Unhandled exception; aborting. POST data:\n%s\n',
+                    'Unhandled exception; aborting. POST data:\n%s\n',
                     json.dumps(request.POST, sort_keys=True))
                 # tell Mailgun we're unhappy with message and to retry later
                 return JsonResponse({'success': False}, status=500)
@@ -64,7 +63,7 @@ def handle_mailing_list_email_route(request):
     :param request:
     :return JsonResponse:
     '''
-    logger.debug(u'Full mailgun post: %s', request.POST)
+    logger.debug('Full mailgun post: %s', request.POST)
 
     from_ = addresslib_address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
@@ -73,15 +72,15 @@ def handle_mailing_list_email_route(request):
     subject = request.POST.get('subject')
     user_alt_email_cache = CommChannelCache()
 
-    logger.info(u'Handling Mailgun mailing list email from %s (sender %s) to '
-                u'%s, subject %s, message id %s',
+    logger.info('Handling Mailgun mailing list email from %s (sender %s) to '
+                '%s, subject %s, message id %s',
                 from_, sender, recipients, subject, message_id)
 
     # short circuit if we detect a bounce loop
     sender_address = sender.address.lower() if sender else ''
     from_address = from_.address.lower() if from_ else ''
     if settings.NO_REPLY_ADDRESS.lower() in (sender_address, from_address):
-        logger.error(u'Caught a bounce loop, dropping it. POST data:\n%s\n',
+        logger.error('Caught a bounce loop, dropping it. POST data:\n%s\n',
                      json.dumps(request.POST))
         return JsonResponse({'success': True})
 
@@ -92,9 +91,9 @@ def handle_mailing_list_email_route(request):
                 settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT
                     % (message_id, recipient))
             if cache.get(cache_key):
-                logger.warning(u'Message-Id %s was posted to the route handler '
-                               u"for %s, but we've already handled that.  "
-                               u'Skipping.', recipient, message_id)
+                logger.warning('Message-Id %s was posted to the route handler '
+                               "for %s, but we've already handled that.  "
+                               'Skipping.', recipient, message_id)
                 continue
         _handle_recipient(request, recipient, user_alt_email_cache)
 
@@ -118,7 +117,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
-    logger.debug(u'Handling recipient %s, from %s, subject %s, message id %s',
+    logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
 
     sender = _remove_batv_prefix(sender)
@@ -129,14 +128,14 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                  recipient.address)
     except MailingList.DoesNotExist:
         logger.info(
-            u'Sending mailing list bounce back email to %s for mailing list %s '
-            u'because the mailing list does not exist', sender, recipient)
+            'Sending mailing list bounce back email to %s for mailing list %s '
+            'because the mailing list does not exist', sender, recipient)
         _send_bounce('mailgun/email/bounce_back_does_not_exist.html',
                      sender, recipient.full_spec(), subject,
                      body_plain or body_html, message_id)
         return
 
-    logger.debug(u'Got the MailingList object: {}'.format(ml))
+    logger.debug('Got the MailingList object: {}'.format(ml))
 
     # try to determine the course instance, and from there the school
     school_id = None
@@ -145,17 +144,17 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
         school_id = ci.course.school_id
     else:
         logger.warning(
-            u'Could not determine the primary course instance for Canvas '
-            u'course id %s, so we cannot prepend a short title to the '
-            u'email subject, or check the super senders.', ml.canvas_course_id)
+            'Could not determine the primary course instance for Canvas '
+            'course id %s, so we cannot prepend a short title to the '
+            'email subject, or check the super senders.', ml.canvas_course_id)
 
     member_addresses = set([m['address'].lower() for m in ml.members])
-    logger.debug(u'Got member_addresses: %d', len(member_addresses))
+    logger.debug('Got member_addresses: %d', len(member_addresses))
 
     # conditionally include staff addresses in the members list. If
     # always_mail_staff is true all staff will receive the email
     teaching_staff_addresses = ml.teaching_staff_addresses
-    logger.debug(u'Got teaching_staff_addresses: %d', len(teaching_staff_addresses))
+    logger.debug('Got teaching_staff_addresses: %d', len(teaching_staff_addresses))
 
     # if the course settings object does not exist create it to initialize the
     # defaults
@@ -237,19 +236,19 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                     # changes to a user's alternate emails in Canvas should be
                     # recognized immediately by this handler logic
                     logger.info(
-                        u'Sending mailing list bounce back email to sender for '
-                        u'mailing list %s because the sender address %s is not '
-                        u'one of the active email communication channels for '
-                        u'the list member matching the from address %s',
+                        'Sending mailing list bounce back email to sender for '
+                        'mailing list %s because the sender address %s is not '
+                        'one of the active email communication channels for '
+                        'the list member matching the from address %s',
                         recipient, sender_address, from_address)
                     bounce_back_email_template = 'mailgun/email/bounce_back_no_comm_channel_match.html'
             elif sender_address in teaching_staff_addresses:
                 parsed_reply_to = parsed_sender
             else:
                 logger.info(
-                    u'Sending mailing list bounce back email to sender for '
-                    u'mailing list %s because neither the sender address %s '
-                    u'nor the from address %s was a staff member',
+                    'Sending mailing list bounce back email to sender for '
+                    'mailing list %s because neither the sender address %s '
+                    'nor the from address %s was a staff member',
                     recipient, sender_address, from_address)
                 bounce_back_email_template = 'mailgun/email/bounce_back_access_denied.html'
 
@@ -269,10 +268,10 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
                 # changes to a user's alternate emails in Canvas should be
                 # recognized immediately by this handler logic
                 logger.info(
-                    u'Sending mailing list bounce back email to sender for '
-                    u'mailing list %s because the sender address %s is not one '
-                    u'of the active email communication channels for the list '
-                    u'member matching the from address %s',
+                    'Sending mailing list bounce back email to sender for '
+                    'mailing list %s because the sender address %s is not one '
+                    'of the active email communication channels for the list '
+                    'member matching the from address %s',
                     recipient, sender_address, from_address)
                 bounce_back_email_template = 'mailgun/email/bounce_back_no_comm_channel_match.html'
         elif sender_address in staff_plus_members:
@@ -280,18 +279,18 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
         else:
             # neither of the possible sender addresses matches a list member
             logger.info(
-                u'Sending mailing list bounce back email to sender for '
-                u'mailing list %s because neither the sender address %s '
-                u'nor the from address %s was a member',
+                'Sending mailing list bounce back email to sender for '
+                'mailing list %s because neither the sender address %s '
+                'nor the from address %s was a member',
                 recipient, sender_address, from_address)
             bounce_back_email_template = 'mailgun/email/bounce_back_not_subscribed.html'
 
     if not is_super_sender and not bounce_back_email_template:
         if ml.access_level == MailingList.ACCESS_LEVEL_READONLY:
             logger.info(
-                u'Sending mailing list bounce back email to sender '
-                u'address %s (from address %s) for mailing list %s because '
-                u'the list is readonly', sender_address, from_address,
+                'Sending mailing list bounce back email to sender '
+                'address %s (from address %s) for mailing list %s because '
+                'the list is readonly', sender_address, from_address,
                 recipient)
             bounce_back_email_template = 'mailgun/email/bounce_back_readonly_list.html'
 
@@ -303,13 +302,13 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     # always send the email to the sender. Add 'parsed_reply_to to the
     # member_addresses set(tlt-2960)
-    logger.debug(u'Adding parsed_reply_to (sender) address to the final '
-                 u'recipient list:%s.', parsed_reply_to.address.lower())
+    logger.debug('Adding parsed_reply_to (sender) address to the final '
+                 'recipient list:%s.', parsed_reply_to.address.lower())
     member_addresses.add(parsed_reply_to.address.lower())
 
     # finally, we can send the email to the list
     member_addresses = list(member_addresses)
-    logger.debug(u'Full list of recipients: %s', member_addresses)
+    logger.debug('Full list of recipients: %s', member_addresses)
 
     # if we found the course instance, insert [SHORT TITLE] into the subject
     if ci and ci.short_title:
@@ -320,13 +319,13 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     # we want to add 'via Canvas' to the sender's name.  do our best to figure
     # it out, then add 'via Canvas' as long as we could.
     logger.debug(
-        u'Original sender: %s, original from: %s, using %s as reply-to and '
-        u'sender address', parsed_sender, parsed_from, parsed_reply_to)
+        'Original sender: %s, original from: %s, using %s as reply-to and '
+        'sender address', parsed_sender, parsed_from, parsed_reply_to)
     reply_to_display_name = _get_sender_display_name(
         parsed_reply_to, parsed_from, ml)
     if reply_to_display_name:
         reply_to_display_name += ' via Canvas'
-    logger.debug(u'Final sender name: %s, sender address: %s',
+    logger.debug('Final sender name: %s, sender address: %s',
                  reply_to_display_name, parsed_reply_to.address.lower())
 
     # make sure inline images actually show up inline, since fscking
@@ -336,7 +335,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     # as the content-id.
     if inlines:
         for f in inlines:
-            logger.debug(u'Replacing "%s" with "%s" in body', f.cid, f.name)
+            logger.debug('Replacing "%s" with "%s" in body', f.cid, f.name)
             body_plain = re.sub(f.cid, f.name, body_plain)
             body_html = re.sub(f.cid, f.name, body_html)
 
@@ -347,7 +346,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     # and send it off
     logger.debug(
-        u'Mailgun router handler sending email to %s from %s, subject %s',
+        'Mailgun router handler sending email to %s from %s, subject %s',
         member_addresses, parsed_reply_to.full_spec(), subject)
     try:
         ml.send_mail(
@@ -358,8 +357,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
         )
     except RuntimeError:
         logger.exception(
-            u'Error attempting to send message from %s to %s, originally '
-            u'sent to list %s, with subject %s', parsed_reply_to.full_spec(),
+            'Error attempting to send message from %s to %s, originally '
+            'sent to list %s, with subject %s', parsed_reply_to.full_spec(),
             member_addresses, ml.address, subject)
         raise
 
@@ -374,25 +373,25 @@ def _get_attachments_inlines(request):
         attachment_count = int(request.POST.get('attachment-count', 0))
     except RuntimeError:
         logger.exception(
-            u'Unable to determine if there were attachments to this email')
+            'Unable to determine if there were attachments to this email')
         attachment_count = 0
 
     try:
         content_id_map = json.loads(request.POST.get('content-id-map', '{}'))
     except RuntimeError:
-        logger.exception(u'Unable to find content-id map in this email, '
-                         u'forwarding all files as attachments.')
+        logger.exception('Unable to find content-id map in this email, '
+                         'forwarding all files as attachments.')
         content_id_map = {}
-    attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.iteritems()}
-    logger.debug(u'Attachment name to cid: %s', attachment_name_to_cid)
+    attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.items()}
+    logger.debug('Attachment name to cid: %s', attachment_name_to_cid)
 
-    for n in xrange(1, attachment_count + 1):
+    for n in range(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
         try:
             file_ = request.FILES[attachment_name]
         except KeyError:
-            logger.exception(u'Mailgun POST claimed to have %s attachments, '
-                             u'but %s is missing',
+            logger.exception('Mailgun POST claimed to have %s attachments, '
+                             'but %s is missing',
                              attachment_count, attachment_name)
             raise HttpResponseException(JsonResponse(
                       {
@@ -452,8 +451,8 @@ class CommChannelCache(object):
         if alt_emails is None:
             alt_emails = get_alternate_emails_for_user_email(email_address)
             self._user_map[email_address] = alt_emails
-            logger.debug(u'Caching valid alternate emails for user {}: '
-                         u'{}'.format(email_address, alt_emails))
+            logger.debug('Caching valid alternate emails for user {}: '
+                         '{}'.format(email_address, alt_emails))
         return alt_emails
 
 
@@ -476,8 +475,8 @@ def _get_sender_display_name(parsed_reply_to, parsed_from, ml):
                                                  reply_to_address)
         if sender_display_name:
             logger.debug(
-                u'Looked up enrollment information to find display name for '
-                u'sender %s, found: %s', reply_to_address, sender_display_name)
+                'Looked up enrollment information to find display name for '
+                'sender %s, found: %s', reply_to_address, sender_display_name)
 
     return sender_display_name
 
@@ -487,12 +486,12 @@ def _send_bounce(template_path, sender, recipient, subject, body, message_id):
     no_reply_address = settings.NO_REPLY_ADDRESS
 
     template = get_template(template_path)
-    content = template.render(Context({
+    content = template.render({
         'sender': sender,
         'recipient': recipient,
         'subject': subject,
         'message_body': body,
-    }))
+    })
     listserv_client.send_mail(no_reply_address, no_reply_address, sender,
                               subject='Undeliverable mail', html=content,
                               message_id=message_id)

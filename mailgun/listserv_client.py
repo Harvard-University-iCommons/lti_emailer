@@ -68,7 +68,7 @@ class MailgunClient(object):
         # if it's a list, add in recipient_variables to make sure mailgun
         # doesn't include the whole list in the to: field, per
         #   https://documentation.mailgun.com/user_manual.html#batch-sending
-        if not isinstance(to_address, basestring):
+        if not isinstance(to_address, str):
             recipient_variables = {e: {} for e in to_address}
             payload['recipient-variables'] = json.dumps(recipient_variables)
 
@@ -88,7 +88,7 @@ class MailgunClient(object):
 
         if response.status_code != 200:
             logger.error(
-                u'Failed to POST email from %s to %s.  Status code was %s, body '
-                u'was %s', from_address, to_address, response.status_code,
+                'Failed to POST email from %s to %s.  Status code was %s, body '
+                'was %s', from_address, to_address, response.status_code,
                 response.text)
             raise ListservApiError(response.text)

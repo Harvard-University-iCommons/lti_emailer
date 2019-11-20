@@ -8,7 +8,7 @@ from functools import wraps
 from django.conf import settings
 from django.utils.decorators import available_attrs
 from django.shortcuts import redirect
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 
 
 logger = logging.getLogger(__name__)
@@ -23,22 +23,23 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
                 token = request.POST['token']
                 signature = request.POST['signature']
             except KeyError as e:
-                logger.error(u"Received mailgun callback request with missing auth param %s", e.message)
+                logger.error("Received mailgun callback request with missing auth param %s", e)
                 return redirect(redirect_url)
 
             time_diff = time.time() - float(timestamp)
             if time_diff >= settings.MAILGUN_CALLBACK_TIMEOUT:
-                logger.error(u"Received stale mailgun callback request, time difference was %d", time_diff)
+                logger.error("Received stale mailgun callback request, time difference was %d", time_diff)
                 return redirect(redirect_url)
 
+            listserv_api_key = settings.LISTSERV_API_KEY
             digest = hmac.new(
-                key=settings.LISTSERV_API_KEY,
-                msg='{}{}'.format(timestamp, token),
+                key=listserv_api_key.encode('utf-8'),
+                msg=('{}{}'.format(timestamp, token)).encode('utf-8'),
                 digestmod=hashlib.sha256
             ).hexdigest()
 
             if signature != digest:
-                logger.error(u"Received invalid mailgun callback request signature %s != digest %s", signature, digest)
+                logger.error("Received invalid mailgun callback request signature %s != digest %s", signature, digest)
                 return redirect(redirect_url)
 
             return view_func(request, *args, **kwargs)

@@ -1,4 +1,4 @@
-from urlparse import urljoin
+from urllib.parse import urljoin
 from os.path import abspath, dirname, join
 from django.conf import settings
 import logging
@@ -114,7 +114,7 @@ class EmailerBaseTestCase(BaseSeleniumTestCase):
         if login_page.is_loaded():
             login_page.login_xid(cls.USERNAME, cls.PASSWORD)
         else:
-            print '(User {} already logged in to PIN)'.format(cls.USERNAME)
+            print('(User {} already logged in to PIN)'.format(cls.USERNAME))
 
     @classmethod
     def tearDownClass(cls):

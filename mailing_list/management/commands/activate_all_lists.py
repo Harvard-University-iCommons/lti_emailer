@@ -74,7 +74,7 @@ class Command(BaseCommand):
             }
 
         if failures:
-            for course_id, error_message in failures.iteritems():
+            for course_id, error_message in failures.items():
                 logger.error(
                     'Unable to get/create mailing lists for canvas course id {}: {}'.format(course_id, error_message)
                 )
@@ -92,10 +92,10 @@ class Command(BaseCommand):
                              'secondary_lists'))
             for course_id in sorted(course_lists):
                 course = courses_by_id[course_id]
-                primary = u';'.join([l['address'] for l in course_lists[course_id]['primary']])
-                secondary = u';'.join([l['address'] for l in course_lists[course_id]['secondary']])
+                primary = ';'.join([l['address'] for l in course_lists[course_id]['primary']])
+                secondary = ';'.join([l['address'] for l in course_lists[course_id]['secondary']])
                 row = (
-                    unicode(course_id), unicode(course['sis_course_id']),
+                    str(course_id), str(course['sis_course_id']),
                     course['name'], course['course_code'], primary, secondary
                 )
                 writer.writerow(row)
