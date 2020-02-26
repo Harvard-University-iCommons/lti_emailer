@@ -4,7 +4,7 @@ from operator import itemgetter
 
 from django.core.management.base import BaseCommand, CommandError
 
-from icommons_common.canvas_utils import UnicodeCSVWriter
+import csv
 
 from lti_emailer.canvas_api_client import get_courses_for_account_in_term
 from mailing_list.models import MailingList
@@ -25,8 +25,7 @@ class Command(BaseCommand):
         parser.add_argument('--enrollment-term-id', nargs='+', required=True,
                             help='Canvas enrollment term id (e.g. 1234) or SIS term ID \
                                   (e.g. sis_term_id:2015-2)')
-        parser.add_argument('--output-file', type=argparse.FileType('w'),
-                            help='File to output mailing list details to')
+        parser.add_argument('--output-file', help='File to output mailing list details to')
 
     def handle(self, *args, **options):
         courses = []
@@ -86,7 +85,8 @@ class Command(BaseCommand):
 
         if options.get('output_file'):
             courses_by_id = {c['id']: c for c in courses}
-            writer = UnicodeCSVWriter(options['output_file'])
+            output_csv = open(options.get('output_file'), "w")
+            writer = csv.writer(output_csv)
             writer.writerow(('canvas_course_id', 'sis_course_id', 'course_name',
                              'course_code', 'primary_list',
                              'secondary_lists'))

@@ -1,17 +1,15 @@
 import argparse
+import csv
 import datetime
 import json
 import logging
-import requests
 import sys
 
 import pytz
-from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.core.management.base import BaseCommand
 
-from icommons_common.canvas_utils import UnicodeCSVWriter
 from mailgun.management.commands._mailgun_api import get_events
-
 
 EVENTS_OF_INTEREST = ('failed',)
 INPUT_DATETIME_FORMAT = '%Y%m%d%H%M%S'
@@ -85,7 +83,7 @@ class Command(BaseCommand):
         rows.sort()
 
         headers = ('timestamp', 'list', 'sender', 'subject', 'message-id')
-        writer = UnicodeCSVWriter(output_file)
+        writer = csv.writer(output_file)
         writer.writerow(headers)
         writer.writerows(rows)
 
