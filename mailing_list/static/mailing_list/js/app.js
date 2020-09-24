@@ -17,10 +17,10 @@
 
   app.controller('MailingListController',
       ['$http', '$timeout', 'djangoUrl', '$q',
-      function($http, $timeout, $djangoUrl, $q){
+      function($http, $timeout, djangoUrl, $q){
     var ml = this;
-    var URL_LISTS = $djangoUrl.reverse('mailing_list:api_lists');
-    var URL_SETTINGS = $djangoUrl.reverse('mailing_list:api_course_settings');
+    var URL_LISTS = djangoUrl.reverse('mailing_list:api_lists');
+    var URL_SETTINGS = djangoUrl.reverse('mailing_list:api_course_settings');
 
     ml.alerts = {
       course: {
@@ -156,7 +156,7 @@
     ml.updateAccessLevel = function(list) {
       $('#permissions-modal-' + list.section_id).modal('hide');
       list.isUpdating = true;
-      var url = $djangoUrl.reverse(
+      var url = djangoUrl.reverse(
         'mailing_list:api_lists_set_access_level',
         [list.id]
       );
@@ -195,11 +195,11 @@
     ml.listMembersUrl = function(list) {
       if(list.section_id) {
         return window.globals.append_resource_link_id(
-          $djangoUrl.reverse('mailing_list:list_members',
+          djangoUrl.reverse('mailing_list:list_members',
           [list.section_id]));
       }else{
         return window.globals.append_resource_link_id(
-          $djangoUrl.reverse('mailing_list:list_members_no_id'));
+          djangoUrl.reverse('mailing_list:list_members_no_id'));
       }
     };
 
