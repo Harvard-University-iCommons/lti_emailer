@@ -17,3 +17,5 @@ secure*.py*
 !secure.py.j2
 data/
 selenium_tests/reports/
+secure.*
+parameters.*
