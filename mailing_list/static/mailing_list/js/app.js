@@ -69,13 +69,6 @@
         section: 'all members of this section and all staff can email each other; students and guests <strong>can</strong> send and reply to this mailing list.'
       }
     },{
-      id: 'everyone',
-      name: {class: 'World Access:', section: 'World Access:'},
-      description: {
-        class: 'anyone can send and reply to this mailing list.',
-        section: 'anyone can send and reply to this mailing list.'
-      }
-    },{
       id: 'readonly',
       name: {class: 'Disabled:', section: 'Disabled:'},
       description: {
