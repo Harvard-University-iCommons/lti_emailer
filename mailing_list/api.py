@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 
 from django_auth_lti.decorators import lti_role_required
 from django_auth_lti import const
@@ -62,9 +63,15 @@ def set_access_level(request, mailing_list_id):
     :param mailing_list_id:
     :return: JSON response containing the updated mailing list data
     """
+    ACCESS_LEVELS = ('staff', 'members', 'readonly')
+
+    access_level = json.loads(request.body)['access_level']
+    if access_level not in ACCESS_LEVELS:
+        logger.warn(f"{access_level} not a valid access_level. Mailing list {mailing_list_id} not modified.")
+        raise PermissionDenied
+
     try:
         logged_in_user_id = request.LTI['lis_person_sourcedid']
-        access_level = json.loads(request.body)['access_level']
 
         mailing_list = MailingList.objects.get(id=mailing_list_id)
         mailing_list.modified_by = logged_in_user_id
