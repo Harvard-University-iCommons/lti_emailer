@@ -60,7 +60,10 @@ class MailgunClient(object):
         # these are prefixed with h: so that mailgun doesn't think we want it
         # to send copies to these addresses as well.
         if original_to_address:
-            payload['h:To'] = original_to_address
+            payload['h:To'] = '%recipient.original_to_address%'
+            recip_var_dict = {'original_to_address': original_to_address}
+        else:
+            recip_var_dict = {}
         if original_cc_address:
             payload['h:Cc'] = original_cc_address
 
@@ -69,7 +72,7 @@ class MailgunClient(object):
         # doesn't include the whole list in the to: field, per
         #   https://documentation.mailgun.com/user_manual.html#batch-sending
         if not isinstance(to_address, str):
-            recipient_variables = {e: {} for e in to_address}
+            recipient_variables = {e: recip_var_dict for e in to_address}
             payload['recipient-variables'] = json.dumps(recipient_variables)
 
         # We need to replace non-ascii characters in attachment filenames
