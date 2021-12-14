@@ -61,7 +61,7 @@ class MailgunClient(object):
         # to send copies to these addresses as well.
         if original_to_address:
             payload['h:To'] = '%recipient.original_to_address%'
-            recip_var_dict = {'original_to_address': original_to_address}
+            recip_var_dict = {'original_to_address': ','.join(original_to_address)}
         else:
             recip_var_dict = {}
         if original_cc_address:
