@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'djng',
     'lti_emailer',
     'mailing_list',
-    'mailgun'
+    'mailgun',
+    'watchman'
 ]
 
 MIDDLEWARE = [
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'allow_cidr.middleware.AllowCIDRMiddleware'
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -313,3 +315,10 @@ CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT = "lti_emailer:message-han
 CACHE_KEY_MESSAGE_HANDLED_TIMEOUT = 60 * 60 * 8  # 8 hours
 
 NO_REPLY_ADDRESS = SECURE_SETTINGS.get('no_reply_address', 'no-reply@coursemail.harvard.edu')
+
+WATCHMAN_TOKENS = SECURE_SETTINGS['watchman_token']
+WATCHMAN_TOKEN_NAME = SECURE_SETTINGS['watchman_token_name']
+WATCHMAN_CHECKS = (
+    'watchman.checks.databases',
+    'watchman.checks.caches',
+)
