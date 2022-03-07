@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:experimental
 
 FROM 482956169056.dkr.ecr.us-east-1.amazonaws.com/uw/python-postgres-build:v0.5 as build
-COPY slack_lti_tool/requirements/*.txt /code/
+COPY lti_emailer/requirements/*.txt /code/
 RUN --mount=type=ssh,id=build_ssh_key ./python_venv/bin/pip3 install gunicorn && ./python_venv/bin/pip3 install -r aws.txt
 COPY . /code/
 RUN chmod a+x /code/docker-entrypoint.sh
