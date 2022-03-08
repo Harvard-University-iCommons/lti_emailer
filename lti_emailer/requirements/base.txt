@@ -6,7 +6,7 @@ flanker==0.9.0
 hiredis==1.0.0
 psycopg2==2.8.3
 redis==3.3.8
-requests==2.22.0
+requests==2.26.0
 cx_oracle==7.2.2
 django-storages==1.7.2
 splunk_handler==3.0.0
