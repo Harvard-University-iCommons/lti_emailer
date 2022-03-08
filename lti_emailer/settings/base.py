@@ -210,7 +210,6 @@ LOGGING = {
             'format': JSON_LOG_FORMAT,
         },
     },
-    # Borrowing some default filters for app loggers
     'filters': {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
@@ -221,16 +220,6 @@ LOGGING = {
             'project': 'lti_emailer',
             'department': 'uw',
         }
-    },
-    # This is the default logger for any apps or libraries that use the logger
-    # package, but are not represented in the `loggers` dict below.  A level
-    # must be set and handlers defined.  Setting this logger is equivalent to
-    # setting and empty string logger in the loggers dict below, but the separation
-    # here is a bit more explicit.  See link for more details:
-    # https://docs.python.org/2.7/library/logging.config.html#dictionary-schema-details
-    'root': {
-        'level': logging.WARNING,
-        'handlers': ['console', 'app_logfile'],
     },
     'handlers': {
         # By default, log to Splunk
@@ -306,9 +295,6 @@ LOGGING = {
         },
     }
 }
-
-# Currently deployed environment
-ENV_NAME = SECURE_SETTINGS.get('env_name', 'local')
 
 # Other app specific settings
 
