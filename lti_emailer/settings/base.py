@@ -194,6 +194,7 @@ class ContextFilter(logging.Filter):
 
         return True
 
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -253,6 +254,10 @@ LOGGING = {
             'formatter': 'verbose',
             'filters': ['require_debug_true'],
         }
+    },
+    'root': {
+        'level': logging.WARNING,
+        'handlers': ['default'],
     },
     'loggers': {
         # TODO: remove this catch-all handler in favor of app-specific handlers
