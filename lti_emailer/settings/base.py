@@ -204,7 +204,11 @@ LOGGING = {
         },
         'simple': {
             'format': '%(levelname)s\t%(name)s:%(lineno)s\t%(message)s',
-        }
+        },
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': JSON_LOG_FORMAT,
+        },
     },
     # Borrowing some default filters for app loggers
     'filters': {
