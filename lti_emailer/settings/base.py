@@ -10,6 +10,7 @@ from dj_secure_settings.loader import load_secure_settings
 
 SECURE_SETTINGS = load_secure_settings()
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -17,6 +18,8 @@ SECRET_KEY = SECURE_SETTINGS.get('django_secret_key', 'changeme')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = SECURE_SETTINGS.get('enable_debug', False)
+
+ENV = SECURE_SETTINGS.get('env_name')
 
 # Application definition
 
@@ -170,12 +173,26 @@ STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'http_static'))
 
 # Logging
 
-_DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', 'DEBUG')
-_LOG_ROOT = SECURE_SETTINGS.get('log_root', '')  # Default to current directory
-
 # Turn off default Django logging
 # https://docs.djangoproject.com/en/2.2/topics/logging/#disabling-logging-configuration
-LOGGING_CONFIG = None
+# LOGGING_CONFIG = None
+
+_DEFAULT_LOG_LEVEL = SECURE_SETTINGS.get('log_level', logging.DEBUG)
+
+JSON_LOG_FORMAT = '%(asctime)s %(created)f %(exc_info)s %(filename)s %(funcName)s %(levelname)s %(levelno)s %(name)s %(lineno)d %(module)s %(message)s %(pathname)s %(process)s'
+
+
+class ContextFilter(logging.Filter):
+
+    def __init__(self, **kwargs):
+        self.extra = kwargs
+
+    def filter(self, record):
+
+        for k in self.extra:
+            setattr(record, k, self.extra[k])
+
+        return True
 
 LOGGING = {
     'version': 1,
@@ -194,6 +211,12 @@ LOGGING = {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
+        'context': {
+            '()': 'lti_emailer.settings.base.ContextFilter',
+            'env': ENV,
+            'project': 'lti_emailer',
+            'department': 'uw',
+        }
     },
     # This is the default logger for any apps or libraries that use the logger
     # package, but are not represented in the `loggers` dict below.  A level
@@ -206,56 +229,74 @@ LOGGING = {
         'handlers': ['console', 'app_logfile'],
     },
     'handlers': {
-        # Log to a text file that can be rotated by logrotate
-        'app_logfile': {
+        # By default, log to Splunk
+        'default': {
+            'class': 'splunk_handler.SplunkHandler',
+            'formatter': 'json',
+            'sourcetype': 'json',
+            'source': 'django-lti_emailer',
+            'host': 'http-inputs-harvard.splunkcloud.com',
+            'port': '443',
+            'index': 'soc-isites',
+            'token': SECURE_SETTINGS['splunk_token'],
             'level': _DEFAULT_LOG_LEVEL,
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': os.path.join(_LOG_ROOT, 'django-lti_emailer.log'),
-            'formatter': 'verbose',
+            'filters': ['context']
+        },
+        'gunicorn': {
+            'class': 'splunk_handler.SplunkHandler',
+            'formatter': 'json',
+            'sourcetype': 'json',
+            'source': 'gunicorn-lti_emailer',
+            'host': 'http-inputs-harvard.splunkcloud.com',
+            'port': '443',
+            'index': 'soc-isites',
+            'token': SECURE_SETTINGS['splunk_token'],
+            'level': _DEFAULT_LOG_LEVEL,
+            'filters': ['context'],
         },
         'console': {
-            'level': logging.DEBUG,
+            'level': _DEFAULT_LOG_LEVEL,
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'verbose',
             'filters': ['require_debug_true'],
-        },
+        }
     },
     'loggers': {
         # TODO: remove this catch-all handler in favor of app-specific handlers
         '': {
-            'handlers': ['console', 'app_logfile'],
+            'handlers': ['default'],
             'level': _DEFAULT_LOG_LEVEL,
         },
         'django.request': {
-            'handlers': ['console', 'app_logfile'],
+            'handlers': ['default'],
             'level': 'ERROR',
             'propagate': False,
         },
         'django': {
-            'handlers': ['console'],
+            'handlers': ['default'],
             'propagate': False,
         },
         'py.warnings': {
-            'handlers': ['console'],
+            'handlers': ['default'],
             'propagate': False,
         },
         'lti_emailer': {
             'level': _DEFAULT_LOG_LEVEL,
-            'handlers': ['console', 'app_logfile'],
+            'handlers': ['default'],
             'propagate': False,
         },
         'mailgun': {
             'level': _DEFAULT_LOG_LEVEL,
-            'handlers': ['console', 'app_logfile'],
+            'handlers': ['default'],
             'propagate': False,
         },
         'mailing_list': {
             'level': _DEFAULT_LOG_LEVEL,
-            'handlers': ['console', 'app_logfile'],
+            'handlers': ['default'],
             'propagate': False,
         },
         'icommons_common': {
-           'handlers': ['console', 'app_logfile'],
+           'handlers': ['default'],
            'level': _DEFAULT_LOG_LEVEL,
            'propagate': False,
         },
