@@ -40,7 +40,7 @@ def admin_index(request):
         
     logger.info("Rendering mailing_list admin_index view for user %s",
                 logged_in_user_id)
-    return render(request, 'mailing_list/admin_index.html', {'course_name': course_name,})
+    return render(request, 'mailing_list/admin_index.html', {'course_name': course_name, 'build_info': build_info})
 
 
 @login_required
