@@ -1,4 +1,4 @@
-Django==2.2.25
+Django==2.2.27
 django-angular==2.2.1
 django-cached-authentication-middleware==0.2.2
 django-redis-cache==2.0.0
