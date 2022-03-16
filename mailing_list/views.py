@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 def admin_index(request):
     logged_in_user_id = request.LTI['lis_person_sourcedid']
     canvas_course_id = request.LTI.get('custom_canvas_course_id')
+    build_info = settings.BUILD_INFO
 
     course = get_course(canvas_course_id)
 
