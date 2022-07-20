@@ -249,6 +249,7 @@ class MailingList(models.Model):
     @property
     def members(self):
         mailing_list_emails = self._get_enrolled_email_set()
+        # In non-production we want to make sure we don't send emails to people.
         if not getattr(settings, 'IGNORE_WHITELIST', False):
             mailing_list_emails = mailing_list_emails.intersection(self._get_whitelist_email_set())
         return [{'address': e} for e in mailing_list_emails]
