@@ -200,10 +200,8 @@
       return (ml.courseSettings.formValues && ml.hasMultipleSections());
     };
 
-    if(window.location.href.indexOf("local") !== -1) {
-      var msg = "Members count may not reflect mailing list in non-production. An intersection of the email lists is being done to prevent accidently emailing users.";
-      setTimeout(function () { alert(msg); }, 5000);
-      console.log(msg);
+    ml.isNonProdURL = function() {
+      return window.location.href.indexOf("lti-emailer.tlt") == 1 ? false : true;
     };
 
   }]);
