@@ -201,7 +201,7 @@
     };
 
     ml.isNonProdURL = function() {
-      return window.location.href.indexOf("lti-emailer.tlt") == 1 ? false : true;
+      return window.location.href.indexOf("lti-emailer.tlt") >= 0 ? false : true;
     };
 
   }]);
