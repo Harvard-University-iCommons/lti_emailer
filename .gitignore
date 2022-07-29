@@ -19,3 +19,6 @@ data/
 selenium_tests/reports/
 secure.*
 parameters.*
+# files generated via `runserver_plus` CLI command
+*.crt
+*.key
