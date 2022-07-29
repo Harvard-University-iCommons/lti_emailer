@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
-from django.utils.decorators import available_attrs
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address as addresslib_address
@@ -31,7 +30,7 @@ listserv_client = ListservClient()
 
 def handle_exceptions():
     def decorator(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func)
         def inner(request, *args, **kwargs):
             try:
                 return view_func(request, *args, **kwargs)
