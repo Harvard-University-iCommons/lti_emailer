@@ -4,14 +4,12 @@ import re
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
-from django.utils import timezone
 from flanker.addresslib import address as addresslib_address
 
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
-from icommons_common.models import CourseInstance
 
-from mailing_list.utils import is_course_crosslisted, get_section_sis_enrollment_status
+from mailing_list.utils import get_section_sis_enrollment_status
 
 logger = logging.getLogger(__name__)
 

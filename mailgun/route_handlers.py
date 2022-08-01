@@ -7,7 +7,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.core.cache import cache
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
