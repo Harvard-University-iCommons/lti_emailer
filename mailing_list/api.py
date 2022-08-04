@@ -4,7 +4,6 @@ import json
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
-from django.utils import timezone
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 

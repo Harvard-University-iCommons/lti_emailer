@@ -12,7 +12,6 @@ from canvas_sdk.methods import (
     accounts,
     communication_channels)
 from canvas_sdk.methods.users import list_users_in_account
-from canvas_sdk.methods.enrollments import list_enrollments_sections
 
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError

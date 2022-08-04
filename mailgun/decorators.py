@@ -6,7 +6,6 @@ import time
 from functools import wraps
 
 from django.conf import settings
-from django.utils.decorators import available_attrs
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
     def decorator(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             try:
                 timestamp = request.POST['timestamp']
