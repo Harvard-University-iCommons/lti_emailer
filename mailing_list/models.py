@@ -83,7 +83,7 @@ class MailingListManager(models.Manager):
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
         sis_course_id = canvas_api_client.get_course(canvas_course_id)['sis_course_id']
-        canvas_sections = canvas_api_client.get_sections(canvas_course_id)
+        canvas_sections = canvas_api_client.get_sections(canvas_course_id, fetch_enrollments=False)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
         overrides = kwargs.get('defaults', {})
