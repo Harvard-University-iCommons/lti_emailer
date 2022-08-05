@@ -34,7 +34,7 @@ class MailgunClient(object):
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
                                      settings.LISTSERV_DOMAIN)
 
-        logger.info(f'send_mail called with list_address={list_address} from_address={from_address} to_address={to_address} subject={subject} original_to_address={original_to_address} original_cc_address={original_cc_address} message_id={message_id}')
+        logger.debug(f'send_mail called with list_address={list_address} from_address={from_address} to_address={to_address} subject={subject} original_to_address={original_to_address} original_cc_address={original_cc_address} message_id={message_id}')
 
         payload = {
             'from': list_address,

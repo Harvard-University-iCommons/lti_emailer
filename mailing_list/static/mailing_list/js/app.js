@@ -86,14 +86,12 @@
 
     var listsPromise = $http.get(URL_LISTS).success(function(data){
       var length = data.length;
-      // var course_list_member_count = 0;
       var list;
 
       for (var i = 0; i < length; i++) {
         list = data[i];
         if(list.is_course_list) {
           ml.courseList.push(list);
-          // course_list_member_count = list.members_count;
         } else if(!list.sis_section_id || list.cs_class_type == 'N'){
           ml.nonEnrollmentSectionLists.push(list);
         } else if(list.sis_section_id || list.cs_class_type == 'E'){
