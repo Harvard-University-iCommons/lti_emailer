@@ -18,7 +18,7 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             logger.info(f'authenticating webhook request content type {request.content_type}')
-            if request.content_type != 'application/json':
+            if request.content_type == 'application/json':
                 payload = request.json()
                 try:
                     timestamp = payload['signature']['timestamp']
