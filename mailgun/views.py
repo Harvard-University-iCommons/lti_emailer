@@ -27,7 +27,8 @@ def log_post_data(request):
     :return HttpResponse:
     """
     if request.content_type == 'application/json':
-        logger.info(request.body.decode('utf-8'))
+        payload = json.loads(request.body)
+        logger.info(json.dumps(payload['event-data']))
     else:
         logger.info(json.dumps(request.POST, separators=(',', ': '), sort_keys=True))
 
