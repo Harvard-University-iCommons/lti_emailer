@@ -26,5 +26,9 @@ def log_post_data(request):
     :param request:
     :return HttpResponse:
     """
-    logger.info('[MAILGUN EVENT] %s', json.dumps(request.POST, separators=(',', ': '), sort_keys=True))
+    if request.content_type == 'application/json':
+        logger.info(request.body.decode('utf-8'))
+    else:
+        logger.info(json.dumps(request.POST, separators=(',', ': '), sort_keys=True))
+
     return HttpResponse("Successfully logged post data", status=200)

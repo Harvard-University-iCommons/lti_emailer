@@ -1,14 +1,13 @@
-import logging
 import hashlib
 import hmac
+import json
+import logging
 import time
-
 from functools import wraps
 
 from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ def authenticate(redirect_url=reverse_lazy('mailgun:auth_error')):
         def _wrapped_view(request, *args, **kwargs):
             logger.info(f'authenticating webhook request content type {request.content_type}')
             if request.content_type == 'application/json':
-                payload = request.json()
+                payload = json.loads(request.body)
                 try:
                     timestamp = payload['signature']['timestamp']
                     token = payload['signature']['token']
