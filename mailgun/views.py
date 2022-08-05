@@ -16,7 +16,6 @@ def auth_error(request):
 
 
 @csrf_exempt
-@authenticate()
 @require_http_methods(['POST'])
 def log_post_data(request):
     """
