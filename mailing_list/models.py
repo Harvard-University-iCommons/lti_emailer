@@ -1,11 +1,11 @@
 import logging
-
 import re
+from timeit import default_timer as timer
+
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 from flanker.addresslib import address as addresslib_address
-
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
 
@@ -244,9 +244,12 @@ class MailingList(models.Model):
 
     @property
     def members(self):
+        start_time = timer()
         mailing_list_emails = self._get_enrolled_email_set()
         if not getattr(settings, 'IGNORE_WHITELIST', False):
             mailing_list_emails = mailing_list_emails.intersection(self._get_whitelist_email_set())
+        end_time = timer()
+        logger.debug(f'called ml.members - took {end_time-start_time}')
         return [{'address': e} for e in mailing_list_emails]
 
     @property
