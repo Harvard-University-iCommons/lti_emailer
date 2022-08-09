@@ -14,6 +14,12 @@ DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
 }
 
+LOGGING['handlers']['default'] = {
+    'level': DEBUG,
+    'class': 'logging.StreamHandler',
+    'formatter': 'verbose',
+    'filters': ['require_debug_true'],
+}
 dictConfig(LOGGING)
 
 # REST API info needed for selenium_common

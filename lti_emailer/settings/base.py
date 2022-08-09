@@ -298,7 +298,17 @@ LOGGING = {
            'level': _DEFAULT_LOG_LEVEL,
            'propagate': False,
         },
-    }
+        'canvas_sdk': {
+           'handlers': ['default'],
+           'level': _DEFAULT_LOG_LEVEL,
+           'propagate': False,
+        },
+        'django_auth_lti': {
+           'handlers': ['default'],
+           'level': 'ERROR',
+           'propagate': False,
+        },
+    },
 }
 
 # Other app specific settings

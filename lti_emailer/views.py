@@ -30,12 +30,12 @@ def tool_config(request):
     url = "https://{}{}".format(request.get_host(), reverse('lti_launch'))
     url = _url(url)
 
-    title = 'LTI Emailer'
+    title = 'Course Emailer'
     lti_tool_config = ToolConfig(
         title=title,
         launch_url=url,
         secure_launch_url=url,
-        description="This LTI tool allows email functionality for this course site."
+        description="This tool provides an email list for the course and each section associated iwth this course site."
     )
 
     # this is how to tell Canvas that this tool provides a course navigation link:

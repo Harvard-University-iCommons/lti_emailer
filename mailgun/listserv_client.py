@@ -33,6 +33,9 @@ class MailgunClient(object):
                   message_id=None):
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
                                      settings.LISTSERV_DOMAIN)
+
+        logger.debug(f'send_mail called with list_address={list_address} from_address={from_address} to_address={to_address} subject={subject} original_to_address={original_to_address} original_cc_address={original_cc_address} message_id={message_id}')
+
         payload = {
             'from': list_address,
             'h:List-Id': '<{}>'.format(list_address),
@@ -59,19 +62,24 @@ class MailgunClient(object):
         #
         # these are prefixed with h: so that mailgun doesn't think we want it
         # to send copies to these addresses as well.
+        cc_list = []
+
         if original_to_address:
-            payload['h:To'] = '%recipient.original_to_address%'
-            recip_var_dict = {'original_to_address': ','.join(original_to_address)}
-        else:
-            recip_var_dict = {}
+            cc_list.extend(original_to_address)
+
         if original_cc_address:
-            payload['h:Cc'] = original_cc_address
+            cc_list.extend(original_cc_address)
+
+        if cc_list:
+            payload['h:cc'] = ','.join(cc_list)
 
         # we accept a single address or a list of addresses in to_address.
         # if it's a list, add in recipient_variables to make sure mailgun
         # doesn't include the whole list in the to: field, per
         #   https://documentation.mailgun.com/user_manual.html#batch-sending
         if not isinstance(to_address, str):
+            # the recipient variables aren't actually used, so we just send a fake dict
+            recip_var_dict = {'k': 'v'}
             recipient_variables = {e: recip_var_dict for e in to_address}
             payload['recipient-variables'] = json.dumps(recipient_variables)
 
