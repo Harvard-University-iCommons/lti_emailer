@@ -19,19 +19,19 @@ We use the [Mailgun API](https://documentation.mailgun.com/ "Mailgun API") to se
 
 ## Local dev setup
 
-After getting all your db connection stuff setup in the secure.py, access the 
-vagrant shell and bring up the postgres shell via `psql`. At the shell prompt:
+Bootstrapping a local Python development environment on your host machine for testing (make sure `USE_PYTHON_VERSION` corresponds to the current Python version used by the `Dockerfile`):
 
-    alter role vagrant with password '(your secure.py default db password)';
+```sh
+USE_PYTHON_VERSION="3.10.4"
+VENV_DIR=".venv"
+pyenv install --skip-existing ${USE_PYTHON_VERSION}
+rm -Rf "${VENV_DIR}" && PYENV_VERSION=${USE_PYTHON_VERSION} python -m venv "${VENV_DIR}"
+. "${VENV_DIR}"/bin/activate && pip install --upgrade pip wheel
+. "${VENV_DIR}"/bin/activate && pip install -r lti_emailer/requirements/local.txt
+```
 
-Then, back in the vagrant shell:
+Running it from your host machine, if libraries and a Python environment are installed locally:
 
-    python manage.py init_db
-    python manage.py migrate
-
-If you're running via runsslserver and testing in Chrome, you'll need to 'bless'
-the local SSL connection in Chrome by first bringing up the tool_config
-(e.g. `https://localhost:8000/tool_config`) in a separate window and explicitly
-allowing the connection.
-
-And because it accesses the coursemanager, don't forget the VPN.
+```sh
+ENV=dev DJANGO_SETTINGS_MODULE=lti_emailer.settings.local python manage.py runserver_plus --cert-file cert.crt
+```

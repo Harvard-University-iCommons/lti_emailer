@@ -13,8 +13,6 @@ from lti_permissions.decorators import lti_permission_required
 from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
 from mailing_list.models import MailingList
 
-from mailing_list.utils import is_course_crosslisted
-
 from icommons_common.canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
 
 logger = logging.getLogger(__name__)
@@ -37,7 +35,7 @@ def admin_index(request):
         course_name = course['course_code']
     else:
         course_name = canvas_course_id
-        
+
     logger.info("Rendering mailing_list admin_index view for user %s",
                 logged_in_user_id)
     return render(request, 'mailing_list/admin_index.html', {'course_name': course_name, 'build_info': build_info})

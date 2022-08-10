@@ -1,17 +1,15 @@
 import logging
-
 import re
+from timeit import default_timer as timer
+
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
-from django.utils import timezone
 from flanker.addresslib import address as addresslib_address
-
 from lti_emailer import canvas_api_client
 from mailgun.listserv_client import MailgunClient as ListservClient
-from icommons_common.models import CourseInstance
 
-from mailing_list.utils import is_course_crosslisted, get_section_sis_enrollment_status
+from mailing_list.utils import get_section_sis_enrollment_status
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +83,7 @@ class MailingListManager(models.Manager):
         :return: List of mailing list dictionaries for the given canvas_course_id
         """
         sis_course_id = canvas_api_client.get_course(canvas_course_id)['sis_course_id']
-        canvas_sections = canvas_api_client.get_sections(canvas_course_id)
+        canvas_sections = canvas_api_client.get_sections(canvas_course_id, fetch_enrollments=False)
         mailing_lists_by_section_id = self._get_mailing_lists_by_section_id(canvas_course_id)
 
         overrides = kwargs.get('defaults', {})
@@ -117,7 +115,6 @@ class MailingListManager(models.Manager):
                 'name': 'Course Mailing List',
                 'address': course_list.address,
                 'access_level': course_list.access_level,
-                'members_count': len(course_list.members),
                 'is_course_list': True,
                 'cs_class_type': None,
                 'is_primary': False,
@@ -156,7 +153,6 @@ class MailingListManager(models.Manager):
                 'name': s['name'],
                 'address': mailing_list.address,
                 'access_level': mailing_list.access_level,
-                'members_count': len(mailing_list.members),
                 'is_course_list': False,
                 'cs_class_type': cs_class_type,
                 'is_primary': s['sis_section_id'] == sis_course_id,
@@ -248,10 +244,13 @@ class MailingList(models.Model):
 
     @property
     def members(self):
+        start_time = timer()
         mailing_list_emails = self._get_enrolled_email_set()
         # In non-production we want to make sure we don't send emails to people.
         if not getattr(settings, 'IGNORE_WHITELIST', False):
             mailing_list_emails = mailing_list_emails.intersection(self._get_whitelist_email_set())
+        end_time = timer()
+        logger.debug(f'called ml.members - took {end_time-start_time}')
         return [{'address': e} for e in mailing_list_emails]
 
     @property

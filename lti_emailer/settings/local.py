@@ -5,7 +5,7 @@ ALLOWED_HOSTS = ['*']
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-INSTALLED_APPS += ['debug_toolbar', 'sslserver']
+INSTALLED_APPS += ['debug_toolbar', 'django_extensions']
 MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
 # For Django Debug Toolbar:
@@ -14,6 +14,12 @@ DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
 }
 
+LOGGING['handlers']['default'] = {
+    'level': DEBUG,
+    'class': 'logging.StreamHandler',
+    'formatter': 'verbose',
+    'filters': ['require_debug_true'],
+}
 dictConfig(LOGGING)
 
 # REST API info needed for selenium_common

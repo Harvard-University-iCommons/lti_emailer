@@ -12,7 +12,6 @@ from canvas_sdk.methods import (
     accounts,
     communication_channels)
 from canvas_sdk.methods.users import list_users_in_account
-from canvas_sdk.methods.enrollments import list_enrollments_sections
 
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
@@ -100,8 +99,8 @@ def get_section(canvas_course_id, section_id):
     return None
 
 
-def get_sections(canvas_course_id):
-    return canvas_api_helper_sections.get_sections(canvas_course_id)
+def get_sections(canvas_course_id, fetch_enrollments=True):
+    return canvas_api_helper_sections.get_sections(canvas_course_id, fetch_enrollments=fetch_enrollments)
 
 
 def get_teaching_staff_enrollments(canvas_course_id):

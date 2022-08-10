@@ -4,18 +4,20 @@
 -r base.txt
 
 # below are requirements specific to the local environment
+django-debug-toolbar==3.5
+mock==4.0.3
+pep8==1.7.1
+flake8==4.0.1
 
-django-debug-toolbar==1.11.1
-django-sslserver==0.21
-mock==3.0.5
-pep8==1.7.0
-flake8==3.7.9
+django-extensions==3.1.5 # provides `runserver_plus` local dev server
+pyOpenSSL==22.0.0 # dependency for django-extensions
+Werkzeug==2.0.3 # dependency for django-extensions
 
 # selenium
-PyVirtualDisplay==0.2
-ddt==1.1.0
-selenium==2.53.6
-xlrd==1.0.0
+PyVirtualDisplay==3.0
+ddt==1.5.0
+selenium==4.3.0
+xlrd==2.0.1
 git+ssh://git@github.com/Harvard-University-iCommons/selenium_common.git@v1.4.3#egg=selenium-common==1.4.3
 
 
@@ -23,4 +25,4 @@ git+ssh://git@github.com/Harvard-University-iCommons/selenium_common.git@v1.4.3#
 # until ccsw gets its own proper project, and we move the delete command out of
 # icommons_common and into ccsw, work around the circular dependency by calling
 # out the ccsw dependency here.
-git+ssh://git@github.com/Harvard-University-iCommons/django-canvas-course-site-wizard.git@v2.0#egg=django-canvas-course-site-wizard==2.0
+git+ssh://git@github.com/Harvard-University-iCommons/django-canvas-course-site-wizard.git@v3.0#egg=django-canvas-course-site-wizard==3.0
