@@ -22,9 +22,6 @@
         data-toggle="tooltip"
         href="{{ ml.listMembersUrl(list) }}">view members</a>)
   </p>
-  <span ng-show="ml.isNonProdURL()">
-    Members count may not reflect mailing list in non-production. An intersection of the mailing lists are being done to prevent accidently emailing all users.
-  </span>
 </div>
 
 <!-- column 2 -->
@@ -40,6 +37,9 @@
        title="" data-original-title="Click this link to send an email">
        <i class="fa fa-envelope"></i> {{ list.address }}
     </a>
+    <span ng-show="ml.isNonProdURL()">
+      <br>In non-production only whitelisted members will get emails when using email entire course email to prevent accidently emailing all users.
+    </span>
   </p>
 </div>
 
