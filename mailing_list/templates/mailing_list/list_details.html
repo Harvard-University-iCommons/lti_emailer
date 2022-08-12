@@ -6,7 +6,7 @@
 {% endblock js %}
 
 {% block body %}
-<body class="lti-tool" role="application">
+<body class="lti-tool" ng-controller="MailingListController as ml" role="application">
   <div class="container">
     <header>
       <div class="row lti-header">
@@ -23,6 +23,12 @@
     <p>
       If a member of the class has changed their preferred email address in Canvas, it will be displayed instead of
       the official Harvard email address.
+    </p>
+    <p ng-show="ml.isNonProdURL()" class="alert alert-info" role="alert">
+      In non-production not all the members in this list will be emailed. Only the ones in the whitelist in the database.
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>    
     </p>
     <div id="members-list" class="row row-lti col-md-8 lti-section">
       {% if enrollments %}
