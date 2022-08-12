@@ -246,7 +246,7 @@ class MailingList(models.Model):
     def members(self):
         start_time = timer()
         mailing_list_emails = self._get_enrolled_email_set()
-        # In non-production we want to make sure we don't send emails to everyone accidently.
+        # In non-production we want to make sure we don't send emails to everyone accidentally.
         if not getattr(settings, 'IGNORE_WHITELIST', False):
             mailing_list_emails = mailing_list_emails.intersection(self._get_whitelist_email_set())
         end_time = timer()
