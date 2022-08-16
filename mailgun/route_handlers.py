@@ -116,6 +116,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
+    logger.info(f'attachments: {attachments}, inlines: {inlines}')
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
 
