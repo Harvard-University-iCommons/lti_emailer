@@ -406,6 +406,8 @@ def _get_attachments_inlines(request):
         else:
             attachments.append(file_)
 
+    logger.info(f'attachments: {attachments}, inlines: {inlines}')
+
     return attachments, inlines
 
 
