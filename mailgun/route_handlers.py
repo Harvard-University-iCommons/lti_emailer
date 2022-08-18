@@ -406,7 +406,7 @@ def _get_attachments_inlines(request):
         else:
             attachments.append(file_)
 
-    attachments_metadata = request.POST.get('attachments', '')
+    attachments_metadata = request.POST.get('attachments')
     logger.info(f'attachments: {attachments}, inlines: {inlines}, attachments_metadata: {attachments_metadata}')
 
     return attachments, inlines
