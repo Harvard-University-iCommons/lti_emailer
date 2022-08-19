@@ -2,6 +2,7 @@
 import json
 import logging
 import re
+import os
 
 from functools import wraps
 
@@ -408,9 +409,8 @@ def _get_attachments_inlines(request):
         else:
             attachments.append(file_)
 
-        import os
-        attachments_size = os.path.getsize(file_.temporary_file_path())
-        attachments_size2 = file_.size
+        attachments_size += os.path.getsize(file_.temporary_file_path())
+        attachments_size2 += file_
 
     logger.info(
         f'attachments: {attachments}, inlines: {inlines}, \
