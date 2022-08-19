@@ -367,6 +367,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request):
     attachments = []
     inlines = []
+    attachments_size = 0
+    attachments_size2 = 0
 
     try:
         attachment_count = int(request.POST.get('attachment-count', 0))
@@ -406,8 +408,14 @@ def _get_attachments_inlines(request):
         else:
             attachments.append(file_)
 
-    attachments_metadata = request.POST.get('attachments')
-    logger.info(f'attachments: {attachments}, inlines: {inlines}, attachments_metadata: {attachments_metadata}')
+        import os
+        attachments_size = os.path.getsize(file_.temporary_file_path())
+        attachments_size2 = file_.size
+
+    logger.info(
+        f'attachments: {attachments}, inlines: {inlines}, \
+        attachments_total_size: {attachments_size}, \
+        attachments_total_size2: {attachments_size2}.size')
 
     return attachments, inlines
 
