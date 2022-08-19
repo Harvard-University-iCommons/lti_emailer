@@ -7,6 +7,9 @@
   This is a workaround for issues of overlapping body styles until we either
   re-adopt bootstrap or continue porting the Manage Sections tool to the
   lti-less workflow.
+
+  Edit: This template now uses app.js for updating alerts on the 
+  list_details.html page.
 {% endcomment %}
 
 <!DOCTYPE html>
@@ -21,6 +24,7 @@
     <script src="https://static.tlt.harvard.edu/shared/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
     <script src="https://static.tlt.harvard.edu/shared/listjs/list.min.js"></script>
     {% include 'django_auth_lti/resource_link_id.html' %}
+    <script src="{% static 'mailing_list/js/app.js' %}"></script>
     {% block js %}{% endblock js %}
     <title>Course Emailer</title>
 </head>

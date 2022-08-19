@@ -197,5 +197,10 @@
     ml.showSettings = function() {
       return (ml.courseSettings.formValues && ml.hasMultipleSections());
     };
+
+    ml.isNonProdURL = function() {
+      return window.location.href.indexOf("lti-emailer.tlt") >= 0 ? false : true;
+    };
+
   }]);
 })();
