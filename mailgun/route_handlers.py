@@ -118,15 +118,15 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
-    logger.info(f'attachments: {attachments}, inlines: {inlines}'
-                f'attachments_total_size: {attachments_size} byte(s), from: {sender}'
+    logger.info(f'attachments: {attachments}, inlines: {inlines}, '
+                f'attachments_total_size: {attachments_size} byte(s), from: {sender}, '
                 f'message id: {message_id}')
 
     sender = _remove_batv_prefix(sender)
 
     # Send sender bounce email if attachments are greater than 25MB.
     # Mailgun's individual email size limit
-    if attachments > 2.5e+7:
+    if attachments_size > 2.5e+7:
         logger.info(f'Sending mailing list bounce back email to {sender} '
                     f'for mailing list {recipient} because the email message exceeds '
                     f'the per-message size limit (including attachments) of 25MB')
