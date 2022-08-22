@@ -23,3 +23,6 @@ parameters.*
 *.crt
 *.key
 .python-version
+
+# Local VS Code settings
+.vscode/*
