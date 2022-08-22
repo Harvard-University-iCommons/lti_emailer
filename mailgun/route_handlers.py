@@ -410,12 +410,12 @@ def _get_attachments_inlines(request):
             attachments.append(file_)
 
         attachments_size += os.path.getsize(file_.temporary_file_path())
-        attachments_size2 += file_
+        attachments_size2 += file_.size
 
     logger.info(
         f'attachments: {attachments}, inlines: {inlines}, \
         attachments_total_size: {attachments_size}, \
-        attachments_total_size2: {attachments_size2}.size')
+        attachments_total_size2: {attachments_size2}')
 
     return attachments, inlines
 
