@@ -106,7 +106,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     matrix can be found on the wiki:
         https://confluence.huit.harvard.edu/display/TLT/LTI+Emailer
     '''
-    attachments, inlines = _get_attachments_inlines(request)
+    attachments, inlines, attachments_size = _get_attachments_inlines(request)
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = addresslib_address.parse_list(request.POST.get('Cc'))
@@ -118,8 +118,23 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
+    logger.info(f'attachments: {attachments}, inlines: {inlines}, '
+                f'attachments_total_size: {attachments_size} byte(s), from: {sender}, '
+                f'message id: {message_id}')
 
     sender = _remove_batv_prefix(sender)
+
+    # Send sender bounce email if attachments are greater than 25MB.
+    # Mailgun's individual email size limit
+    if attachments_size > 2.5e+7:
+        logger.info(f'Sending mailing list bounce back email to {sender} '
+                    f'for mailing list {recipient} because the email message exceeds '
+                    f'the per-message size limit (including attachments) of 25MB')
+
+        _send_bounce('mailgun/email/bounce_back_size_limit_exceeded.html',
+                     sender, recipient.full_spec(), subject,
+                     body_plain or body_html, message_id)
+        return None
 
     # short circuit if the mailing list doesn't exist
     try:
@@ -367,6 +382,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request):
     attachments = []
     inlines = []
+    attachments_size = 0
 
     try:
         attachment_count = int(request.POST.get('attachment-count', 0))
@@ -406,7 +422,9 @@ def _get_attachments_inlines(request):
         else:
             attachments.append(file_)
 
-    return attachments, inlines
+        attachments_size += file_.size
+
+    return attachments, inlines, attachments_size
 
 
 def _remove_batv_prefix(sender_address):
