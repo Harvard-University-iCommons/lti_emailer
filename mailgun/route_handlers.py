@@ -106,7 +106,6 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     matrix can be found on the wiki:
         https://confluence.huit.harvard.edu/display/TLT/LTI+Emailer
     '''
-    attachments, inlines, attachments_size = _get_attachments_inlines(request)
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = addresslib_address.parse_list(request.POST.get('Cc'))
@@ -115,6 +114,16 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     sender = request.POST.get('sender')
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
+
+    attachments, inlines, attachments_size = _get_attachments_inlines(
+        request,
+        sender,
+        recipient,
+        subject,
+        body_plain,
+        body_html,
+        message_id
+    )
 
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
@@ -379,7 +388,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     return JsonResponse({'success': True})
 
 
-def _get_attachments_inlines(request):
+def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
     attachments_size = 0
@@ -408,6 +417,15 @@ def _get_attachments_inlines(request):
             logger.exception('Mailgun POST claimed to have %s attachments, '
                              'but %s is missing',
                              attachment_count, attachment_name)
+
+            logger.info(f'Sending mailing list bounce back email to {sender} '
+                        f'for mailing list {recipient} because Mailgun POST claimed to have '
+                        f'{attachment_count} attachments but {attachment_name} is missing')
+
+            _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
+                         sender, recipient.full_spec(), subject,
+                         body_plain or body_html, message_id)
+
             raise HttpResponseException(JsonResponse(
                       {
                           'message': 'Attachment {} missing from POST'.format(
