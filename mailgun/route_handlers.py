@@ -407,7 +407,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                          'forwarding all files as attachments.')
         content_id_map = {}
     attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.items()}
-    logger.debug('Attachment name to cid: %s', attachment_name_to_cid)
+    logger.info('Attachment name to cid: %s', attachment_name_to_cid)
 
     for n in range(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
