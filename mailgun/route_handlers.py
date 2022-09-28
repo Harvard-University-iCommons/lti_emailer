@@ -62,7 +62,7 @@ def handle_mailing_list_email_route(request):
     :param request:
     :return JsonResponse:
     '''
-    logger.debug('Full mailgun post: %s', request.POST)
+    logger.debug('Full mailgun post', extra=request.POST)
 
     from_ = addresslib_address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
