@@ -418,9 +418,17 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                              'but %s is missing',
                              attachment_count, attachment_name)
 
-            logger.info(f'Sending mailing list bounce back email to {sender} '
-                        f'for mailing list {recipient} because Mailgun POST claimed to have '
-                        f'{attachment_count} attachments but {attachment_name} is missing')
+            logger.info(f'Sent bounce back email to {sender} for mailing list {recipient} '
+                        f'because Mailgun POST claimed to have {attachment_count} '
+                        f'attachments but {attachment_name} is missing',
+                        extra={
+                            'sender': sender,
+                            'recipient': recipient,
+                            'content_id_map': content_id_map,
+                            'attachment_count': attachment_count,
+                            'attachment_name': attachment_name
+                        }
+                        )
 
             _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
                          sender, recipient.full_spec(), subject,
