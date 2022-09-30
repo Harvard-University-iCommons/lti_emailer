@@ -410,8 +410,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
     attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.items()}
     logger.info('Attachment name to cid: %s', attachment_name_to_cid)
 
-    for n in range(1, attachment_count + 1):
-        attachment_name = 'attachment-{}'.format(n)
+    for attachment_name in request.FILES.keys():
         try:
             file_ = request.FILES[attachment_name]
         except KeyError:
