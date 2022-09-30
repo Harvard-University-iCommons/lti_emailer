@@ -1,4 +1,5 @@
 
+import tempfile
 import json
 import logging
 import re
@@ -410,37 +411,52 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
     attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.items()}
     logger.info('Attachment name to cid: %s', attachment_name_to_cid)
 
-    for attachment_name in request.FILES.keys():
+    for n in range(1, attachment_count + 1):
+        attachment_name = 'attachment-{}'.format(n)
         try:
             file_ = request.FILES[attachment_name]
         except KeyError:
-            logger.exception('Mailgun POST claimed to have %s attachments, '
-                             'but %s is missing',
-                             attachment_count, attachment_name)
+            attachment_content = request.POST.get(attachment_name, '{}')
 
-            logger.info(f'Sent bounce back email to {sender} for mailing list {recipient} '
-                        f'because Mailgun POST claimed to have {attachment_count} '
-                        f'attachments but {attachment_name} is missing',
-                        extra={
-                            'sender': sender,
-                            'recipient': recipient,
-                            'content_id_map': content_id_map,
-                            'attachment_count': attachment_count,
-                            'attachment_name': attachment_name
-                        }
-                        )
+            if attachment_content:
+                fp = tempfile.TemporaryFile()
+                fp.write(attachment_content)
+                attachments.append(fp)
+                fp.close()
 
-            _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
-                         sender, recipient.full_spec(), subject,
-                         body_plain or body_html, message_id)
 
-            raise HttpResponseException(JsonResponse(
-                      {
-                          'message': 'Attachment {} missing from POST'.format(
-                                         attachment_name),
-                          'success': False,
-                      },
-                      status=400))
+
+
+
+            else:
+                logger.exception('Mailgun POST claimed to have %s attachments, '
+                                'but %s is missing',
+                                attachment_count, attachment_name)
+
+                logger.info(f'Sent bounce back email to {sender} for mailing list {recipient} '
+                            f'because Mailgun POST claimed to have {attachment_count} '
+                            f'attachments but {attachment_name} is missing',
+                            extra={
+                                'sender': sender,
+                                'recipient': recipient,
+                                'content_id_map': content_id_map,
+                                'attachment_count': attachment_count,
+                                'attachment_name': attachment_name
+                            }
+                            )
+
+                _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
+                            sender, recipient.full_spec(), subject,
+                            body_plain or body_html, message_id)
+
+                raise HttpResponseException(JsonResponse(
+                        {
+                            'message': 'Attachment {} missing from POST'.format(
+                                            attachment_name),
+                            'success': False,
+                        },
+                        status=400))
+                        
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
