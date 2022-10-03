@@ -419,9 +419,8 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
             attachment_content = ''
             try:
                 attachment_content = request.POST.get(attachment_name, '')
-                attachments.append(file_)
             except Exception:
-                logger.info(f'file type: {type(file_)} attachment_content: {attachment_content}')
+                logger.info(f'attachment type: {type(file_)} attachment_content: {attachment_content}')
 
                 logger.exception('Mailgun POST claimed to have %s attachments, '
                                 'but %s is missing',
@@ -439,19 +438,18 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                             }
                             )
 
-                # _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
-                #             sender, recipient.full_spec(), subject,
-                #             body_plain or body_html, message_id)
+                _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
+                            sender, recipient.full_spec(), subject,
+                            body_plain or body_html, message_id)
 
-                # raise HttpResponseException(JsonResponse(
-                #         {
-                #             'message': 'Attachment {} missing from POST'.format(
-                #                             attachment_name),
-                #             'success': False,
-                #         },
-                #         status=400))
+                raise HttpResponseException(JsonResponse(
+                        {
+                            'message': 'Attachment {} missing from POST'.format(
+                                            attachment_name),
+                            'success': False,
+                        },
+                        status=400))
              
-
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
