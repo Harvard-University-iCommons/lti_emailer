@@ -422,7 +422,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
             except Exception as e:
                 logger.info("Failed to retrieve .eml attachment")
 
-            logger.info(f'attachment_content {attachment_content}')
+            logger.info(f'file type: {type(file_)} attachment_content: {attachment_content}')
 
             if attachment_content:
                 # fp = tempfile.TemporaryFile()
