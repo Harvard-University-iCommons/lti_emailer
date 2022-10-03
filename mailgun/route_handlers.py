@@ -426,7 +426,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
 
             if attachment_content:
                 fp = tempfile.TemporaryFile()
-                fp.write(bytes(attachment_content))
+                fp.write(bytes(attachment_content, encoding='utf-8'))
                 attachments.append(fp)
                 fp.close()
                 logger.info(f'attachments after saving temp file {attachments}')
