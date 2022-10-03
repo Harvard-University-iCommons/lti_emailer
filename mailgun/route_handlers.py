@@ -416,19 +416,20 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
         try:
             file_ = request.FILES[attachment_name]
         except KeyError:
+            attachment_content = ''
             try:
                 attachment_content = request.POST.get(attachment_name, '')
             except Exception as e:
                 logger.info("Failed to retrieve .eml attachment")
 
-            logger.info("attachment_content", extra=attachment_content)
+            logger.info("attachment_content", extra={attachment_content})
 
             if attachment_content:
                 # fp = tempfile.TemporaryFile()
                 # fp.write(attachment_content)
                 # attachments.append(fp)
                 # fp.close()
-                logger.info("attachments after saving temp file", extra=attachments)
+                logger.info("attachments after saving temp file", extra={attachments})
 
 
 
