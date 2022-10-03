@@ -429,7 +429,9 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                 # fp.write(attachment_content)
                 # attachments.append(fp)
                 # fp.close()
+                attachments.append(attachment_name)
                 logger.info(f'attachments after saving temp file {attachments}')
+                
 
 
 
