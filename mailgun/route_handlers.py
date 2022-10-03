@@ -419,24 +419,10 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
             attachment_content = ''
             try:
                 attachment_content = request.POST.get(attachment_name, '')
-            except Exception as e:
-                logger.info("Failed to retrieve .eml attachment")
+                attachments.append(file_)
+            except Exception:
+                logger.info(f'file type: {type(file_)} attachment_content: {attachment_content}')
 
-            logger.info(f'file type: {type(file_)} attachment_content: {attachment_content}')
-
-            if attachment_content:
-                fp = tempfile.TemporaryFile()
-                fp.write(bytes(attachment_content, encoding='utf-8'))
-                attachments.append(fp)
-                fp.close()
-                logger.info(f'attachments after saving temp file {attachments}')
-                
-
-
-
-
-
-            else:
                 logger.exception('Mailgun POST claimed to have %s attachments, '
                                 'but %s is missing',
                                 attachment_count, attachment_name)
@@ -453,18 +439,19 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                             }
                             )
 
-                _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
-                            sender, recipient.full_spec(), subject,
-                            body_plain or body_html, message_id)
+                # _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
+                #             sender, recipient.full_spec(), subject,
+                #             body_plain or body_html, message_id)
 
-                raise HttpResponseException(JsonResponse(
-                        {
-                            'message': 'Attachment {} missing from POST'.format(
-                                            attachment_name),
-                            'success': False,
-                        },
-                        status=400))
-                        
+                # raise HttpResponseException(JsonResponse(
+                #         {
+                #             'message': 'Attachment {} missing from POST'.format(
+                #                             attachment_name),
+                #             'success': False,
+                #         },
+                #         status=400))
+             
+
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
