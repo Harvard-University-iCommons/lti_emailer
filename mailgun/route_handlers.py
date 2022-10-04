@@ -1,9 +1,7 @@
-
-import tempfile
+import io
 import json
 import logging
 import re
-
 from functools import wraps
 
 from django.conf import settings
@@ -13,16 +11,14 @@ from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address as addresslib_address
-
 from icommons_common.models import CourseInstance
-from lti_emailer.canvas_api_client import (
-    get_alternate_emails_for_user_email,
-    get_name_for_email)
+
+from lti_emailer.canvas_api_client import (get_alternate_emails_for_user_email,
+                                           get_name_for_email)
 from mailgun.decorators import authenticate
 from mailgun.exceptions import HttpResponseException
 from mailgun.listserv_client import MailgunClient as ListservClient
-from mailing_list.models import MailingList, SuperSender, CourseSettings
-
+from mailing_list.models import CourseSettings, MailingList, SuperSender
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +113,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
-    attachments, inlines, eml_attachments, attachments_size = _get_attachments_inlines(
+    attachments, inlines, attachments_size = _get_attachments_inlines(
         request,
         sender,
         recipient,
@@ -412,10 +408,14 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
     attachment_name_to_cid = {v: k.strip('<>') for k, v in content_id_map.items()}
     logger.info('Attachment name to cid: %s', attachment_name_to_cid)
 
-    for attachment_name in request.FILES.keys():
-        try:
+    for n in range(1, attachment_count + 1):
+        attachment_name = 'attachment-{}'.format(n)
+        if request.POST.get(attachment_name):
+            # use io.StringIO to wrap the string
+            file_ = io.StringIO(request.POST.get(attachment_name))
+        elif request.FILES.get(attachment_name):
             file_ = request.FILES[attachment_name]
-        except KeyError:
+        else:
             log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
                                            body_plain, body_html, message_id, content_id_map)
 
@@ -428,39 +428,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
 
         attachments_size += file_.size
 
-    # Get attachments that are not regular attachments or inlines (eml file attachments)
-    if attachment_count > (len(attachments) + len(inlines)):
-        eml_attachments = get_eml_attachments(request, eml_attachments, attachment_count, attachment_name, sender,
-                                              recipient, subject, body_plain, body_html, message_id, content_id_map)
-
-    return attachments, inlines, eml_attachments, attachments_size
-
-
-def get_eml_attachments(request, eml_attachments, attachment_count, attachment_name, sender,
-                        recipient, subject, body_plain, body_html, message_id, content_id_map):
-
-    attachment_content = ''
-    eml_names_and_content = {}
-
-    for n in range(1, attachment_count + 1):
-        attachment_name = 'attachment-{}'.format(n)
-
-        if attachment_name not in request.FILES.keys():
-            try:
-                attachment_content = request.POST.get(attachment_name)
-                if attachment_content:
-                    eml_attachments.append(attachment_content)
-
-                    body_html += attachment_content
-            except KeyError:
-                log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
-                                               body_plain, body_html, message_id, content_id_map)
-
-            eml_names_and_content[attachment_name] = attachment_content
-
-    logger.debug('eml file names and content', extra=eml_names_and_content)
-
-    return eml_attachments
+    return attachments, inlines, attachments_size
 
 
 def log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
