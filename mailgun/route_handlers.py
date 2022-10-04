@@ -117,7 +117,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
-    attachments, inlines, attachments_size = _get_attachments_inlines(
+    attachments, inlines, eml_attachments, attachments_size = _get_attachments_inlines(
         request,
         sender,
         recipient,
@@ -393,6 +393,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
+    eml_attachments = []
     attachments_size = 0
 
     try:
@@ -421,15 +422,12 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                 attachment_content = request.POST.get(attachment_name, '')
             except Exception:
                 if attachment_content:
-                    fp = tempfile.TemporaryFile()
-                    fp.write(bytes(attachment_content, encoding='utf-8'))
-                    attachments.append(fp)
+                    eml_attachments.append(attachment_content)
                     logger.debug(
                         f'attachment name: {attachment_name}, '
                         f'type: {type(attachments[-1])}, '
-                        f'attachment_content: {attachment_content}'
+                        f'attachment_content: {eml_attachments}'
                     )
-                    fp.close()
                 else:
                     logger.exception('Mailgun POST claimed to have %s attachments, '
                                     'but %s is missing',
@@ -468,7 +466,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
 
         attachments_size += file_.size
 
-    return attachments, inlines, attachments_size
+    return attachments, inlines, eml_attachments, attachments_size
 
 
 def _remove_batv_prefix(sender_address):
