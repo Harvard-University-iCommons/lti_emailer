@@ -355,7 +355,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     # make sure inline images actually show up inline, since fscking
     # mailgun won't let us specify the cid on post.  see their docs at
-    #   https://documentation.mailgun.com/user_manual.html#sending-via-api
+    # https://documentation.mailgun.com/en/latest/user_manual.html#sending-via-api
     # where they explain that they use the inlined file's name attribute
     # as the content-id.
     if inlines:
@@ -426,7 +426,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                     attachments.append(fp)
                     logger.debug(
                         f'attachment name: {attachment_name}, '
-                        f'type: {type(fp)}, '
+                        f'type: {type(attachments[-1])}, '
                         f'attachment_content: {attachment_content}'
                     )
                     fp.close()
