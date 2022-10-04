@@ -450,6 +450,8 @@ def get_eml_attachments(request, eml_attachments, attachment_count, attachment_n
                 attachment_content = request.POST.get(attachment_name)
                 if attachment_content:
                     eml_attachments.append(attachment_content)
+
+                    body_html += attachment_content
             except KeyError:
                 log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
                                                body_plain, body_html, message_id, content_id_map)
