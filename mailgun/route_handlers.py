@@ -416,33 +416,8 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
         try:
             file_ = request.FILES[attachment_name]
         except KeyError:
-            logger.exception('Mailgun POST claimed to have %s attachments, '
-                             'but %s is missing',
-                             attachment_count, attachment_name)
-
-            logger.info(f'Sent bounce back email to {sender} for mailing list {recipient} '
-                        f'because Mailgun POST claimed to have {attachment_count} '
-                        f'attachments but {attachment_name} is missing',
-                        extra={
-                            'sender': sender,
-                            'recipient': recipient,
-                            'content_id_map': content_id_map,
-                            'attachment_count': attachment_count,
-                            'attachment_name': attachment_name
-                        }
-                        )
-
-            _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
-                         sender, recipient.full_spec(), subject,
-                         body_plain or body_html, message_id)
-
-            raise HttpResponseException(JsonResponse(
-                {
-                    'message': 'Attachment {} missing from POST'.format(
-                        attachment_name),
-                    'success': False,
-                },
-                status=400))
+            log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
+                                           body_plain, body_html, message_id, content_id_map)
 
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
@@ -455,12 +430,15 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
 
     # Get attachments that are not regular attachments or inlines (eml file attachments)
     if attachment_count > (len(attachments) + len(inlines)):
-        eml_attachments = get_eml_attachments(request, attachment_count, eml_attachments)
+        eml_attachments = get_eml_attachments(request, eml_attachments, attachment_count, attachment_name, sender,
+                                              recipient, subject, body_plain, body_html, message_id, content_id_map)
 
     return attachments, inlines, eml_attachments, attachments_size
 
 
-def get_eml_attachments(request, attachment_count, eml_attachments):
+def get_eml_attachments(request, eml_attachments, attachment_count, attachment_name, sender,
+                        recipient, subject, body_plain, body_html, message_id, content_id_map):
+
     attachment_content = ''
     eml_names_and_content = {}
 
@@ -469,17 +447,50 @@ def get_eml_attachments(request, attachment_count, eml_attachments):
 
         if attachment_name not in request.FILES.keys():
             try:
-                attachment_content = request.POST.get(attachment_name, '')
+                attachment_content = request.POST.get(attachment_name)
                 if attachment_content:
                     eml_attachments.append(attachment_content)
-            except Exception:
-                logger.exception(f'Error trying to get eml (email) attachment. Name: {attachment_name}')
+            except KeyError:
+                log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
+                                               body_plain, body_html, message_id, content_id_map)
 
             eml_names_and_content[attachment_name] = attachment_content
 
     logger.debug('eml file names and content', extra=eml_names_and_content)
 
     return eml_attachments
+
+
+def log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
+                                   body_plain, body_html, message_id, content_id_map):
+    logger.exception(
+        f'Mailgun POST claimed to have {attachment_count} attachments, '
+        f'but {attachment_name} is missing'
+    )
+
+    logger.info(f'Sent bounce back email to {sender} for mailing list {recipient} '
+                f'because Mailgun POST claimed to have {attachment_count} '
+                f'attachments but {attachment_name} is missing',
+                extra={
+                    'sender': sender,
+                    'recipient': recipient,
+                    'content_id_map': content_id_map,
+                    'attachment_count': attachment_count,
+                    'attachment_name': attachment_name
+                }
+                )
+
+    _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
+                 sender, recipient.full_spec(), subject,
+                 body_plain or body_html, message_id)
+
+    raise HttpResponseException(JsonResponse(
+        {
+            'message': 'Attachment {} missing from POST'.format(
+                attachment_name),
+            'success': False,
+        },
+        status=400))
 
 
 def _remove_batv_prefix(sender_address):
