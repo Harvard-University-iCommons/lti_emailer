@@ -389,7 +389,6 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
-    eml_attachments = []
     attachments_size = 0
 
     try:
@@ -426,7 +425,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
         else:
             attachments.append(file_)
 
-        attachments_size += len(file_)
+        # attachments_size += len(file_)
 
     return attachments, inlines, attachments_size
 
