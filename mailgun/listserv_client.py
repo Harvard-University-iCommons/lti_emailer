@@ -94,11 +94,8 @@ class MailgunClient(object):
             files.extend([('attachment', (replace_non_ascii(f.name), f, f.content_type)) for f in attachments])
         if inlines:
             files.extend([('inline', (replace_non_ascii(f.name), f, f.content_type)) for f in inlines])
-        
         if eml_attachments:
-            payload.update(eml_attachments)
-
-        logger.info(f'Payload data: ', extra=payload)
+            files.extend([('inline', (replace_non_ascii(key), value)) for key, value in eml_attachments.items()])
 
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),
