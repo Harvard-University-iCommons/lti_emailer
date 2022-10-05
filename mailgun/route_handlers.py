@@ -423,7 +423,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
                 name = name[:name.find('\r')+len('\r')]
             encapsulated_msg_att[attachment_name] = (name, eml_content)
 
-            attachments_size += sys.getsizeof(encapsulated_msg_att[attachment_name])
+            attachments_size += sys.getsizeof(encapsulated_msg_att[attachment_name][1])
             continue
         elif request.FILES.get(attachment_name):
             file_ = request.FILES[attachment_name]
