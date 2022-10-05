@@ -98,6 +98,8 @@ class MailgunClient(object):
         if eml_attachments:
             payload.update(eml_attachments)
 
+        logger.info(f'Payload data: ', extra=payload)
+
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),
                                      data=payload, files=files)
