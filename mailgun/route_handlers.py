@@ -428,7 +428,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
         else:
             attachments.append(file_)
 
-        attachments_size += file_
+        attachments_size += file_.size
 
     return attachments, inlines, eml_attachments, attachments_size
 
