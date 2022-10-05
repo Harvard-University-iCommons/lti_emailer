@@ -1,4 +1,4 @@
-import io
+import sys
 import json
 import logging
 import re
@@ -113,7 +113,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
-    attachments, inlines, attachments_size = _get_attachments_inlines(
+    attachments, inlines, eml_attachments, attachments_size = _get_attachments_inlines(
         request,
         sender,
         recipient,
@@ -125,7 +125,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
-    logger.info(f'attachments: {attachments}, inlines: {inlines}, '
+    logger.info(f'attachments: {attachments}, inlines: {inlines}, eml_attachments: {eml_attachments}'
                 f'attachments_total_size: {attachments_size} byte(s), from: {sender}, '
                 f'message id: {message_id}')
 
@@ -374,7 +374,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
             reply_to_display_name, parsed_reply_to.address.lower(),
             member_addresses, subject, text=body_plain, html=body_html,
             original_to_address=original_to_list, original_cc_address=original_cc_list,
-            attachments=attachments, inlines=inlines, message_id=message_id
+            attachments=attachments, inlines=inlines, eml_attachments=eml_attachments,  
+            message_id=message_id
         )
     except RuntimeError:
         logger.exception(
@@ -389,6 +390,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
+    eml_attachments = {}
     attachments_size = 0
 
     try:
@@ -410,8 +412,9 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
     for n in range(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
         if request.POST.get(attachment_name):
-            # use io.StringIO to wrap the string
-            file_ = io.StringIO(request.POST.get(attachment_name))
+            eml_attachments[attachment_name] = (request.POST.get(attachment_name))
+            attachments_size += sys.getsizeof(eml_attachments[attachment_name])
+            continue
         elif request.FILES.get(attachment_name):
             file_ = request.FILES[attachment_name]
         else:
@@ -425,9 +428,9 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
         else:
             attachments.append(file_)
 
-        # attachments_size += len(file_)
+        attachments_size += file_
 
-    return attachments, inlines, attachments_size
+    return attachments, inlines, eml_attachments, attachments_size
 
 
 def log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,

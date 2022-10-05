@@ -30,11 +30,14 @@ class MailgunClient(object):
     def send_mail(self, list_address, from_address, to_address, subject='',
                   text='', html='', original_to_address=None,
                   original_cc_address=None, attachments=None, inlines=None,
-                  message_id=None):
+                  eml_attachments=None, message_id=None):
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
                                      settings.LISTSERV_DOMAIN)
 
-        logger.debug(f'send_mail called with list_address={list_address} from_address={from_address} to_address={to_address} subject={subject} original_to_address={original_to_address} original_cc_address={original_cc_address} message_id={message_id}')
+        logger.debug(f'send_mail called with list_address={list_address} ' 
+                     f'from_address={from_address} to_address={to_address} '
+                     f'subject={subject} original_to_address={original_to_address} '
+                     f'original_cc_address={original_cc_address} message_id={message_id}')
 
         payload = {
             'from': list_address,
@@ -91,6 +94,9 @@ class MailgunClient(object):
             files.extend([('attachment', (replace_non_ascii(f.name), f, f.content_type)) for f in attachments])
         if inlines:
             files.extend([('inline', (replace_non_ascii(f.name), f, f.content_type)) for f in inlines])
+        
+        if eml_attachments:
+            payload.update(eml_attachments)
 
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),
