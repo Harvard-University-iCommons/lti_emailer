@@ -30,7 +30,7 @@ class MailgunClient(object):
     def send_mail(self, list_address, from_address, to_address, subject='',
                   text='', html='', original_to_address=None,
                   original_cc_address=None, attachments=None, inlines=None,
-                  eml_attachments=None, message_id=None):
+                  encapsulated_msg_att=None, message_id=None):
         api_url = "%s%s/messages" % (settings.LISTSERV_API_URL,
                                      settings.LISTSERV_DOMAIN)
 
@@ -94,8 +94,9 @@ class MailgunClient(object):
             files.extend([('attachment', (replace_non_ascii(f.name), f, f.content_type)) for f in attachments])
         if inlines:
             files.extend([('inline', (replace_non_ascii(f.name), f, f.content_type)) for f in inlines])
-        if eml_attachments:
-            files.extend([('inline', (replace_non_ascii(key), value)) for key, value in eml_attachments.items()])
+        if encapsulated_msg_att:
+            content_type = 'message/rfc822'
+            files.extend([('inline', (replace_non_ascii(value[0]), value[1], content_type)) for key, value in encapsulated_msg_att.items()])
 
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
             response = requests.post(api_url, auth=(self.api_user, self.api_key),

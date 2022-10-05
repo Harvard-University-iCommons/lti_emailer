@@ -113,7 +113,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
-    attachments, inlines, eml_attachments, attachments_size = _get_attachments_inlines(
+    attachments, inlines, encapsulated_msg_att, attachments_size = _get_attachments_inlines(
         request,
         sender,
         recipient,
@@ -125,9 +125,10 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
-    logger.info(f'attachments: {attachments}, inlines: {inlines}, eml_attachments: {eml_attachments}'
-                f'attachments_total_size: {attachments_size} byte(s), from: {sender}, '
-                f'message id: {message_id}')
+    logger.info(f'attachments: {attachments}, inlines: {inlines}, '
+                f'encapsulated_msg_att: {encapsulated_msg_att}, '
+                f'attachments_total_size: {attachments_size} byte(s), '
+                f'from: {sender}, message id: {message_id}')
 
     sender = _remove_batv_prefix(sender)
 
@@ -374,7 +375,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
             reply_to_display_name, parsed_reply_to.address.lower(),
             member_addresses, subject, text=body_plain, html=body_html,
             original_to_address=original_to_list, original_cc_address=original_cc_list,
-            attachments=attachments, inlines=inlines, eml_attachments=eml_attachments,  
+            attachments=attachments, inlines=inlines, encapsulated_msg_att=encapsulated_msg_att,  
             message_id=message_id
         )
     except RuntimeError:
@@ -390,7 +391,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
-    eml_attachments = {}
+    encapsulated_msg_att = {}
     attachments_size = 0
 
     try:
@@ -412,8 +413,17 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
     for n in range(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
         if request.POST.get(attachment_name):
-            eml_attachments[attachment_name] = (request.POST.get(attachment_name))
-            attachments_size += sys.getsizeof(eml_attachments[attachment_name])
+            eml_content = request.POST.get(attachment_name)
+            # find subject of encapsulated message, to be used as 
+            # name of file for sending
+            name = attachment_name
+            word = 'Subject: '
+            if word in eml_content:
+                name = eml_content[eml_content.find(word)+len(word): ]
+                name = name[:name.find('\r')+len('\r')]
+            encapsulated_msg_att[attachment_name] = (name, eml_content)
+
+            attachments_size += sys.getsizeof(encapsulated_msg_att[attachment_name])
             continue
         elif request.FILES.get(attachment_name):
             file_ = request.FILES[attachment_name]
@@ -430,7 +440,7 @@ def _get_attachments_inlines(request, sender, recipient, subject, body_plain, bo
 
         attachments_size += file_.size
 
-    return attachments, inlines, eml_attachments, attachments_size
+    return attachments, inlines, encapsulated_msg_att, attachments_size
 
 
 def log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
