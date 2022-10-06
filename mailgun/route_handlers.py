@@ -391,6 +391,10 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
+    # encapsulated_msg_att is for "message/rfc822" attachments (learn more here: 
+    # https://learn.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2010/aa494204(v=exchg.140))
+    # Key is attachment-x, name from Mailgun and value is tuple of subject 
+    # use as attachment name, and contents of attachment
     encapsulated_msg_att = {}
     attachments_size = 0
 

@@ -95,8 +95,7 @@ class MailgunClient(object):
         if inlines:
             files.extend([('inline', (replace_non_ascii(f.name), f, f.content_type)) for f in inlines])
         if encapsulated_msg_att:
-            content_type = 'message/rfc822'
-            files.extend([('attachment', (replace_non_ascii(value[0]+'.eml'), value[1], content_type))
+            files.extend([('attachment', (replace_non_ascii(value[0]+'.eml'), value[1]))
                          for key, value in encapsulated_msg_att.items()])
 
         with ApiRequestTimer(logger, 'POST', api_url, payload) as timer:
