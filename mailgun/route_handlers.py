@@ -126,7 +126,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
     logger.info(f'attachments: {attachments}, inlines: {inlines}, '
-                f'encapsulated_msg_att: {encapsulated_msg_att}, '
+                f'encapsulated_msg_att_count: {len(encapsulated_msg_att)}, '
                 f'attachments_total_size: {attachments_size} byte(s), '
                 f'from: {sender}, message id: {message_id}')
 
