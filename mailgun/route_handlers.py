@@ -1,8 +1,7 @@
-
+import sys
 import json
 import logging
 import re
-
 from functools import wraps
 
 from django.conf import settings
@@ -12,16 +11,14 @@ from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address as addresslib_address
-
 from icommons_common.models import CourseInstance
-from lti_emailer.canvas_api_client import (
-    get_alternate_emails_for_user_email,
-    get_name_for_email)
+
+from lti_emailer.canvas_api_client import (get_alternate_emails_for_user_email,
+                                           get_name_for_email)
 from mailgun.decorators import authenticate
 from mailgun.exceptions import HttpResponseException
 from mailgun.listserv_client import MailgunClient as ListservClient
-from mailing_list.models import MailingList, SuperSender, CourseSettings
-
+from mailing_list.models import CourseSettings, MailingList, SuperSender
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +59,8 @@ def handle_mailing_list_email_route(request):
     :param request:
     :return JsonResponse:
     '''
-    logger.debug('Full mailgun post: %s', request.POST)
+    logger.debug('Full mailgun post', extra=request.POST)
+    logger.debug('request.files keys', extra={'keys': request.FILES.keys()})
 
     from_ = addresslib_address.parse(request.POST.get('from'))
     message_id = request.POST.get('Message-Id')
@@ -106,7 +104,6 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     matrix can be found on the wiki:
         https://confluence.huit.harvard.edu/display/TLT/LTI+Emailer
     '''
-    attachments, inlines, attachments_size = _get_attachments_inlines(request)
     body_html = request.POST.get('body-html', '')
     body_plain = request.POST.get('body-plain', '')
     cc_list = addresslib_address.parse_list(request.POST.get('Cc'))
@@ -116,11 +113,22 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     subject = request.POST.get('subject')
     to_list = addresslib_address.parse_list(request.POST.get('To'))
 
+    attachments, inlines, encapsulated_msg_att, attachments_size = _get_attachments_inlines(
+        request,
+        sender,
+        recipient,
+        subject,
+        body_plain,
+        body_html,
+        message_id
+    )
+
     logger.debug('Handling recipient %s, from %s, subject %s, message id %s',
                  recipient, sender, subject, message_id)
     logger.info(f'attachments: {attachments}, inlines: {inlines}, '
-                f'attachments_total_size: {attachments_size} byte(s), from: {sender}, '
-                f'message id: {message_id}')
+                f'encapsulated_msg_att_count: {len(encapsulated_msg_att)}, '
+                f'attachments_total_size: {attachments_size} byte(s), '
+                f'from: {sender}, message id: {message_id}')
 
     sender = _remove_batv_prefix(sender)
 
@@ -344,7 +352,7 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
 
     # make sure inline images actually show up inline, since fscking
     # mailgun won't let us specify the cid on post.  see their docs at
-    #   https://documentation.mailgun.com/user_manual.html#sending-via-api
+    # https://documentation.mailgun.com/en/latest/user_manual.html#sending-via-api
     # where they explain that they use the inlined file's name attribute
     # as the content-id.
     if inlines:
@@ -367,7 +375,8 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
             reply_to_display_name, parsed_reply_to.address.lower(),
             member_addresses, subject, text=body_plain, html=body_html,
             original_to_address=original_to_list, original_cc_address=original_cc_list,
-            attachments=attachments, inlines=inlines, message_id=message_id
+            attachments=attachments, inlines=inlines, encapsulated_msg_att=encapsulated_msg_att,  
+            message_id=message_id
         )
     except RuntimeError:
         logger.exception(
@@ -379,9 +388,14 @@ def _handle_recipient(request, recipient, user_alt_email_cache):
     return JsonResponse({'success': True})
 
 
-def _get_attachments_inlines(request):
+def _get_attachments_inlines(request, sender, recipient, subject, body_plain, body_html, message_id):
     attachments = []
     inlines = []
+    # encapsulated_msg_att is for "message/rfc822" attachments (learn more here: 
+    # https://learn.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2010/aa494204(v=exchg.140))
+    # Key is attachment-x, name from Mailgun and value is tuple of subject 
+    # use as attachment name, and contents of attachment
+    encapsulated_msg_att = {}
     attachments_size = 0
 
     try:
@@ -402,19 +416,25 @@ def _get_attachments_inlines(request):
 
     for n in range(1, attachment_count + 1):
         attachment_name = 'attachment-{}'.format(n)
-        try:
+        if request.POST.get(attachment_name):
+            eml_content = request.POST.get(attachment_name)
+            # find subject of encapsulated message, to be used as 
+            # name of file for sending
+            name = attachment_name
+            word = 'Subject: '
+            if word in eml_content:
+                name = eml_content[eml_content.find(word)+len(word): ]
+                name = name[:name.find('\r')]
+            encapsulated_msg_att[attachment_name] = (name, eml_content)
+
+            attachments_size += sys.getsizeof(encapsulated_msg_att[attachment_name][1])
+            continue
+        elif request.FILES.get(attachment_name):
             file_ = request.FILES[attachment_name]
-        except KeyError:
-            logger.exception('Mailgun POST claimed to have %s attachments, '
-                             'but %s is missing',
-                             attachment_count, attachment_name)
-            raise HttpResponseException(JsonResponse(
-                      {
-                          'message': 'Attachment {} missing from POST'.format(
-                                         attachment_name),
-                          'success': False,
-                      },
-                      status=400))
+        else:
+            log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
+                                           body_plain, body_html, message_id, content_id_map)
+
         if attachment_name in attachment_name_to_cid:
             file_.cid = attachment_name_to_cid[attachment_name]
             file_.name = file_.name.replace(' ', '_')
@@ -424,7 +444,39 @@ def _get_attachments_inlines(request):
 
         attachments_size += file_.size
 
-    return attachments, inlines, attachments_size
+    return attachments, inlines, encapsulated_msg_att, attachments_size
+
+
+def log_attachment_error_warn_user(attachment_count, attachment_name, sender, recipient, subject,
+                                   body_plain, body_html, message_id, content_id_map):
+    logger.exception(
+        f'Mailgun POST claimed to have {attachment_count} attachments, '
+        f'but {attachment_name} is missing'
+    )
+
+    logger.info(f'Sent bounce back email to {sender} for mailing list {recipient} '
+                f'because Mailgun POST claimed to have {attachment_count} '
+                f'attachments but {attachment_name} is missing',
+                extra={
+                    'sender': sender,
+                    'recipient': recipient,
+                    'content_id_map': content_id_map,
+                    'attachment_count': attachment_count,
+                    'attachment_name': attachment_name
+                }
+                )
+
+    _send_bounce('mailgun/email/bounce_back_attachments_missing.html',
+                 sender, recipient.full_spec(), subject,
+                 body_plain or body_html, message_id)
+
+    raise HttpResponseException(JsonResponse(
+        {
+            'message': 'Attachment {} missing from POST'.format(
+                attachment_name),
+            'success': False,
+        },
+        status=400))
 
 
 def _remove_batv_prefix(sender_address):

@@ -260,7 +260,7 @@ class MailingList(models.Model):
     def send_mail(self, sender_display_name, sender_address, to_address,
                   subject='', text='', html='', original_to_address=None,
                   original_cc_address=None, attachments=None, inlines=None,
-                  message_id=None):
+                  encapsulated_msg_att=None, message_id=None):
         logger.debug('in send_mail: sender_address=%s, to_address=%s, '
                      'mailing_list.address=%s ',
                      sender_address, to_address, self.address)
@@ -268,7 +268,7 @@ class MailingList(models.Model):
         listserv_client.send_mail(
             mailing_list_address.full_spec(), sender_address, to_address,
             subject, text, html, original_to_address, original_cc_address,
-            attachments, inlines, message_id
+            attachments, inlines, encapsulated_msg_att, message_id
         )
         cache_key = settings.CACHE_KEY_MESSAGE_HANDLED_BY_MESSAGE_ID_AND_RECIPIENT % (message_id, to_address)
         cache.set(cache_key, True,
