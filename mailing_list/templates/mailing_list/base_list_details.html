@@ -24,6 +24,10 @@
     <script src="https://static.tlt.harvard.edu/shared/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
     <script src="https://static.tlt.harvard.edu/shared/listjs/list.min.js"></script>
     {% include 'django_auth_lti/resource_link_id.html' %}
+    <script src="https://static.tlt.harvard.edu/shared/angular-1.5.2/angular.min.js"></script>
+    <script src="https://static.tlt.harvard.edu/shared/angular-1.5.2/angular-sanitize.min.js"></script>
+    <script src="https://static.tlt.harvard.edu/shared/angular-1.5.2/angular-animate.min.js"></script>
+    <script src="{% static 'djng/js/django-angular.js' %}"></script>
     <script src="{% static 'mailing_list/js/app.js' %}"></script>
     {% block js %}{% endblock js %}
     <title>Course Emailer</title>
