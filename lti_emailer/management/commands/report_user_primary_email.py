@@ -11,7 +11,7 @@ from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.methods.courses import list_users_in_course_users
 from canvas_sdk.exceptions import CanvasAPIError
 
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
+from canvas_api.canvas_utils import SessionInactivityExpirationRC
 from icommons_common.models import Person
 
 

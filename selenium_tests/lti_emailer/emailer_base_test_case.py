@@ -14,7 +14,7 @@ from canvas_sdk.methods.external_tools \
             create_external_tool_courses,
             delete_external_tool_courses)
 from canvas_sdk.exceptions import CanvasAPIError
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
+from canvas_api.canvas_utils import SessionInactivityExpirationRC
 
 SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
 

@@ -1,7 +1,7 @@
 """
-Utility methods for working with canvas_python_sdk which add a caching layer to the Canvas API calls.
+Utility methods for working with canvas_sdk which add a caching layer to the Canvas API calls.
 
-TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
+TODO: Incorporate this caching layer into canvas_sdk. Punting on this for now to limit collateral concerns.
 """
 import logging
 
@@ -16,8 +16,8 @@ from canvas_sdk.methods.users import list_users_in_account
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
-from icommons_common.canvas_api.helpers import (
+from canvas_api.canvas_utils import SessionInactivityExpirationRC
+from canvas_api.helpers import (
     courses as canvas_api_helper_courses,
     sections as canvas_api_helper_sections)
 

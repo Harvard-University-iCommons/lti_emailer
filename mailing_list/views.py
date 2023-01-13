@@ -13,7 +13,7 @@ from lti_permissions.decorators import lti_permission_required
 from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
 from mailing_list.models import MailingList
 
-from icommons_common.canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
+from canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
 
 logger = logging.getLogger(__name__)
 
