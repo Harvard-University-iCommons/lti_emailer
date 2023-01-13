@@ -1,7 +1,7 @@
 """
-Utility methods for working with canvas_sdk which add a caching layer to the Canvas API calls.
+Utility methods for working with canvas_python_sdk which add a caching layer to the Canvas API calls.
 
-TODO: Incorporate this caching layer into canvas_sdk. Punting on this for now to limit collateral concerns.
+TODO: Incorporate this caching layer into canvas_python_sdk. Punting on this for now to limit collateral concerns.
 """
 import logging
 
