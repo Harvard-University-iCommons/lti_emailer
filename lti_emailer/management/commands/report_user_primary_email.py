@@ -11,11 +11,11 @@ from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.methods.courses import list_users_in_course_users
 from canvas_sdk.exceptions import CanvasAPIError
 
-from canvas_api.canvas_utils import SessionInactivityExpirationRC
+from canvas_sdk.client import RequestContext
 from icommons_common.models import Person
 
 
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
+SDK_CONTEXT = RequestContext(**settings.CANVAS_SDK_SETTINGS)
 logger = logging.getLogger(__name__)
 
 
