@@ -1,4 +1,4 @@
-Django==3.2.15
+Django==3.2.16
 django-cached-authentication-middleware==0.2.2
 django-redis-cache==3.0.1
 flanker==0.9.11
