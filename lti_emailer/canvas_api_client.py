@@ -21,7 +21,7 @@ from canvas_api.helpers import (
     courses as canvas_api_helper_courses,
     sections as canvas_api_helper_sections)
 
-from lti_permissions.verification import is_allowed
+from lti_school_permissions.verification import is_allowed
 
 
 cache = caches['shared']
