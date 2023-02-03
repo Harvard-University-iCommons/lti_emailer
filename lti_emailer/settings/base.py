@@ -2,11 +2,12 @@
 Django settings for lti_emailer project.
 """
 
+import logging
 import os
 import re
-import logging
-from django.urls import reverse_lazy
+
 from dj_secure_settings.loader import load_secure_settings
+from django.urls import reverse_lazy
 
 SECURE_SETTINGS = load_secure_settings()
 
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     'icommons_ui',
     'djng',
     'lti_emailer',
+    'lti_school_permissions',
     'mailing_list',
     'mailgun',
     'watchman'
@@ -353,6 +355,11 @@ LISTSERV_COURSE_ADDRESS_FORMAT = "canvas-{canvas_course_id}@%s" % LISTSERV_DOMAI
 
 PERMISSION_LTI_EMAILER_VIEW = 'lti_emailer_view'
 PERMISSION_LTI_EMAILER_SEND_ALL = 'lti_emailer_send_all'
+
+LTI_SCHOOL_PERMISSIONS_TOOL_PERMISSIONS = (
+    PERMISSION_LTI_EMAILER_VIEW,
+    PERMISSION_LTI_EMAILER_SEND_ALL,
+)
 
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
