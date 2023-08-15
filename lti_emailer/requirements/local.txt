@@ -20,10 +20,3 @@ ddt==1.5.0
 selenium==4.3.0
 xlrd==2.0.1
 git+ssh://git@github.com/Harvard-University-iCommons/selenium_common.git@v1.4.3#egg=selenium-common==1.4.3
-
-
-# icommons_common unit tests depend on ccsw, and ccsw depends on icommons_common.
-# until ccsw gets its own proper project, and we move the delete command out of
-# icommons_common and into ccsw, work around the circular dependency by calling
-# out the ccsw dependency here.
-git+ssh://git@github.com/Harvard-University-iCommons/django-canvas-course-site-wizard.git@v3.0#egg=django-canvas-course-site-wizard==3.0
