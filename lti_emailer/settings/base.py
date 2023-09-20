@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'icommons_ui',
     'djng',
     'lti_emailer',
+    'coursemanager',
     'lti_school_permissions',
     'mailing_list',
     'mailgun',
