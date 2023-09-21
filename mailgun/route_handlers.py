@@ -11,7 +11,7 @@ from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from flanker.addresslib import address as addresslib_address
-from icommons_common.models import CourseInstance
+from coursemanager.models import CourseInstance
 
 from lti_emailer.canvas_api_client import (get_alternate_emails_for_user_email,
                                            get_name_for_email)

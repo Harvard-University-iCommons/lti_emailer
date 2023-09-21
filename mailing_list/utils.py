@@ -1,6 +1,6 @@
 import logging
 
-from icommons_common.models import CourseInstance, XlistMap
+from coursemanager.models import CourseInstance, XlistMap
 
 logger = logging.getLogger(__name__)
 

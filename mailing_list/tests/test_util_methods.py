@@ -3,7 +3,7 @@ from django.test import TestCase
 from mock import patch
 
 from mailing_list.utils import get_section_sis_enrollment_status, is_course_crosslisted
-from icommons_common.models import CourseInstance, XlistMap
+from coursemanager.models import CourseInstance, XlistMap
 
 
 class CourseInstanceStub:
