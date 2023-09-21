@@ -4,7 +4,7 @@ import json
 
 from django.conf import settings
 
-from icommons_common.utils import ApiRequestTimer
+from harvard_django_utils.utils import ApiRequestTimer
 
 from lti_emailer.exceptions import ListservApiError
 from mailgun.utils import replace_non_ascii

@@ -1,20 +1,17 @@
-import logging
 import json
+import logging
 
 from django.conf import settings
-from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-
-from django_auth_lti.decorators import lti_role_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 from django_auth_lti import const
-
-from icommons_common.view_utils import create_json_200_response, create_json_500_response
+from django_auth_lti.decorators import lti_role_required
 from lti_school_permissions.decorators import lti_permission_required
 
-from .models import MailingList, CourseSettings
-
+from .models import CourseSettings, MailingList
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +42,9 @@ def lists(request):
     except Exception:
         message = "Failed to get_or_create MailingLists with LTI params %s" % json.dumps(request.LTI)
         logger.exception(message)
-        return create_json_500_response(message)
+        return JsonResponse({'error': message}, status=500)
 
-    return create_json_200_response(mailing_lists)
+    return JsonResponse(mailing_lists, safe=False, status=200)
 
 
 @login_required
@@ -87,9 +84,9 @@ def set_access_level(request, mailing_list_id):
     except Exception:
         message = "Failed to activate MailingList %s with LTI params %s" % (mailing_list_id, json.dumps(request.LTI))
         logger.exception(message)
-        return create_json_500_response(message)
+        return JsonResponse({'error': message}, status=500)
 
-    return create_json_200_response(result)
+    return JsonResponse(result, status=200)
 
 
 @login_required
@@ -125,11 +122,11 @@ def get_or_create_course_settings(request):
     except Exception:
         message = "Failed to get_or_create CourseSettings for course %s" % canvas_course_id
         logger.exception(message)
-        return create_json_500_response(message)
+        return JsonResponse({'error': message}, status=500)
 
     result = {
         'canvas_course_id': course_settings.canvas_course_id,
         'always_mail_staff': course_settings.always_mail_staff,
     }
 
-    return create_json_200_response(result)
+    return JsonResponse(result, status=200)

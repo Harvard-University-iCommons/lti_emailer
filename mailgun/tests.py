@@ -13,7 +13,7 @@ from django.test import TestCase, RequestFactory
 from django.test.utils import override_settings
 from mock import MagicMock, call, patch
 
-from icommons_common.utils import Bunch
+from harvard_django_utils.utils import Bunch
 
 from mailing_list.models import MailingList
 from mailgun.decorators import authenticate

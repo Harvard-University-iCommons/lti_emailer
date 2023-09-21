@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_auth_lti',
-    'icommons_common',
+    'coursemanager',
     'lti_permissions',
     'icommons_ui',
     'djng',
@@ -87,7 +87,7 @@ WSGI_APPLICATION = 'lti_emailer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASE_ROUTERS = ['icommons_common.routers.CourseSchemaDatabaseRouter']
+DATABASE_ROUTERS = ['coursemanager.routers.CourseSchemaDatabaseRouter']
 
 DATABASES = {
     'default': {
@@ -112,6 +112,7 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 COURSE_SCHEMA_DB_NAME = 'coursemanager'
 
 # Cache
@@ -299,7 +300,7 @@ LOGGING = {
             'handlers': ['default'],
             'propagate': False,
         },
-        'icommons_common': {
+        'coursemanager': {
            'handlers': ['default'],
            'level': _DEFAULT_LOG_LEVEL,
            'propagate': False,
