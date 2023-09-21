@@ -44,7 +44,7 @@ def lists(request):
         logger.exception(message)
         return JsonResponse({'error': message}, status=500)
 
-    return JsonResponse(mailing_lists, status=200)
+    return JsonResponse(mailing_lists, safe=False, status=200)
 
 
 @login_required
