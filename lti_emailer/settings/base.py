@@ -112,6 +112,7 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 COURSE_SCHEMA_DB_NAME = 'coursemanager'
 
 # Cache
