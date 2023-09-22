@@ -5,17 +5,17 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from icommons_common.models import Term, CourseInstance
+from coursemanager.models import Term, CourseInstance
 
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.methods.courses import list_users_in_course_users
 from canvas_sdk.exceptions import CanvasAPIError
 
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
-from icommons_common.models import Person
+from canvas_sdk.client import RequestContext
+from coursemanager.people_models import Person
 
 
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
+SDK_CONTEXT = RequestContext(**settings.CANVAS_SDK_SETTINGS)
 logger = logging.getLogger(__name__)
 
 

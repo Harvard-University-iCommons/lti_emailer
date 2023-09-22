@@ -16,12 +16,12 @@ from canvas_sdk.methods.users import list_users_in_account
 from canvas_sdk.utils import get_all_list_data
 from canvas_sdk.exceptions import CanvasAPIError
 
-from icommons_common.canvas_utils import SessionInactivityExpirationRC
-from icommons_common.canvas_api.helpers import (
+from canvas_sdk.client import RequestContext
+from canvas_api.helpers import (
     courses as canvas_api_helper_courses,
     sections as canvas_api_helper_sections)
 
-from lti_permissions.verification import is_allowed
+from lti_school_permissions.verification import is_allowed
 
 
 cache = caches['shared']
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 CACHE_KEY_COMM_CHANNELS_BY_CANVAS_USER_ID = "comm-channels-by-canvas-user-id_%s"
 CACHE_KEY_USER_IN_ACCOUNT_BY_SEARCH_TERM = "user-in-account-{}-by-search-term-{}"
-SDK_CONTEXT = SessionInactivityExpirationRC(**settings.CANVAS_SDK_SETTINGS)
+SDK_CONTEXT = RequestContext(**settings.CANVAS_SDK_SETTINGS)
 TEACHING_STAFF_ENROLLMENT_TYPES = ['TeacherEnrollment', 'TaEnrollment', 'DesignerEnrollment']
 USER_ATTRIBUTES_TO_COPY = ['email', 'name', 'sortable_name']
 

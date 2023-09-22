@@ -2,11 +2,12 @@
 Django settings for lti_emailer project.
 """
 
+import logging
 import os
 import re
-import logging
-from django.urls import reverse_lazy
+
 from dj_secure_settings.loader import load_secure_settings
+from django.urls import reverse_lazy
 
 SECURE_SETTINGS = load_secure_settings()
 
@@ -30,11 +31,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_auth_lti',
-    'icommons_common',
+    'coursemanager',
     'lti_permissions',
     'icommons_ui',
     'djng',
     'lti_emailer',
+    'lti_school_permissions',
     'mailing_list',
     'mailgun',
     'watchman'
@@ -85,7 +87,7 @@ WSGI_APPLICATION = 'lti_emailer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASE_ROUTERS = ['icommons_common.routers.CourseSchemaDatabaseRouter']
+DATABASE_ROUTERS = ['coursemanager.routers.CourseSchemaDatabaseRouter']
 
 DATABASES = {
     'default': {
@@ -110,6 +112,7 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 COURSE_SCHEMA_DB_NAME = 'coursemanager'
 
 # Cache
@@ -297,7 +300,7 @@ LOGGING = {
             'handlers': ['default'],
             'propagate': False,
         },
-        'icommons_common': {
+        'coursemanager': {
            'handlers': ['default'],
            'level': _DEFAULT_LOG_LEVEL,
            'propagate': False,
@@ -326,7 +329,6 @@ CANVAS_SDK_SETTINGS = {
     'base_api_url': CANVAS_URL + '/api',
     'max_retries': 3,
     'per_page': 40,
-    'session_inactivity_expiration_time_secs': 50,
 }
 
 ICOMMONS_COMMON = {
@@ -354,6 +356,11 @@ LISTSERV_COURSE_ADDRESS_FORMAT = "canvas-{canvas_course_id}@%s" % LISTSERV_DOMAI
 
 PERMISSION_LTI_EMAILER_VIEW = 'lti_emailer_view'
 PERMISSION_LTI_EMAILER_SEND_ALL = 'lti_emailer_send_all'
+
+LTI_SCHOOL_PERMISSIONS_TOOL_PERMISSIONS = (
+    PERMISSION_LTI_EMAILER_VIEW,
+    PERMISSION_LTI_EMAILER_SEND_ALL,
+)
 
 MAILGUN_CALLBACK_TIMEOUT = 30 * 1000  # 30 seconds
 
