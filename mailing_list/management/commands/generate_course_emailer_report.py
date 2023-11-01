@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Generates a CSV report for Course Emailer list of courses that \
-            have used Course Emailer for specified school and academic years'
+    help = 'Generates a CSV report of courses that have utilized the \
+            Course Emailer tool within a specified school and academic years.'
 
     def add_arguments(self, parser):
         """ Command-line argument definitions."""
@@ -24,8 +24,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         """
-        Generates a CSV report for Course Emailer list of courses that \
-        have used Course Emailer for specified school and academic years.
+        Generates a CSV report of courses that have utilized the \
+        Course Emailer tool within a specified school and academic years.
         """
         # Retrieve command-line arguments
         school = options['school']
