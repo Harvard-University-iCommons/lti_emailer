@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 raise CommandError(f"Invalid academic year: {year}. Years must be integers.")
 
         earliest_academic_year = min(int(year) for year in academic_years)
-        start_date = timezone.datetime(earliest_academic_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        start_date = timezone.datetime(earliest_academic_year, 8, 1, 0, 0, 0, tzinfo=timezone.utc)
         
         # Retrieve canvas course ids in mailing list. Mailing list records are
         # created in the database once a course start using the Course Emailer tool.
