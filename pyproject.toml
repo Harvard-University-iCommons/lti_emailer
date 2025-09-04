@@ -4,7 +4,7 @@ version = "2.11"
 requires-python = ">=3.10,<3.11"
 dependencies = [
     "canvas-python-sdk",
-    "cx-oracle==8.3.0",
+    "oracledb==1.1.1",
     "django==3.2.16",
     "django-allow-cidr==0.5.0",
     "django-angular==2.3",
@@ -61,10 +61,7 @@ dev = [
     "ddt==1.5.0",
     "django-debug-toolbar==3.5",
     "django-extensions==3.1.5",
-    "flake8==4.0.1",
     "mock==4.0.3",
-    "oracledb==1.1.1",
-    "pep8==1.7.1",
     "pyopenssl==25.1.0",
     "pyvirtualdisplay==3.0",
     "selenium==4.3.0",

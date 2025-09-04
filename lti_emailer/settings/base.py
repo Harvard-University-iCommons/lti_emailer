@@ -9,6 +9,13 @@ import re
 from dj_secure_settings.loader import load_secure_settings
 from django.urls import reverse_lazy
 
+import sys
+import oracledb
+
+oracledb.version = "8.3.0"
+sys.modules["cx_Oracle"] = oracledb
+
+
 SECURE_SETTINGS = load_secure_settings()
 
 
