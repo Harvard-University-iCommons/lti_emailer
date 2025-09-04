@@ -35,13 +35,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-    # TODO: remember to enable this
-    #   - name: Lint with ruff
-    #     uses: astral-sh/ruff-action@v3
+      - name: Lint with ruff
+        uses: astral-sh/ruff-action@v3
 
-    # TODO: remember to enable this
-    #   - name: Check formatting with ruff
-    #     run: ruff format --check
+      - name: Check formatting with ruff
+        run: ruff format --check
 
       # could run tests here, but we don't have any tests yet
 

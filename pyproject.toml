@@ -28,6 +28,9 @@ dependencies = [
     "splunk-handler==3.0.0",
 ]
 
+[tool.ruff.lint]
+ignore = ["F403", "F405", "F841", "E741"]  # Globally ignore star-import warnings, unused vars, and ambiguous names
+
 # TODO: Once TLT-5255 is completed. Edit the dependencies in the pyproject.toml file:
 # for any libraries that were installed directly from GitHub,
 # make sure that the dependency line has a specific version number.

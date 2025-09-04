@@ -1,11 +1,11 @@
-'''
+"""
 NOTE: These template tags were copied from icommons_lti_tools/add_people as of
 e7437aaf35f81880a19ab18f69e51f19f632ac0f, to support a stripped down version of
 add_people/templates/_enrollments_list_by_name.html.  Refactoring to split that
 template out into icommons_ui, then retesting manage sections was deemed too
 much extra work for a single reuse.  If we need to use this view of course
 enrollments again, we should do the refactor then.
-'''
+"""
 
 from django import template
 from django.template.defaultfilters import stringfilter
@@ -23,7 +23,7 @@ def to_letter_range(name, args):
     """
     try:
         ord_val = ord(name[0].upper())
-        letter_ranges = [arg.strip().upper() for arg in args.split(',')]
+        letter_ranges = [arg.strip().upper() for arg in args.split(",")]
         for letter_range in letter_ranges:
             range_len = len(letter_range)
             if ord(letter_range[0]) <= ord_val <= ord(letter_range[range_len - 1]):
@@ -31,7 +31,7 @@ def to_letter_range(name, args):
     except IndexError:
         # Either the name passed in was empty, or one of the ranges was passed in as an empty string, so
         # just return an empty string in this case.
-        return ''
+        return ""
 
 
 @register.filter
@@ -46,7 +46,7 @@ def list_comp(lst):
 @register.filter(is_safe=True)
 def enrollment_lname(enrollment):
     try:
-        lname_first = enrollment['sortable_name']
+        lname_first = enrollment["sortable_name"]
     except KeyError:
-        return ''
-    return lname_first.split(',')[0]
+        return ""
+    return lname_first.split(",")[0]

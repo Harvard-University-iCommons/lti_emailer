@@ -2,8 +2,7 @@ from ddt import ddt, data, unpack
 
 from selenium_common.base_test_case import get_xl_data
 from selenium_tests.lti_emailer.emailer_base_test_case import CANVAS_ADD_USERS
-from selenium_tests.lti_emailer.emailer_base_test_case import \
-    EmailerBaseTestCase
+from selenium_tests.lti_emailer.emailer_base_test_case import EmailerBaseTestCase
 
 
 @ddt
@@ -18,21 +17,21 @@ class EmailerPermissionTests(EmailerBaseTestCase):
         self.masquerade_page.masquerade_as(user_id)
         self.emailer_main_page.get(self.TOOL_URL)
 
-        if given_access == 'no':
+        if given_access == "no":
             self.assertFalse(
                 self.emailer_main_page.is_authorized(),
-                'User {} has been authorized, '
-                'but should not be.'.format(user_id)
+                "User {} has been authorized, but should not be.".format(user_id),
             )
 
-        elif given_access == 'yes':
+        elif given_access == "yes":
             self.assertTrue(
                 self.emailer_main_page.is_authorized(),
-                'User {} not authorized, but should be.'.format(user_id)
+                "User {} not authorized, but should be.".format(user_id),
             )
 
         else:
             raise ValueError(
-                'given_access column for user {} must be either \'yes\' or '
-                '\'no\''.format(user_id)
+                "given_access column for user {} must be either 'yes' or 'no'".format(
+                    user_id
+                )
             )
