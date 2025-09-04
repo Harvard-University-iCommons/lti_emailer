@@ -3,12 +3,11 @@ on:
   push:
     branches:
       - 'develop'
-      - 'main'
     tags:
       - 'v*'
   pull_request:
     branches:
-      - 'main'
+      - 'develop'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -19,12 +18,13 @@ env:
   DJANGO_SETTINGS_MODULE: lti_emailer.settings.local
   AWS_REGION: 'us-east-1'
   AWS_ROLE: arn:aws:iam::482956169056:role/uw-lti-emailer-github-actions-role
-  REPOSITORY: 'uw/ops-tools'
+  REPOSITORY: 'uw/lti-emailer'
   ECR_HOST: '482956169056.dkr.ecr.us-east-1.amazonaws.com'
   ECS_CLUSTER: 'default'
-  ECS_SERVICE: 'uw-ops-tools-service-dev-1-4-0'
-  ECS_TASK_DEFINITION: 'uw-ops-tools-task-dev'
-  CONTAINER_NAME: 'uw-ops-tools-container-dev'
+  ECS_SERVICE: 'uw-lti-emailer-service-dev-1-4-0'
+  ECS_TASK_DEFINITION: 'uw-lti-emailer-task-dev'
+  CONTAINER_NAME: 'uw-lti-emailer-container-dev'
+  UV_INDEX_PRIVATE_REGISTRY_USERNAME: aws
 
 
 jobs:
@@ -35,8 +35,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Lint with ruff
-        uses: astral-sh/ruff-action@v3
+    # TODO: remember to enable this
+    #   - name: Lint with ruff
+    #     uses: astral-sh/ruff-action@v3
 
     # TODO: remember to enable this
     #   - name: Check formatting with ruff
@@ -66,8 +67,10 @@ jobs:
           mask-aws-account-id: 'no'
 
       - name: Get CodeArtifact authorization token
+        id: codeartifact-auth
         run: |
-          echo "CODEARTIFACT_TOKEN=$(aws codeartifact get-authorization-token --domain huit-academic-technology --query authorizationToken --output text)" >> $GITHUB_ENV
+          echo "UV_INDEX_PRIVATE_REGISTRY_PASSWORD=$(aws codeartifact get-authorization-token --domain huit-academic-technology --query authorizationToken --output text)" >> $GITHUB_ENV
+          echo "index pwd: ${UV_INDEX_PRIVATE_REGISTRY_PASSWORD}"
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -75,40 +78,12 @@ jobs:
         with:
           mask-password: 'true'
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "pyproject.toml"
-
+      # SSH agent will no longer be required once we switch to
+      # using CodeArtifact for all private package dependencies
       - name: Setup ssh agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Install Python dependencies
-        run: |
-          uv sync --no-dev --extra aws --locked
-
-      # - name: Set up pnpm
-      #   uses: pnpm/action-setup@v3
-      #   with:
-      #     version: 8
-      #     run_install: true
-
-      # - name: Set up nodejs
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '18'
-      #     cache: 'pnpm'
-
-      # - name: Build the project
-      #   run: uv run pnpm build
 
       - name: Configure docker image metadata
         id: docker_meta
@@ -143,10 +118,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          secrets: |
-            UV_INDEX_PRIVATE_REGISTRY_PASSWORD=${{ env.CODEARTIFACT_TOKEN }}
           ssh: default=${{ env.SSH_AUTH_SOCK }}
-          file: ${{ github.workspace }}/Dockerfile.github_actions
+          secrets: UV_INDEX_PRIVATE_REGISTRY_PASSWORD=${{ env.UV_INDEX_PRIVATE_REGISTRY_PASSWORD }}
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
@@ -157,6 +130,7 @@ jobs:
       - name: Download task definition
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
+
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -171,8 +145,9 @@ jobs:
             BUILD_REF=${{ github.ref }}
             BUILD_REF_NAME=${{ github.ref_name }}
             BUILD_REF_TYPE=${{ github.ref_type }}
+
       - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
