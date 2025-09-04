@@ -65,7 +65,7 @@ dev = [
     "mock==4.0.3",
     "oracledb==1.1.1",
     "pep8==1.7.1",
-    "pyopenssl==22.0.0",
+    "pyopenssl==25.1.0",
     "pyvirtualdisplay==3.0",
     "selenium==4.3.0",
     "selenium-common",

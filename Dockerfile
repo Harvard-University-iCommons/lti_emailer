@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.10-slim-bookworm as build
+FROM 482956169056.dkr.ecr.us-east-1.amazonaws.com/uw/python-postgres-build:v3.10 as build
 COPY --from=ghcr.io/astral-sh/uv:0.7.22 /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0 UV_INDEX_PRIVATE_REGISTRY_USERNAME=aws
 
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --extra aws --keyring-provider disabled -v
 RUN chmod a+x /code/docker-entrypoint.sh
 
-FROM python:3.10-slim-bookworm
+FROM 482956169056.dkr.ecr.us-east-1.amazonaws.com/uw/python-postgres-base:v3.10
 RUN apt-get update; apt-get install -y --no-install-recommends git libpq5
 COPY --from=build /code /code
 ENV PATH="/code/.venv/bin:$PATH"
