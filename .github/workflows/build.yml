@@ -68,7 +68,7 @@ jobs:
         id: codeartifact-auth
         run: |
           echo "UV_INDEX_PRIVATE_REGISTRY_PASSWORD=$(aws codeartifact get-authorization-token --domain huit-academic-technology --query authorizationToken --output text)" >> $GITHUB_ENV
-          echo "index pwd: ${UV_INDEX_PRIVATE_REGISTRY_PASSWORD}"
+          echo "Successfully retrieved CodeArtifact authorization token"
 
       - name: Login to Amazon ECR
         id: login-ecr
