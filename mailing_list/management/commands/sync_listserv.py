@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Synchronizes mailing lists created for canvas courses with the enrollment list for each course'
+    help = "Synchronizes mailing lists created for canvas courses with the enrollment list for each course"
 
     def handle(self, *args, **options):
         logger.info("Beginning sync_listserv job for canvas_course_ids %s", args)

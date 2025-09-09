@@ -11,7 +11,9 @@ def is_course_crosslisted(course_instance_id):
     :param course_instance_id:
     :return Bool:
     """
-    xlistentrys = XlistMap.objects.filter(primary_course_instance=course_instance_id).count()
+    xlistentrys = XlistMap.objects.filter(
+        primary_course_instance=course_instance_id
+    ).count()
     if xlistentrys > 0:
         return True
 
@@ -35,11 +37,11 @@ def get_section_sis_enrollment_status(sis_section_id):
         ci = CourseInstance.objects.get(course_instance_id=int(sis_section_id))
         # if there is a course instance but there is no cs_class_type
         # we should assume this is an enrollment type so return 'E'
-        if not ci.cs_class_type or ci.cs_class_type in 'E':
-            return 'E'
+        if not ci.cs_class_type or ci.cs_class_type in "E":
+            return "E"
         else:
             # the only other option is 'N' so just return it
-            return 'N'
+            return "N"
 
     except CourseInstance.DoesNotExist:
         # there was no record for this id, so return None

@@ -25,32 +25,36 @@ def lti_auth_error(request):
     raise PermissionDenied()
 
 
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def tool_config(request):
-    url = "https://{}{}".format(request.get_host(), reverse('lti_launch'))
+    url = "https://{}{}".format(request.get_host(), reverse("lti_launch"))
     url = _url(url)
 
-    title = 'Course Emailer'
+    title = "Course Emailer"
     lti_tool_config = ToolConfig(
         title=title,
         launch_url=url,
         secure_launch_url=url,
-        description="This tool provides an email list for the course and each section associated iwth this course site."
+        description="This tool provides an email list for the course and each section associated iwth this course site.",
     )
 
     # this is how to tell Canvas that this tool provides a course navigation link:
     course_nav_params = {
-        'enabled': 'true',
-        'text': title,
-        'default': 'disabled',
-        'visibility': 'admins',
+        "enabled": "true",
+        "text": title,
+        "default": "disabled",
+        "visibility": "admins",
     }
-    custom_fields = {'canvas_membership_roles': '$Canvas.membership.roles'}
-    lti_tool_config.set_ext_param('canvas.instructure.com', 'custom_fields', custom_fields)
-    lti_tool_config.set_ext_param('canvas.instructure.com', 'course_navigation', course_nav_params)
-    lti_tool_config.set_ext_param('canvas.instructure.com', 'privacy_level', 'public')
+    custom_fields = {"canvas_membership_roles": "$Canvas.membership.roles"}
+    lti_tool_config.set_ext_param(
+        "canvas.instructure.com", "custom_fields", custom_fields
+    )
+    lti_tool_config.set_ext_param(
+        "canvas.instructure.com", "course_navigation", course_nav_params
+    )
+    lti_tool_config.set_ext_param("canvas.instructure.com", "privacy_level", "public")
 
-    return HttpResponse(lti_tool_config.to_xml(), content_type='text/xml')
+    return HttpResponse(lti_tool_config.to_xml(), content_type="text/xml")
 
 
 def _url(url):
@@ -67,8 +71,8 @@ def _url(url):
 
     parts = urllib.parse.urlparse(url)
     query_dict = urllib.parse.parse_qs(parts.query)
-    if 'resource_link_id' in query_dict:
-        query_dict.pop('resource_link_id', None)
+    if "resource_link_id" in query_dict:
+        query_dict.pop("resource_link_id", None)
     new_parts = list(parts)
     new_parts[4] = urllib.parse.urlencode(query_dict)
     return urllib.parse.urlunparse(new_parts)
@@ -77,11 +81,11 @@ def _url(url):
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @csrf_exempt
 def lti_launch(request):
     logger.debug(
         "lti_emailer launched with params: %s",
-        json.dumps(request.POST.dict(), indent=4)
+        json.dumps(request.POST.dict(), indent=4),
     )
-    return redirect('mailing_list:admin_index')
+    return redirect("mailing_list:admin_index")

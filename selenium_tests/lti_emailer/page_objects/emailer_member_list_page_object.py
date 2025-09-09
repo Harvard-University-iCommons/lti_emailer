@@ -1,7 +1,9 @@
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium_tests.lti_emailer.page_objects.emailer_base_page_object \
-    import EmailerBasePageObject
+from selenium_tests.lti_emailer.page_objects.emailer_base_page_object import (
+    EmailerBasePageObject,
+)
+
 
 class EmailerMainPageLocators(object):
     PAGE_TITLE = (By.CSS_SELECTOR, "h1")
@@ -26,10 +28,10 @@ class CourseEmailerListPage(EmailerBasePageObject):
         except NoSuchElementException:
             return False
 
-        if title and 'Course Emailer' in self.get_title():
+        if title and "Course Emailer" in self.get_title():
             return True
         else:
             raise RuntimeError(
-                'Could not determine if dashboard page loaded as expected;'
-                'title element was found but did not contain expected text'
+                "Could not determine if dashboard page loaded as expected;"
+                "title element was found but did not contain expected text"
             )

@@ -10,14 +10,14 @@ from mailgun.decorators import authenticate
 logger = logging.getLogger(__name__)
 
 
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def auth_error(request):
-    return JsonResponse({'error': 'Failed to authenticate request.'}, status=401)
+    return JsonResponse({"error": "Failed to authenticate request."}, status=401)
 
 
 @csrf_exempt
 @authenticate()
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 def log_post_data(request):
     """
     This method will log POST data. It is primarily provided so that it can be configured as an endpoint for the
@@ -26,10 +26,10 @@ def log_post_data(request):
     :param request:
     :return HttpResponse:
     """
-    if request.content_type == 'application/json':
+    if request.content_type == "application/json":
         payload = json.loads(request.body)
-        logger.info(json.dumps(payload['event-data']))
+        logger.info(json.dumps(payload["event-data"]))
     else:
-        logger.info(json.dumps(request.POST, separators=(',', ': '), sort_keys=True))
+        logger.info(json.dumps(request.POST, separators=(",", ": "), sort_keys=True))
 
     return HttpResponse("Successfully logged post data", status=200)
