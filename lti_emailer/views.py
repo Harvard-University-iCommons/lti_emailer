@@ -55,7 +55,7 @@ def config(request: HttpRequest, registration_uuid: str) -> JsonResponse:
         Returns a 400 status JsonResponse if the registration_uuid is not found
     """
     tool_domain = request.get_host()
-    tool_name = "lti_emailer"
+    tool_name = "lti-emailer"
     tool_friendly_name = "Course Emailer"
 
     # Determine the Canvas environment based on the request domain
@@ -76,7 +76,7 @@ def config(request: HttpRequest, registration_uuid: str) -> JsonResponse:
         ):
             return " - LOCAL"
         else:
-            return None
+            return ""
 
     # Check for existing LtiRegistration by UUID for this issuer
     existing_registration: Optional[LtiRegistration] = LtiRegistration.objects.filter(
