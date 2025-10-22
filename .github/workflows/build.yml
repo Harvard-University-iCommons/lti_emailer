@@ -67,21 +67,19 @@ jobs:
       - name: Get CodeArtifact authorization token
         id: codeartifact-auth
         run: |
-          echo "UV_INDEX_PRIVATE_REGISTRY_PASSWORD=$(aws codeartifact get-authorization-token --domain huit-academic-technology --query authorizationToken --output text)" >> $GITHUB_ENV
-          echo "Successfully retrieved CodeArtifact authorization token"
+          CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token \
+            --domain huit-academic-technology \
+            --domain-owner 482956169056 \
+            --query authorizationToken \
+            --output text)
+          echo "UV_INDEX_PRIVATE_REGISTRY_USERNAME=aws" >> $GITHUB_ENV
+          echo "UV_INDEX_PRIVATE_REGISTRY_PASSWORD=$CODEARTIFACT_AUTH_TOKEN" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
         with:
           mask-password: 'true'
-
-      # SSH agent will no longer be required once we switch to
-      # using CodeArtifact for all private package dependencies
-      - name: Setup ssh agent
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
       - name: Configure docker image metadata
         id: docker_meta
@@ -102,7 +100,6 @@ jobs:
         run: |
           # Get the short version of the SHA (Note: this commit SHA is the last commit in the push event that triggered the workflow).
           SHORT_SHA=$(echo ${{ github.event.after }} | cut -c1-7)
-
           echo "BUILD_INFO = {" > build_info.py
           echo "    'resolved_source_version': '${{ github.sha }}'," >> build_info.py
           echo "    'source_version': '${{ github.ref_name }}'," >> build_info.py
@@ -116,7 +113,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          ssh: default=${{ env.SSH_AUTH_SOCK }}
           secrets: UV_INDEX_PRIVATE_REGISTRY_PASSWORD=${{ env.UV_INDEX_PRIVATE_REGISTRY_PASSWORD }}
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}

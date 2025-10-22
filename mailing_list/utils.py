@@ -1,4 +1,5 @@
 import logging
+from lti_tool.types import LtiLaunch
 
 from coursemanager.models import CourseInstance, XlistMap
 
@@ -46,3 +47,20 @@ def get_section_sis_enrollment_status(sis_section_id):
     except CourseInstance.DoesNotExist:
         # there was no record for this id, so return None
         return None
+
+
+def get_custom_data_from_request(request):
+    """
+    Get the custom data from the request object.
+    """
+    lti_launch: LtiLaunch = request.lti_launch
+    launch_data = lti_launch.get_launch_data()
+
+    if launch_data is None:
+        return {}
+
+    custom_data = launch_data.get(
+        "https://purl.imsglobal.org/spec/lti/claim/custom", {}
+    )
+
+    return custom_data

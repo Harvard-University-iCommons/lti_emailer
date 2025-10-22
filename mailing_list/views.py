@@ -1,30 +1,30 @@
 import logging
 
+import lti_school_permissions.constants as constants
+from canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
-from django.http import HttpResponseBadRequest
-from django_auth_lti import const
-from django_auth_lti.decorators import lti_role_required
+from lti_school_permissions.decorators import lti_permission_required, lti_role_required
 
-from lti_school_permissions.decorators import lti_permission_required
-
-from lti_emailer.canvas_api_client import get_enrollments, get_section, get_course
+from lti_emailer.canvas_api_client import get_course, get_enrollments, get_section
 from mailing_list.models import MailingList
-
-from canvas_api.helpers import enrollments as canvas_api_helpers_enrollments
+from mailing_list.utils import get_custom_data_from_request
 
 logger = logging.getLogger(__name__)
 
 
 @login_required
-@lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["GET"])
 def admin_index(request):
-    logged_in_user_id = request.LTI["lis_person_sourcedid"]
-    canvas_course_id = request.LTI.get("custom_canvas_course_id")
+    logged_in_user_id = get_custom_data_from_request(request).get(
+        "canvas_user_sissourceid"
+    )
+    canvas_course_id = get_custom_data_from_request(request).get("canvas_course_id")
     build_info = settings.BUILD_INFO
 
     course = get_course(canvas_course_id)
@@ -47,11 +47,11 @@ def admin_index(request):
 
 
 @login_required
-@lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["GET"])
 def list_members(request, section_id=None):
-    canvas_course_id = request.LTI.get("custom_canvas_course_id")
+    canvas_course_id = get_custom_data_from_request(request).get("canvas_course_id")
 
     if not canvas_course_id:
         return HttpResponseBadRequest("Unable to determine canvas course id")

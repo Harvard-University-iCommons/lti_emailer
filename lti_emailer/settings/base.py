@@ -32,15 +32,14 @@ ENV = SECURE_SETTINGS.get("env_name")
 # Application definition
 
 INSTALLED_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_auth_lti",
+    "lti_tool",
     "coursemanager",
-    "lti_permissions",
-    "icommons_ui",
     "djng",
     "lti_emailer",
     "lti_school_permissions",
@@ -56,14 +55,23 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "cached_auth.Middleware",
-    "django_auth_lti.middleware_patched.MultiLTILaunchAuthMiddleware",
+    "lti_tool.middleware.LtiLaunchMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "lti_authentication.middleware.LtiLaunchAuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "allow_cidr.middleware.AllowCIDRMiddleware",
 ]
 
-AUTHENTICATION_BACKENDS = ("django_auth_lti.backends.LTIAuthBackend",)
+AUTHENTICATION_BACKENDS = [
+    "lti_authentication.backends.LtiLaunchAuthenticationBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+LTI_AUTHENTICATION = {
+    "use_person_sourcedid": SECURE_SETTINGS.get("use_person_sourcedid", True),
+}
 
 LOGIN_URL = reverse_lazy("lti_auth_error")
 
@@ -110,9 +118,6 @@ DATABASES = {
         "PASSWORD": SECURE_SETTINGS.get("db_coursemanager_password"),
         "HOST": SECURE_SETTINGS.get("db_coursemanager_host"),
         "PORT": str(SECURE_SETTINGS.get("db_coursemanager_port")),
-        "OPTIONS": {
-            "threaded": True,
-        },
         "CONN_MAX_AGE": 0,
     },
 }
@@ -128,18 +133,16 @@ REDIS_PORT = SECURE_SETTINGS.get("redis_port", 6379)
 
 CACHES = {
     "default": {
-        "BACKEND": "redis_cache.RedisCache",
-        "LOCATION": "redis://%s:%s/0" % (REDIS_HOST, REDIS_PORT),
-        "OPTIONS": {"PARSER_CLASS": "redis.connection.HiredisParser"},
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "KEY_PREFIX": "lti_emailer",  # Provide a unique value for intra-app cache
-        # See following for default timeout (5 minutes as of 1.7):
-        # https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-CACHES-TIMEOUT
+        # See following for default timeout (5 minutes as of 4.2):
+        # https://docs.djangoproject.com/en/4.2/ref/settings/#timeout
         "TIMEOUT": SECURE_SETTINGS.get("default_cache_timeout_secs", 300),
     },
     "shared": {
-        "BACKEND": "redis_cache.RedisCache",
-        "LOCATION": "redis://%s:%s/0" % (REDIS_HOST, REDIS_PORT),
-        "OPTIONS": {"PARSER_CLASS": "redis.connection.HiredisParser"},
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "KEY_PREFIX": "tlt_shared",
         "TIMEOUT": SECURE_SETTINGS.get("default_cache_timeout_secs", 300),
     },
@@ -309,11 +312,6 @@ LOGGING = {
             "level": _DEFAULT_LOG_LEVEL,
             "propagate": False,
         },
-        "django_auth_lti": {
-            "handlers": ["default"],
-            "level": "ERROR",
-            "propagate": False,
-        },
     },
 }
 
@@ -330,17 +328,6 @@ CANVAS_SDK_SETTINGS = {
     "per_page": 40,
 }
 
-ICOMMONS_COMMON = {
-    "ICOMMONS_API_HOST": SECURE_SETTINGS.get("icommons_api_host", None),
-    "ICOMMONS_API_USER": SECURE_SETTINGS.get("icommons_api_user", None),
-    "ICOMMONS_API_PASS": SECURE_SETTINGS.get("icommons_api_pass", None),
-    "CANVAS_API_BASE_URL": CANVAS_URL + "/api/v1",
-    "CANVAS_API_HEADERS": {
-        "Authorization": "Bearer "
-        + SECURE_SETTINGS.get("canvas_token", "canvas_token_missing_from_config")
-    },
-}
-
 REPORT_DIR = SECURE_SETTINGS.get("report_dir", BASE_DIR)
 
 LISTSERV_DOMAIN = SECURE_SETTINGS.get("listserv_domain")
@@ -349,10 +336,10 @@ LISTSERV_API_USER = SECURE_SETTINGS.get("listserv_api_user")
 LISTSERV_API_KEY = str(SECURE_SETTINGS.get("listserv_api_key"))
 
 LISTSERV_SECTION_ADDRESS_RE = re.compile(
-    "^canvas-(?P<canvas_course_id>\d+)-(?P<section_id>\d+)@%s$" % LISTSERV_DOMAIN
+    r"^canvas-(?P<canvas_course_id>\d+)-(?P<section_id>\d+)@%s$" % LISTSERV_DOMAIN
 )
 LISTSERV_COURSE_ADDRESS_RE = re.compile(
-    "^canvas-(?P<canvas_course_id>\d+)@%s$" % LISTSERV_DOMAIN
+    r"^canvas-(?P<canvas_course_id>\d+)@%s$" % LISTSERV_DOMAIN
 )
 
 LISTSERV_SECTION_ADDRESS_FORMAT = (

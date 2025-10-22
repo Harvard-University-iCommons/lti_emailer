@@ -1,15 +1,16 @@
 import json
 import logging
 
+import lti_school_permissions.constants as constants
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django_auth_lti import const
-from django_auth_lti.decorators import lti_role_required
-from lti_school_permissions.decorators import lti_permission_required
+from lti_school_permissions.decorators import lti_permission_required, lti_role_required
+
+from mailing_list.utils import get_custom_data_from_request
 
 from .models import CourseSettings, MailingList
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
-@lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["GET"])
 def lists(request):
@@ -28,8 +29,10 @@ def lists(request):
     :return: JSON response containing the mailing lists for the course in this session context
     """
     try:
-        canvas_course_id = request.LTI["custom_canvas_course_id"]
-        logged_in_user_id = request.LTI["lis_person_sourcedid"]
+        canvas_course_id = get_custom_data_from_request(request).get("canvas_course_id")
+        logged_in_user_id = get_custom_data_from_request(request).get(
+            "canvas_user_loginid"
+        )
 
         mailing_lists = MailingList.objects.get_or_create_or_delete_mailing_lists_for_canvas_course_id(
             canvas_course_id,
@@ -40,18 +43,15 @@ def lists(request):
         )
 
     except Exception:
-        message = (
-            "Failed to get_or_create MailingLists with LTI params %s"
-            % json.dumps(request.LTI)
-        )
-        logger.exception(message)
+        message = f"Failed to get_or_create MailingLists with LTI params {get_custom_data_from_request(request)}"
+        logger.exception(message, extra=get_custom_data_from_request(request))
         return JsonResponse({"error": message}, status=500)
 
     return JsonResponse(mailing_lists, safe=False, status=200)
 
 
 @login_required
-@lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["PUT"])
 def set_access_level(request, mailing_list_id):
@@ -66,13 +66,15 @@ def set_access_level(request, mailing_list_id):
 
     access_level = json.loads(request.body)["access_level"]
     if access_level not in ACCESS_LEVELS:
-        logger.warn(
+        logger.warning(
             f"{access_level} not a valid access_level. Mailing list {mailing_list_id} not modified."
         )
         raise PermissionDenied
 
     try:
-        logged_in_user_id = request.LTI["lis_person_sourcedid"]
+        logged_in_user_id = get_custom_data_from_request(request).get(
+            "canvas_user_sissourceid"
+        )
 
         mailing_list = MailingList.objects.get(id=mailing_list_id)
         mailing_list.modified_by = logged_in_user_id
@@ -89,18 +91,15 @@ def set_access_level(request, mailing_list_id):
             "access_level": access_level,
         }
     except Exception:
-        message = "Failed to activate MailingList %s with LTI params %s" % (
-            mailing_list_id,
-            json.dumps(request.LTI),
-        )
-        logger.exception(message)
+        message = f"Failed to activate MailingList {mailing_list_id} with LTI params {get_custom_data_from_request(request)}"
+        logger.exception(message, extra=get_custom_data_from_request(request))
         return JsonResponse({"error": message}, status=500)
 
     return JsonResponse(result, status=200)
 
 
 @login_required
-@lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["GET", "PUT"])
 def get_or_create_course_settings(request):
@@ -112,8 +111,10 @@ def get_or_create_course_settings(request):
     :param request:
     :return: JSON response of the course settings object
     """
-    logged_in_user_id = request.LTI["lis_person_sourcedid"]
-    canvas_course_id = request.LTI["custom_canvas_course_id"]
+    logged_in_user_id = get_custom_data_from_request(request).get(
+        "canvas_user_sissourceid"
+    )
+    canvas_course_id = get_custom_data_from_request(request).get("canvas_course_id")
 
     try:
         (course_settings, created) = CourseSettings.objects.get_or_create(
