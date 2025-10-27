@@ -1,76 +1,54 @@
 [project]
 name = "lti-emailer"
-version = "2.12"
-requires-python = ">=3.10,<3.11"
+version = "3.0"
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "canvas-python-sdk",
-    "oracledb==1.1.1",
-    "django==3.2.16",
-    "django-allow-cidr==0.5.0",
-    "django-angular==2.3",
-    "django-auth-lti",
-    "django-cached-authentication-middleware==0.2.2",
-    "django-canvas-lti-school-permissions",
-    "django-coursemanager",
-    "django-icommons-common",
-    "django-icommons-ui",
-    "django-redis-cache==3.0.1",
-    "django-ssm-parameter-store",
-    "django-storages==1.12.3",
-    "django-watchman==1.3.0",
-    "flanker==0.9.11",
-    "harvard-django-utils",
-    "hiredis==2.0.0",
-    "psycopg2==2.9.3",
-    "python-json-logger==2.0.4",
-    "redis==3.5.3",
-    "requests==2.28.1",
-    "splunk-handler==3.0.0",
+    "canvas-python-sdk>=2.1.2,<3",
+    "oracledb>=2.4.1,<3",
+    "django>=4.2,<5.0",
+    "django-allow-cidr>=0.8.0,<1",
+    "django-angular>=2.3,<3",
+    "django-cached-authentication-middleware>=0.2.2,<1",
+    "django-canvas-lti-school-permissions>=5.1.5,<6",
+    "django-coursemanager>=0.8,<1",
+    "django-ssm-parameter-store>=0.7,<1",
+    "django-storages>=1.14.6,<2",
+    "django-watchman>=1.3.0,<2",
+    "flanker>=0.9.11,<1",
+    "harvard-django-utils>=0.4,<1",
+    "hiredis>=3.2.1,<4",
+    "psycopg2-binary>=2.9.11,<3",
+    "python-json-logger>=4.0.0,<5",
+    "redis>=6.4.0,<7",
+    "requests>=2.32.5,<3",
+    "splunk-handler>=3.0.0,<4",
+    "django-lti>=0.8.1,<1",
+    "django-lti-authentication>=0.2.0,<1",
 ]
 
 [tool.ruff.lint]
 ignore = ["F403", "F405", "F841", "E741"]  # Globally ignore star-import warnings, unused vars, and ambiguous names
 
-# TODO: Once TLT-5255 is completed. Edit the dependencies in the pyproject.toml file:
-# for any libraries that were installed directly from GitHub,
-# make sure that the dependency line has a specific version number.
-# You can find the most recent published versions in the CodeArtifact repository.
-# Remove the corresponding git lines in the [tool.uv.sources] section.
-[tool.uv.sources]
-django-angular = { git = "ssh://git@github.com/Harvard-University-iCommons/django-angular.git", rev = "v2.3" }
-canvas-python-sdk = { git = "ssh://git@github.com/Harvard-University-iCommons/canvas_python_sdk.git", rev = "v1.3" }
-django-icommons-common = { git = "ssh://git@github.com/Harvard-University-iCommons/django-icommons-common.git", rev = "v3.0" }
-django-icommons-ui = { git = "ssh://git@github.com/Harvard-University-iCommons/django-icommons-ui.git", rev = "v2.1" }
-django-auth-lti = { git = "ssh://git@github.com/Harvard-University-iCommons/django-auth-lti.git", rev = "v2.1.0" }
-django-ssm-parameter-store = { git = "https://github.com/Harvard-University-iCommons/django-ssm-parameter-store.git", rev = "v0.6" }
-harvard-django-utils = { git = "ssh://git@github.com/Harvard-University-iCommons/harvard-django-utils.git", rev = "v0.1" }
-django-coursemanager = { git = "ssh://git@github.com/Harvard-University-iCommons/django-coursemanager.git", rev = "v0.6" }
-django-canvas-lti-school-permissions = { git = "ssh://git@github.com/Harvard-University-iCommons/django-canvas-lti-school-permissions", rev = "v3.2" }
-selenium-common = { git = "ssh://git@github.com/Harvard-University-iCommons/selenium_common.git", rev = "v1.4.3" }
+[tool.uv]
+keyring-provider = "subprocess"
 
-# TODO: Once TLT-5251 is completed and above changes are made, uncomment below section to use CodeArtifact.
-# [tool.uv]
-# keyring-provider = "subprocess"
-
-# [[tool.uv.index]]
-# name = "private-registry"
-# url = "https://aws@huit-academic-technology-482956169056.d.codeartifact.us-east-1.amazonaws.com/pypi/uw/simple/"
+[[tool.uv.index]]
+name = "private-registry"
+url = "https://aws@huit-academic-technology-482956169056.d.codeartifact.us-east-1.amazonaws.com/pypi/uw/simple/"
 
 [dependency-groups]
-dev = [
-    "ddt==1.5.0",
-    "django-debug-toolbar==3.5",
-    "django-extensions==3.1.5",
-    "mock==4.0.3",
-    "pyopenssl==25.1.0",
-    "pyvirtualdisplay==3.0",
-    "selenium==4.3.0",
-    "selenium-common",
-    "werkzeug==2.0.3",
-    "xlrd==2.0.1",
-]
-
-[project.optional-dependencies]
 aws = [
-    "gunicorn>=23.0.0",
+    "gunicorn>=23.0.0,<24",
+]
+dev = [
+    "ddt>=1.7.2,<2",
+    "django-debug-toolbar>=6.0.0,<7",
+    "django-extensions>=4.1,<5",
+    "mock>=5.2.0,<6",
+    "pyopenssl>=25.3.0,<26",
+    "pyvirtualdisplay>=3.0,<4",
+    "selenium>=4.37.0,<5",
+    # "selenium-common>=1.8.0,<2",  # Archived, we could use git source instead of CodeArtifact
+    "werkzeug>=3.1.3,<4",
+    "xlrd>=2.0.2,<3",
 ]

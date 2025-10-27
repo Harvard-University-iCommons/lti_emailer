@@ -2,7 +2,7 @@ from logging.config import dictConfig
 
 from .base import *
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "*local.tlt.harvard.edu"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

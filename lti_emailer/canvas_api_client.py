@@ -147,7 +147,13 @@ def get_users_in_course(canvas_course_id):
 
 
 def _copy_user_attributes_to_enrollment(user, enrollment):
-    enrollment.update({a: user[a] for a in USER_ATTRIBUTES_TO_COPY})
+    """
+    Copy user attributes to enrollment, handling missing attributes gracefully.
+    """
+    for attr in USER_ATTRIBUTES_TO_COPY:
+        enrollment[attr] = user.get(
+            attr, ""
+        )  # Use empty string as default if attribute is missing
 
 
 def get_alternate_emails_for_user_email(email_address):
