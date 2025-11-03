@@ -2,13 +2,15 @@ import json
 import logging
 from typing import Optional
 
+import lti_school_permissions.constants as const
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from lti_school_permissions.decorators import lti_permission_required
+from lti_school_permissions.decorators import lti_permission_required, lti_role_required
+from lti_tool.decorators import lti_launch_required
 from lti_tool.models import LtiRegistration
 from lti_tool.types import LtiLaunch
 from lti_tool.views import LtiLaunchBaseView
@@ -200,11 +202,9 @@ def not_authorized(request):
     return HttpResponse("You are not authorized to view this page.", status=403)
 
 
-@login_required
-# @lti_role_required(const.TEACHING_STAFF_ROLES)
+@lti_launch_required
+@lti_role_required(const.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
-# @require_http_methods(["POST"])
-# @csrf_exempt
 def lti_emailer_launch(request):
     logger.debug(
         "lti_emailer launched with params: %s",
