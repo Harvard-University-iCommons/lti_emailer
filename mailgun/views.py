@@ -1,16 +1,20 @@
-import logging
 import json
+import logging
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from lti_tool.decorators import lti_launch_required
+
 from mailgun.decorators import authenticate
 
 logger = logging.getLogger(__name__)
 
 
 @require_http_methods(["GET"])
+@lti_launch_required
+@login_required
 def auth_error(request):
     return JsonResponse({"error": "Failed to authenticate request."}, status=401)
 
@@ -18,6 +22,8 @@ def auth_error(request):
 @csrf_exempt
 @authenticate()
 @require_http_methods(["POST"])
+@lti_launch_required
+@login_required
 def log_post_data(request):
     """
     This method will log POST data. It is primarily provided so that it can be configured as an endpoint for the

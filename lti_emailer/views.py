@@ -203,6 +203,7 @@ def not_authorized(request):
 
 
 @lti_launch_required
+@login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 def lti_emailer_launch(request):
