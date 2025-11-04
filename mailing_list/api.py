@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @lti_launch_required
+@login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["GET"])
@@ -52,6 +53,7 @@ def lists(request):
 
 
 @lti_launch_required
+@login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["PUT"])
@@ -100,6 +102,7 @@ def set_access_level(request, mailing_list_id):
 
 
 @lti_launch_required
+@login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
 @require_http_methods(["GET", "PUT"])

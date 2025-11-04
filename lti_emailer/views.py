@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from lti_school_permissions.decorators import lti_permission_required, lti_role_required
 from lti_tool.decorators import lti_launch_required
 from lti_tool.models import LtiRegistration
@@ -206,6 +207,7 @@ def not_authorized(request):
 @login_required
 @lti_role_required(const.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
+@csrf_exempt
 def lti_emailer_launch(request):
     logger.debug(
         "lti_emailer launched with params: %s",
