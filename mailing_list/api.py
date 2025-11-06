@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from lti_school_permissions.decorators import lti_permission_required, lti_role_required
+from lti_tool.decorators import lti_launch_required
 
 from mailing_list.utils import get_custom_data_from_request
 
@@ -17,6 +18,7 @@ from .models import CourseSettings, MailingList
 logger = logging.getLogger(__name__)
 
 
+@lti_launch_required
 @login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
@@ -50,6 +52,7 @@ def lists(request):
     return JsonResponse(mailing_lists, safe=False, status=200)
 
 
+@lti_launch_required
 @login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
@@ -98,6 +101,7 @@ def set_access_level(request, mailing_list_id):
     return JsonResponse(result, status=200)
 
 
+@lti_launch_required
 @login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)

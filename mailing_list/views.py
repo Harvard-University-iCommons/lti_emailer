@@ -8,6 +8,7 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 from lti_school_permissions.decorators import lti_permission_required, lti_role_required
+from lti_tool.decorators import lti_launch_required
 
 from lti_emailer.canvas_api_client import get_course, get_enrollments, get_section
 from mailing_list.models import MailingList
@@ -16,6 +17,7 @@ from mailing_list.utils import get_custom_data_from_request
 logger = logging.getLogger(__name__)
 
 
+@lti_launch_required
 @login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
@@ -46,6 +48,7 @@ def admin_index(request):
     )
 
 
+@lti_launch_required
 @login_required
 @lti_role_required(constants.TEACHING_STAFF_ROLES)
 @lti_permission_required(settings.PERMISSION_LTI_EMAILER_VIEW)
