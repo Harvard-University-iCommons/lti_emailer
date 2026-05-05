@@ -16,7 +16,10 @@ ACCESS_LEVEL_TO_V2 = {
     MailingList.ACCESS_LEVEL_MEMBERS: {"valid_senders": "all_members", "active": True},
     MailingList.ACCESS_LEVEL_EVERYONE: {"valid_senders": "all_members", "active": True},
     MailingList.ACCESS_LEVEL_STAFF: {"valid_senders": "staff_only", "active": True},
-    MailingList.ACCESS_LEVEL_READONLY: {"valid_senders": "all_members", "active": False},
+    MailingList.ACCESS_LEVEL_READONLY: {
+        "valid_senders": "all_members",
+        "active": False,
+    },
 }
 
 ACTION_WRITTEN = "written"
