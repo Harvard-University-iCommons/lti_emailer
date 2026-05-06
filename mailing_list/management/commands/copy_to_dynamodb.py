@@ -1,14 +1,17 @@
 import csv
 import logging
 import sys
-from datetime import timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 import boto3
 from botocore.exceptions import ClientError
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from mailing_list.models import MailingList
+
+AWS_REGION = "us-east-1"
+DEFAULT_MAX_AGE_YEARS = 2.0
+DAYS_PER_YEAR = 365.25
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +36,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "--table-name",
+            required=True,
+            help="Name of the target DynamoDB table.",
+        )
+        parser.add_argument(
             "--output-file",
             help="Write a CSV of per-list results to this path.",
         )
@@ -46,12 +54,21 @@ class Command(BaseCommand):
             action="store_true",
             help="Replace existing items instead of skipping them.",
         )
+        parser.add_argument(
+            "--max-age-years",
+            type=float,
+            default=DEFAULT_MAX_AGE_YEARS,
+            help=(
+                "Only copy lists modified within this many years. "
+                f"Default: {DEFAULT_MAX_AGE_YEARS}. Pass 0 to copy all rows."
+            ),
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
         overwrite = options["overwrite"]
 
-        table = None if dry_run else self._get_table()
+        table = None if dry_run else self._get_table(options["table_name"])
 
         counts = {
             ACTION_WRITTEN: 0,
@@ -61,7 +78,17 @@ class Command(BaseCommand):
         }
         results = []
 
-        rows = MailingList.objects.all().select_related("course_settings").iterator()
+        qs = MailingList.objects.all().select_related("course_settings")
+        max_age_years = options["max_age_years"]
+        if max_age_years > 0:
+            cutoff = datetime.now(tz=dt_timezone.utc) - timedelta(
+                days=max_age_years * DAYS_PER_YEAR
+            )
+            qs = qs.filter(date_modified__gte=cutoff)
+            self.stdout.write(
+                f"Filtering to lists modified on or after {cutoff.isoformat()}"
+            )
+        rows = qs.iterator()
         for ml in rows:
             try:
                 item = self._to_dynamo_item(ml)
@@ -104,16 +131,8 @@ class Command(BaseCommand):
         if counts[ACTION_ERROR]:
             sys.exit(1)
 
-    def _get_table(self):
-        table_name = settings.DYNAMODB_TABLE_NAME
-        if not table_name:
-            raise CommandError(
-                "DYNAMODB_TABLE_NAME is not configured. Set dynamodb_table_name "
-                "in SECURE_SETTINGS."
-            )
-        return boto3.resource("dynamodb", region_name=settings.AWS_REGION).Table(
-            table_name
-        )
+    def _get_table(self, table_name):
+        return boto3.resource("dynamodb", region_name=AWS_REGION).Table(table_name)
 
     def _to_dynamo_item(self, ml):
         mapping = ACCESS_LEVEL_TO_V2.get(ml.access_level)
